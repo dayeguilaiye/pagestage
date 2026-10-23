@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "utf16",
+  "bookId": "e29cb883376b4e31947bb861",
+  "chapterNumber": 5,
+  "sourceTextHash": "905f816d255f7b533f30e35da7857c0b1cb914b36a0af11e3381d61427736314",
+  "humanReviewed": false,
+  "speakers": {
+    "narrator": "旁白",
+    "mrs-bennet": "Mrs. Bennet",
+    "jane-bennet": "Jane Bennet",
+    "elizabeth-bennet": "Elizabeth Bennet",
+    "mary-bennet": "Mary Bennet",
+    "charlotte-lucas": "Charlotte Lucas",
+    "young-lucas": "A young Lucas (boy)"
+  },
+  "spans": [
+    {
+      "start": 0,
+      "end": 1360,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1360,
+      "end": 1400,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1400,
+      "end": 1459,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1459,
+      "end": 1497,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1497,
+      "end": 1499,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1499,
+      "end": 1546,
+      "speakerId": "charlotte-lucas"
+    },
+    {
+      "start": 1546,
+      "end": 1548,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1548,
+      "end": 1775,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1775,
+      "end": 1777,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1777,
+      "end": 2191,
+      "speakerId": "charlotte-lucas",
+      "note": "Includes Charlotte quoting Bingley (‘Oh, the eldest Miss Bennet…’); the embedded quotation stays with Charlotte, who voices it."
+    },
+    {
+      "start": 2191,
+      "end": 2193,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2193,
+      "end": 2319,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 2319,
+      "end": 2321,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2321,
+      "end": 2382,
+      "speakerId": "charlotte-lucas"
+    },
+    {
+      "start": 2382,
+      "end": 2399,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2399,
+      "end": 2505,
+      "speakerId": "charlotte-lucas"
+    },
+    {
+      "start": 2505,
+      "end": 2507,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2507,
+      "end": 2778,
+      "speakerId": "mrs-bennet",
+      "note": "Unattributed; Mrs. Bennet (calls her “Lizzy”, cites Mrs. Long; Jane replies “ma’am”)."
+    },
+    {
+      "start": 2778,
+      "end": 2780,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2780,
+      "end": 2839,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 2839,
+      "end": 2851,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2851,
+      "end": 2895,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 2895,
+      "end": 2897,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2897,
+      "end": 3048,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3048,
+      "end": 3050,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3050,
+      "end": 3073,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 3073,
+      "end": 3085,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3085,
+      "end": 3190,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 3190,
+      "end": 3192,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3192,
+      "end": 3498,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3498,
+      "end": 3500,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3500,
+      "end": 3545,
+      "speakerId": "charlotte-lucas"
+    },
+    {
+      "start": 3545,
+      "end": 3563,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3563,
+      "end": 3601,
+      "speakerId": "charlotte-lucas"
+    },
+    {
+      "start": 3601,
+      "end": 3603,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3603,
+      "end": 3625,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3625,
+      "end": 3643,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3643,
+      "end": 3687,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3687,
+      "end": 3689,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3689,
+      "end": 3758,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 3758,
+      "end": 3760,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3760,
+      "end": 3772,
+      "speakerId": "charlotte-lucas"
+    },
+    {
+      "start": 3772,
+      "end": 3790,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3790,
+      "end": 4055,
+      "speakerId": "charlotte-lucas"
+    },
+    {
+      "start": 4055,
+      "end": 4057,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4057,
+      "end": 4077,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 4077,
+      "end": 4097,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4097,
+      "end": 4166,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 4166,
+      "end": 4168,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4168,
+      "end": 4176,
+      "speakerId": "mary-bennet"
+    },
+    {
+      "start": 4176,
+      "end": 4249,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4249,
+      "end": 4775,
+      "speakerId": "mary-bennet"
+    },
+    {
+      "start": 4775,
+      "end": 4777,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4777,
+      "end": 4810,
+      "speakerId": "young-lucas"
+    },
+    {
+      "start": 4810,
+      "end": 4859,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4859,
+      "end": 4967,
+      "speakerId": "young-lucas"
+    },
+    {
+      "start": 4967,
+      "end": 4969,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4969,
+      "end": 5025,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 5025,
+      "end": 5044,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 5044,
+      "end": 5118,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 5118,
+      "end": 5244,
+      "speakerId": "narrator"
+    }
+  ],
+  "notes": [
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed."
+  ]
+}

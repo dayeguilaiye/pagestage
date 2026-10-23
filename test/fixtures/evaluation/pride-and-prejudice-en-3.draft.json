@@ -1,0 +1,216 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "utf16",
+  "bookId": "e29cb883376b4e31947bb861",
+  "chapterNumber": 3,
+  "sourceTextHash": "8430db6ed3c5eb4cf962a1c5d889b7bb0cb5e34d8fbe593cf9f9aeea2252f16c",
+  "humanReviewed": false,
+  "speakers": {
+    "narrator": "旁白",
+    "mr-bennet": "Mr. Bennet",
+    "mrs-bennet": "Mrs. Bennet",
+    "charles-bingley": "Charles Bingley",
+    "fitzwilliam-darcy": "Fitzwilliam Darcy"
+  },
+  "spans": [
+    {
+      "start": 0,
+      "end": 818,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 818,
+      "end": 888,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 888,
+      "end": 922,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 922,
+      "end": 998,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 998,
+      "end": 4770,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4770,
+      "end": 4784,
+      "speakerId": "charles-bingley"
+    },
+    {
+      "start": 4784,
+      "end": 4794,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4794,
+      "end": 4913,
+      "speakerId": "charles-bingley"
+    },
+    {
+      "start": 4913,
+      "end": 4915,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 4915,
+      "end": 5201,
+      "speakerId": "fitzwilliam-darcy"
+    },
+    {
+      "start": 5201,
+      "end": 5203,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 5203,
+      "end": 5245,
+      "speakerId": "charles-bingley"
+    },
+    {
+      "start": 5245,
+      "end": 5261,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 5261,
+      "end": 5427,
+      "speakerId": "charles-bingley"
+    },
+    {
+      "start": 5427,
+      "end": 5429,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 5429,
+      "end": 5487,
+      "speakerId": "fitzwilliam-darcy"
+    },
+    {
+      "start": 5487,
+      "end": 5540,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 5540,
+      "end": 5751,
+      "speakerId": "charles-bingley"
+    },
+    {
+      "start": 5751,
+      "end": 5753,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 5753,
+      "end": 5773,
+      "speakerId": "fitzwilliam-darcy"
+    },
+    {
+      "start": 5773,
+      "end": 5892,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 5892,
+      "end": 6147,
+      "speakerId": "fitzwilliam-darcy"
+    },
+    {
+      "start": 6147,
+      "end": 7502,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 7502,
+      "end": 7527,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 7527,
+      "end": 7553,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 7553,
+      "end": 8407,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 8407,
+      "end": 8409,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 8409,
+      "end": 8447,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 8447,
+      "end": 8479,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 8479,
+      "end": 8617,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 8617,
+      "end": 8619,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 8619,
+      "end": 8633,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 8633,
+      "end": 8657,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 8657,
+      "end": 8868,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 8868,
+      "end": 9128,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 9128,
+      "end": 9151,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 9151,
+      "end": 9163,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 9163,
+      "end": 9553,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 9553,
+      "end": 9555,
+      "speakerId": "narrator"
+    }
+  ],
+  "notes": [
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed.",
+    "Bingley’s written refusal (“unable to accept the honour of their invitation, etc.”) is paraphrased in the third person, so narrator."
+  ]
+}

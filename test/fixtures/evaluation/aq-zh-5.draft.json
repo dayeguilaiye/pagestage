@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "utf16",
+  "bookId": "15bad7444de48233ea12c39c",
+  "chapterNumber": 5,
+  "sourceTextHash": "09d9fffef3a69df06a8524f0af612ce83d803b643968ce139286276a546dacb4",
+  "humanReviewed": false,
+  "speakers": {
+    "narrator": "旁白（立传者“我”）",
+    "aq": "阿Q",
+    "idle-villagers": "未庄闲人（无名村民）",
+    "xiao-d": "小D",
+    "old-nun": "老尼姑"
+  },
+  "spans": [
+    {
+      "start": 0,
+      "end": 107,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 107,
+      "end": 114,
+      "speakerId": "aq"
+    },
+    {
+      "start": 114,
+      "end": 245,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 245,
+      "end": 269,
+      "speakerId": "aq"
+    },
+    {
+      "start": 269,
+      "end": 505,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 505,
+      "end": 518,
+      "speakerId": "idle-villagers",
+      "note": "老主顾家走出的无名男人，并入无名村民 idle-villagers。"
+    },
+    {
+      "start": 518,
+      "end": 532,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 532,
+      "end": 568,
+      "speakerId": "aq",
+      "note": "无引号但由“他想，”直接引出、无第三人称自指的思想，归 aq。"
+    },
+    {
+      "start": 568,
+      "end": 673,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 673,
+      "end": 688,
+      "speakerId": "aq"
+    },
+    {
+      "start": 688,
+      "end": 735,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 735,
+      "end": 742,
+      "speakerId": "aq"
+    },
+    {
+      "start": 742,
+      "end": 760,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 760,
+      "end": 774,
+      "speakerId": "xiao-d"
+    },
+    {
+      "start": 774,
+      "end": 957,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 957,
+      "end": 967,
+      "speakerId": "idle-villagers"
+    },
+    {
+      "start": 967,
+      "end": 980,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 980,
+      "end": 988,
+      "speakerId": "idle-villagers"
+    },
+    {
+      "start": 988,
+      "end": 1144,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1144,
+      "end": 1157,
+      "speakerId": "aq"
+    },
+    {
+      "start": 1157,
+      "end": 1165,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1165,
+      "end": 1178,
+      "speakerId": "xiao-d"
+    },
+    {
+      "start": 1178,
+      "end": 1920,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1920,
+      "end": 1963,
+      "speakerId": "old-nun"
+    },
+    {
+      "start": 1963,
+      "end": 1983,
+      "speakerId": "aq"
+    },
+    {
+      "start": 1983,
+      "end": 1992,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1992,
+      "end": 2004,
+      "speakerId": "old-nun"
+    },
+    {
+      "start": 2004,
+      "end": 2014,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2014,
+      "end": 2036,
+      "speakerId": "aq"
+    },
+    {
+      "start": 2036,
+      "end": 2234,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2234,
+      "end": 2253,
+      "speakerId": "aq",
+      "note": "无引号但由“想道，”直接引出的思想，归 aq。"
+    },
+    {
+      "start": 2253,
+      "end": 2278,
+      "speakerId": "narrator"
+    }
+  ],
+  "notes": [
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed.",
+    "Source: test/fixtures/books/aq-zh.txt, 第五章　生计问题.",
+    "“他仔细一想，终于省悟过来：其原因盖在自己的赤膊”含第三人称“自己”与立传者文言口吻，归 narrator；『仇人相见分外眼明』『龙虎斗』『求食』等术语引号归 narrator。"
+  ]
+}

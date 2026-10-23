@@ -6,24 +6,24 @@
   "sourceTextHash": "4f3c1c99fab90ab646a2a7ea8aae80e89120eada2552f0de10ad6f4d13108222",
   "humanReviewed": false,
   "speakers": {
-    "aq-author": "我（立传者）",
+    "narrator": "旁白（立传者“我”）",
     "zhao": "赵太爷"
   },
   "spans": [
     {
       "start": 0,
-      "end": 740,
-      "speakerId": "aq-author"
+      "end": 738,
+      "speakerId": "narrator"
     },
     {
-      "start": 740,
+      "start": 738,
       "end": 761,
       "speakerId": "zhao"
     },
     {
       "start": 761,
       "end": 787,
-      "speakerId": "aq-author"
+      "speakerId": "narrator"
     },
     {
       "start": 787,
@@ -32,25 +32,24 @@
     },
     {
       "start": 811,
-      "end": 842,
-      "speakerId": "aq-author"
+      "end": 840,
+      "speakerId": "narrator"
     },
     {
-      "start": 842,
+      "start": 840,
       "end": 860,
       "speakerId": "zhao"
     },
     {
       "start": 860,
       "end": 1737,
-      "speakerId": "aq-author"
+      "speakerId": "narrator"
     }
   ],
   "notes": [
-    "DRAFT — awaiting human correction.",
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed.",
     "Source: test/fixtures/books/aq-zh.txt, 第一章　序.",
-    "待人工校对：本章第一人称立传者使用独立说话人 aq-author，实际演员表可能命名为“我”或“立传者”；导入评测前应映射到对应成员。",
-    "孔子名言及“列传”“本传”“洋字”等引述/术语均视为立传者正在引用的文字，草稿不为孔子等历史引用另设配音角色。",
-    "阿Q没有开口的段落不产生阿Q台词；转述他认为自己与赵太爷同宗的内容由立传者朗读。"
+    "孔子曰：『名不正则言不顺。』及『列传』『本传』等文体名、术语引号都是立传者在引用，归 narrator，不为孔子另设角色。",
+    "阿Q自称与赵太爷同宗、知道的人都说阿Q太荒唐等均为转述，归 narrator；本章只有赵太爷三句直接引语。"
   ]
 }
