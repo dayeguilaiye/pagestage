@@ -1,0 +1,6 @@
+name: pagestage
+publish_to: none
+environment:
+  sdk: ^3.11.0
+workspace:
+  - packages/core
