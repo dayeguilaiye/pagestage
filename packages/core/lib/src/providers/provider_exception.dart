@@ -27,7 +27,11 @@ class ProviderException implements Exception {
         ProviderErrorKind.invalidKey => 'API key is invalid.',
         ProviderErrorKind.insufficientBalance => 'The account has insufficient balance.',
         ProviderErrorKind.rateLimited => 'The provider rate limit was reached.',
-        ProviderErrorKind.unavailable => 'The provider is unavailable. Try again later.',
+        ProviderErrorKind.unavailable => switch (code) {
+          'timeout' => 'The provider request timed out. Retry the command.',
+          'connection_error' => 'The provider connection failed or was interrupted. Retry the command.',
+          _ => 'The provider is unavailable. Try again later.',
+        },
         ProviderErrorKind.invalidResponse => 'The provider returned an invalid response.',
         ProviderErrorKind.invalidVoice => 'The voice binding is unavailable.',
         ProviderErrorKind.invalidConfiguration => 'The provider configuration is invalid.',

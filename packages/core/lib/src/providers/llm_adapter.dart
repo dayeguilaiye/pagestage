@@ -61,6 +61,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
     required this.model,
     this.api = LlmApi.chatCompletions,
     this.jsonSchema = true,
+    this.reasoningEffort,
     http.Client? client,
     this.timeout = const Duration(minutes: 3),
   }) : _baseUrl = baseUrl,
@@ -86,6 +87,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
   final String model;
   final LlmApi api;
   final bool jsonSchema;
+  final String? reasoningEffort;
   final Duration timeout;
   final http.Client _client;
   final bool _ownsClient;
@@ -103,6 +105,11 @@ class OpenAiLlmAdapter implements LlmAdapter {
     );
     final body = <String, Object?>{
       'model': model,
+      if (reasoningEffort != null)
+        if (isChat)
+          'reasoning_effort': reasoningEffort
+        else
+          'reasoning': {'effort': reasoningEffort},
       isChat ? 'messages' : 'input': [
         {'role': 'system', 'content': request.system},
         {'role': 'user', 'content': request.user},
@@ -207,11 +214,13 @@ class OpenAiLlmAdapter implements LlmAdapter {
       throw const ProviderException(
         provider: 'llm',
         kind: ProviderErrorKind.unavailable,
+        code: 'timeout',
       );
     } on http.ClientException {
       throw const ProviderException(
         provider: 'llm',
         kind: ProviderErrorKind.unavailable,
+        code: 'connection_error',
       );
     } catch (_) {
       throw const ProviderException(

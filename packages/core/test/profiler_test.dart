@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:pagestage_core/pagestage_core.dart';
@@ -76,6 +77,24 @@ void main() {
   tearDown(() async {
     await store.close();
     await temp.delete(recursive: true);
+  });
+  test('keeps the system narrator out of character profiling input', () async {
+    await CastRepository(store).save(
+      Cast(
+        bookId: book.id,
+        speakers: [
+          Speaker(id: 'narrator', name: 'Narrator', kind: SpeakerKind.narrator),
+          Speaker(id: 'lin', name: '林舟'),
+          Speaker(id: 'guest', name: '访客', kind: SpeakerKind.provisional),
+        ],
+      ),
+    );
+    final llm = FakeLlm([batch()]);
+    final result = await Profiler(store, llm).profile(book, throughChapter: 1);
+    final input = jsonDecode(llm.requests.single.user) as Map;
+    final speakers = (input['existingCast'] as Map)['speakers'] as List;
+    expect(speakers.map((s) => (s as Map)['id']), ['lin', 'guest']);
+    expect(result.cast.speaker('narrator').kind, SpeakerKind.narrator);
   });
   test(
     'profiles batches and returns saved cast, pronunciation and usage',

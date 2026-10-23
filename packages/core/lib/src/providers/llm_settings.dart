@@ -11,6 +11,7 @@ class LlmSettings {
     required this.profileModel,
     required this.directorModel,
     required this.jsonSchema,
+    required this.reasoningEffort,
   }) : _key = key;
   final Uri baseUrl;
   final LlmApi api;
@@ -18,6 +19,7 @@ class LlmSettings {
   final String profileModel;
   final String directorModel;
   final bool jsonSchema;
+  final String? reasoningEffort;
 
   factory LlmSettings.fromConfiguration(ProviderConfiguration config) {
     final common = config.value(
@@ -73,6 +75,11 @@ class LlmSettings {
       profileModel: profile,
       directorModel: director,
       jsonSchema: mode == 'schema',
+      reasoningEffort: config.value(
+        'llm',
+        'reasoningEffort',
+        environmentVariable: 'LLM_REASONING_EFFORT',
+      ),
     );
   }
 
@@ -82,6 +89,7 @@ class LlmSettings {
     model: profileModel,
     api: api,
     jsonSchema: jsonSchema,
+    reasoningEffort: reasoningEffort,
   );
   OpenAiLlmAdapter createDirectorAdapter() => OpenAiLlmAdapter(
     baseUrl: baseUrl,
@@ -89,5 +97,6 @@ class LlmSettings {
     model: directorModel,
     api: api,
     jsonSchema: jsonSchema,
+    reasoningEffort: reasoningEffort,
   );
 }

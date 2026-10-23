@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -35,6 +36,7 @@ void main() {
         expect(incoming.headers['authorization'], 'Bearer test-key');
         final body = jsonDecode(incoming.body) as Map;
         expect(body['model'], 'profile-model');
+        expect(body.containsKey('reasoning_effort'), false);
         expect((body['response_format'] as Map)['type'], 'json_schema');
         expect(
           ((body['response_format'] as Map)['json_schema'] as Map)['schema'],
@@ -91,6 +93,7 @@ void main() {
           expect(incoming.url.path, '/v1/responses');
           final body = jsonDecode(incoming.body) as Map;
           expect(body['store'], false);
+          expect(body.containsKey('reasoning'), false);
           expect(((body['text'] as Map)['format'] as Map)['name'], 'profile');
           expect(
             ((body['text'] as Map)['format'] as Map)['schema'],
@@ -151,6 +154,74 @@ void main() {
     },
   );
   for (final api in LlmApi.values) {
+    test(
+      '${api.name} sends an explicitly configured reasoning effort',
+      () async {
+        final settings = LlmSettings.fromConfiguration(
+          await ProviderConfiguration.load(
+            null,
+            environment: {
+              'LLM_KEY': 'test-key',
+              'LLM_MODEL': 'model',
+              'LLM_API': api == LlmApi.responses
+                  ? 'responses'
+                  : 'chat-completions',
+              'LLM_REASONING_EFFORT': 'none',
+            },
+          ),
+        );
+        expect(settings.reasoningEffort, 'none');
+        for (final adapter in [
+          settings.createProfileAdapter(),
+          settings.createDirectorAdapter(),
+        ]) {
+          expect(adapter.reasoningEffort, 'none');
+          adapter.close();
+        }
+        final adapter = OpenAiLlmAdapter(
+          baseUrl: Uri.parse('https://example.invalid'),
+          apiKey: 'test-key',
+          model: 'model',
+          api: api,
+          reasoningEffort: settings.reasoningEffort,
+          client: MockClient((incoming) async {
+            final body = jsonDecode(incoming.body) as Map;
+            expect(
+              api == LlmApi.responses
+                  ? body['reasoning']
+                  : body['reasoning_effort'],
+              api == LlmApi.responses ? {'effort': 'none'} : 'none',
+            );
+            return http.Response(
+              jsonEncode(
+                api == LlmApi.responses
+                    ? {
+                        'status': 'completed',
+                        'output': [
+                          {
+                            'type': 'message',
+                            'content': [
+                              {'type': 'output_text', 'text': '{}'},
+                            ],
+                          },
+                        ],
+                      }
+                    : {
+                        'choices': [
+                          {
+                            'finish_reason': 'stop',
+                            'message': {'content': '{}'},
+                          },
+                        ],
+                      },
+              ),
+              200,
+            );
+          }),
+        );
+        expect((await adapter.complete(request)).data, isEmpty);
+      },
+    );
     test('${api.name} classifies balance and rate limits', () async {
       for (final row in [
         (429, 'insufficient_quota', ProviderErrorKind.insufficientBalance),
@@ -241,4 +312,50 @@ void main() {
       }
     });
   }
+  test(
+    'distinguishes connection failure and timeout without exposing details',
+    () async {
+      for (final row in [
+        (
+          MockClient(
+            (_) async =>
+                throw http.ClientException('secret-key: Connection closed'),
+          ),
+          const Duration(seconds: 1),
+          'connection_error',
+        ),
+        (
+          MockClient((_) => Completer<http.Response>().future),
+          const Duration(milliseconds: 1),
+          'timeout',
+        ),
+      ]) {
+        final adapter = OpenAiLlmAdapter(
+          baseUrl: Uri.parse('https://example.invalid'),
+          apiKey: 'secret-key',
+          model: 'model',
+          client: row.$1,
+          timeout: row.$2,
+        );
+        await expectLater(
+          adapter.complete(request),
+          throwsA(
+            isA<ProviderException>()
+                .having((e) => e.kind, 'kind', ProviderErrorKind.unavailable)
+                .having((e) => e.code, 'code', row.$3)
+                .having(
+                  (e) => e.toString(),
+                  'message',
+                  isNot(contains('secret-key')),
+                )
+                .having(
+                  (e) => e.toString(),
+                  'message',
+                  isNot(contains('The provider is unavailable')),
+                ),
+          ),
+        );
+      }
+    },
+  );
 }

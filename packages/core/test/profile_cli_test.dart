@@ -45,7 +45,7 @@ void main() {
       expect(status, 0, reason: errors.toString());
       final result = jsonDecode(output.toString()) as Map;
       expect(result['model'], 'fake-cli');
-      expect(result['promptVersion'], 'profile-v1');
+      expect(result['promptVersion'], 'profile-v2');
       expect((result['usage'] as Map)['totalTokens'], 5);
       expect(result['elapsedMs'], isA<int>());
       expect(output.toString(), isNot(contains('secret-key')));
