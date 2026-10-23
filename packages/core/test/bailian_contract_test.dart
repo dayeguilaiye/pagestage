@@ -8,6 +8,38 @@ import 'package:pagestage_core/pagestage_core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test('Bailian downloads plain-HTTP result links over HTTPS', () async {
+    final wav = PcmAudio(samples: Int16List.fromList([1, 2])).toWav();
+    final downloads = <Uri>[];
+    final adapter = BailianTtsAdapter(
+      apiKey: 'fixture-secret',
+      client: MockClient((request) async {
+        if (request.method == 'GET') {
+          downloads.add(request.url);
+          return http.Response.bytes(wav, 200);
+        }
+        return http.Response(
+          jsonEncode({
+            'output': {
+              'finish_reason': 'stop',
+              'audio': {
+                'data': '',
+                'url':
+                    'http://result.oss-cn-beijing.aliyuncs.com/a.wav?Signature=fixture',
+              },
+            },
+            'usage': {'characters': 20},
+          }),
+          200,
+        );
+      }),
+    );
+    await adapter.synthesize(_request);
+    expect(
+      downloads.single.toString(),
+      'https://result.oss-cn-beijing.aliyuncs.com/a.wav?Signature=fixture',
+    );
+  });
   test(
     'Bailian sends Qwen Audio request and downloads WAV without credentials',
     () async {

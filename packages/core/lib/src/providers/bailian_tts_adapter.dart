@@ -122,7 +122,10 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
       if (output['finish_reason'] != 'stop') {
         throw const FormatException('Incomplete audio.');
       }
-      final url = Uri.tryParse((output['audio'] as Map)['url'] as String);
+      var url = Uri.tryParse((output['audio'] as Map)['url'] as String);
+      // Result links may arrive as plain HTTP; the signed OSS URL also
+      // serves HTTPS, so never download audio unencrypted.
+      if (url?.scheme == 'http') url = url!.replace(scheme: 'https');
       if (url == null ||
           url.scheme != 'https' ||
           url.host.isEmpty ||
