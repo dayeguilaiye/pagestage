@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "utf16",
+  "bookId": "15bad7444de48233ea12c39c",
+  "chapterNumber": 1,
+  "sourceTextHash": "4f3c1c99fab90ab646a2a7ea8aae80e89120eada2552f0de10ad6f4d13108222",
+  "humanReviewed": false,
+  "speakers": {
+    "aq-author": "我（立传者）",
+    "zhao": "赵太爷"
+  },
+  "spans": [
+    {
+      "start": 0,
+      "end": 740,
+      "speakerId": "aq-author"
+    },
+    {
+      "start": 740,
+      "end": 761,
+      "speakerId": "zhao"
+    },
+    {
+      "start": 761,
+      "end": 787,
+      "speakerId": "aq-author"
+    },
+    {
+      "start": 787,
+      "end": 811,
+      "speakerId": "zhao"
+    },
+    {
+      "start": 811,
+      "end": 842,
+      "speakerId": "aq-author"
+    },
+    {
+      "start": 842,
+      "end": 860,
+      "speakerId": "zhao"
+    },
+    {
+      "start": 860,
+      "end": 1737,
+      "speakerId": "aq-author"
+    }
+  ],
+  "notes": [
+    "DRAFT — awaiting human correction.",
+    "Source: test/fixtures/books/aq-zh.txt, 第一章　序.",
+    "待人工校对：本章第一人称立传者使用独立说话人 aq-author，实际演员表可能命名为“我”或“立传者”；导入评测前应映射到对应成员。",
+    "孔子名言及“列传”“本传”“洋字”等引述/术语均视为立传者正在引用的文字，草稿不为孔子等历史引用另设配音角色。",
+    "阿Q没有开口的段落不产生阿Q台词；转述他认为自己与赵太爷同宗的内容由立传者朗读。"
+  ]
+}

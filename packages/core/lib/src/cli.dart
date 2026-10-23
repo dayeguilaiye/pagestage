@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import 'commands/profile_command.dart';
 import 'commands/voice_design_command.dart';
+import 'commands/evaluate_command.dart';
 import 'commands/cast_command.dart';
 import 'commands/direct_command.dart';
 import 'providers/llm_adapter.dart';
@@ -54,6 +55,7 @@ class PagestageCommandRunner extends CommandRunner<void> {
     addCommand(CastCommand(context));
     addCommand(VoiceDesignCommand(context));
     addCommand(DirectCommand(context));
+    addCommand(EvaluateCommand(context));
     addCommand(NarrateCommand(context));
   }
 
