@@ -7,10 +7,12 @@ import '../pcm_audio.dart';
 import '../models/voice.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
+import 'voice_design_adapter.dart';
+import 'voice_design_http.dart';
 
 enum BailianRegion { beijing, singapore }
 
-class BailianTtsAdapter implements TtsAdapter {
+class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
   BailianTtsAdapter({
     required String apiKey,
     this.region = BailianRegion.beijing,
@@ -57,7 +59,9 @@ class BailianTtsAdapter implements TtsAdapter {
       'qwen-audio-3.0-tts-flash',
       'qwen-audio-3.0-tts-plus',
     };
-    if (binding.provider != provider || !models.contains(binding.model)) {
+    if (binding.provider != provider ||
+        !models.contains(binding.model) ||
+        (binding.designed && region != BailianRegion.beijing)) {
       throw const ProviderException(
         provider: 'bailian',
         kind: ProviderErrorKind.invalidConfiguration,
@@ -197,6 +201,30 @@ class BailianTtsAdapter implements TtsAdapter {
         kind: ProviderErrorKind.invalidResponse,
       );
     }
+  }
+
+  @override
+  Future<DesignedVoice> design(VoiceDesignRequest request) async {
+    final binding = VoiceBinding(
+      provider: provider,
+      model: request.model,
+      voiceId: '',
+      designed: true,
+    );
+    if (!capabilitiesFor(binding).supportsVoiceDesign ||
+        _baseUrl.host == 'dashscope-intl.aliyuncs.com' ||
+        _baseUrl.host.contains('.ap-southeast-')) {
+      throw const ProviderException(
+        provider: 'bailian',
+        kind: ProviderErrorKind.invalidConfiguration,
+      );
+    }
+    return designBailian(
+      request,
+      apiKey: _apiKey,
+      baseUrl: _baseUrl,
+      client: _client,
+    );
   }
 
   void close() {

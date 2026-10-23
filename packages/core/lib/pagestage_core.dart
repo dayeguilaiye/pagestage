@@ -21,3 +21,6 @@ export 'src/providers/bailian_tts_adapter.dart';
 export 'src/preset_catalog.dart';
 export 'src/casting.dart';
 export 'src/providers/tts_settings.dart';
+
+export 'src/voice_design.dart';
+export 'src/providers/voice_design_adapter.dart';

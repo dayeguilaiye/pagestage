@@ -8,8 +8,10 @@ import '../pcm_audio.dart';
 import '../models/voice.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
+import 'voice_design_adapter.dart';
+import 'voice_design_http.dart';
 
-class MiniMaxTtsAdapter implements TtsAdapter {
+class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
   MiniMaxTtsAdapter({required String apiKey, Uri? baseUrl, http.Client? client})
     : _apiKey = apiKey,
       _baseUrl = baseUrl ?? Uri.parse('https://api.minimax.io/v1'),
@@ -165,6 +167,14 @@ class MiniMaxTtsAdapter implements TtsAdapter {
       );
     }
   }
+
+  @override
+  Future<DesignedVoice> design(VoiceDesignRequest request) => designMiniMax(
+    request,
+    apiKey: _apiKey,
+    baseUrl: _baseUrl,
+    client: _client,
+  );
 
   void close() {
     if (_ownsClient) _client.close();
