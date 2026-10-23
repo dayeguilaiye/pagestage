@@ -1,15 +1,15 @@
 # CLI 原型报告
 
-2026-10-23 用真实服务商把两本测试书前 5 章各跑完一遍完整流程：建档、选角、导演、合成，以及说话人准确率评测。本文给出数据、运行中发现的问题和对 App 开发的建议，对应 [issue #13](https://github.com/dayeguilaiye/pagestage/issues/13)。**听感部分留空，由人试听后填写。**
+2026-10-23 用真实服务商把两本测试书前 5 章各跑完一遍完整流程：建档、选角、导演、合成，以及说话人准确率评测。本文给出数据、运行中发现的问题和对 App 开发的建议，对应 [issue #13](https://github.com/dayeguilaiye/pagestage/issues/13)。听感结论见文末。
 
 ## 结论
 
-建议进入 App 开发。对白归属的核心判断已经够用：*Pride and Prejudice* 有 99.0% 的字符归给了正确的人，阿Q为 96.7%（均不计说话提示问题，见下文）。成本和速度都不构成障碍。原型中暴露的问题都能在工程上解决，进入 App 前应先处理以下四项：
+建议进入 App 开发。对白归属的核心判断已经够用：*Pride and Prejudice* 有 99.0% 的字符归给了正确的人，阿Q为 96.7%（均不计说话提示问题，见下文）。成本和速度都不构成障碍。原型中暴露的问题都能在工程上解决，已分别建为 issue。进入 App 前应先处理第 1、2、4 项；第 3 项只影响推荐结果，可以与 App 开发并行：
 
-1. **由程序切分原文，LLM 只负责给片段标注说话人。** 当前让 LLM 逐句回抄原文，带来三个问题：说话提示（`said Mrs. Bennet`、`王胡轻蔑的抬起眼来说`）被并进角色台词，是准确率损失的最大来源；回抄的文字一旦偏离原文，就要整块付费重试；输出 token 约为输入的 1.5 倍，大部分花在复述原文上。
-2. **整本书使用同一个旁白声音。** 阿Q第一章的叙述归给了角色“我”，第二到五章归给了系统旁白，听众会听到旁白在章节之间换人。
-3. **重建预设音色目录的标签。** 许多 MiniMax 预设没有性别或年龄标签，推荐结果近似随机，例如中年的 Mrs. Bennet 配了 `Kind-heartedGirl`，男性桩家配了 `HK_Flight_Attendant`。
-4. **LLM 默认使用流式请求；TTS 按服务商限流排队。** 非流式请求经透明代理时约 25 秒无数据就被断开；MiniMax 账号每分钟只放行 12 到 15 个请求。
+1. **台词对齐后，由程序拆出说话提示**（[#16](https://github.com/dayeguilaiye/pagestage/issues/16)）。说话提示（`said Mrs. Bennet`、`王胡轻蔑的抬起眼来说`）被并进角色台词，是准确率损失的最大来源。按 ADR 0004 保留 LLM 带原文分段；台词对齐回原文后，角色台词中引号外的文字拆成单独的台词，归旁白并标为说话提示，不需要额外请求。对齐重试和回抄原文所花的 token 是 ADR 0004 已经接受的成本。
+2. **整本书使用同一个旁白声音**（[#17](https://github.com/dayeguilaiye/pagestage/issues/17)）。阿Q第一章的叙述归给了角色“我”，第二到五章归给了系统旁白，听众会听到旁白在章节之间换人。
+3. **持续维护预设音色信息单**（[#18](https://github.com/dayeguilaiye/pagestage/issues/18)）。许多 MiniMax 预设没有性别或年龄标签，推荐结果近似随机，例如中年的 Mrs. Bennet 配了 `Kind-heartedGirl`，男性桩家配了 `HK_Flight_Attendant`。这只影响推荐结果，不改变 App 调用侧的接口，不阻塞 App。
+4. **LLM 默认使用流式请求；TTS 按服务商限流排队**（[#19](https://github.com/dayeguilaiye/pagestage/issues/19)）。非流式请求经透明代理时约 25 秒无数据就被断开；MiniMax 账号每分钟只放行 12 到 15 个请求。
 
 ## 运行条件
 
@@ -110,7 +110,7 @@
 | P&P 2 | MiniMax | 27 | 4,241 字符 | 38 | 4:39 |
 | P&P 2 | 百炼 | 27 | 4,241 字符；1,021 输入 / 3,377 输出 token | 33 | 4:38 |
 
-两家的请求数、计费字符和速度几乎相同；百炼这次没有遇到限流。接入百炼时修复了两个问题：结果音频链接是 `http://`，现在改为通过 HTTPS 下载；返回的 WAV 是流式写入的，长度字段为占位值，现在可以正确读取。中英文听感比较见文末。
+两家的请求数、计费字符和速度几乎相同；百炼这次没有遇到限流。接入百炼时修复了两个问题：结果音频链接是 `http://`，现在改为通过 HTTPS 下载；返回的 WAV 是流式写入的，长度字段为占位值，现在可以正确读取。听感结论见文末。
 
 ## 相邻旁白合并
 
@@ -140,11 +140,11 @@
 
 在 3,000 到 12,000 字符之间，分块大小对准确率没有可见影响，同一配置两次运行的差别来自对齐重试。块越大，重复的上下文越少，输入 token 越省；但单次请求越长，必须使用流式，而且一旦需要重试，要重付的部分也越大。
 
-建议默认值保持 6000。如果改成第“结论”第 1 项所说的程序切分，重试问题消失，阈值可以按首段等待时间来定：第一块用 2,000 到 3,000 字符，让音频尽快开始，后续块用 6,000 字符。每种配置只跑了一次，结论仅供参考。
+建议默认值保持 6000。首段等待时间也可以作为依据：第一块用 2,000 到 3,000 字符，让音频尽快开始，后续块用 6,000 字符。每种配置只跑了一次，结论仅供参考。
 
 ## 选角
 
-推荐结果在听感上的影响可能比准确率还大。目录里中文 MiniMax 预设有 34 个，同时带性别和年龄标签的只有 15 个，完全没有标签的有 10 个。英文 MiniMax 预设有 45 个，同时带两项标签的只有 12 个。推荐器在标签缺失时没有约束，于是出现了：P&P 旁白配 `English_AnimeCharacter`（目录把它标为旁白候选），中年的 Mr. Bennet 配 `DecentYoungMan`、Mrs. Bennet 配 `Kind-heartedGirl`，Darcy 配 `SadTeen`；赵太爷配 `Southern_Young_Man`，男性桩家配 `HK_Flight_Attendant`。建议在 App 开发前人工补全两家预设的性别、年龄和风格标签，并把没有标签的音色排除在角色推荐之外。
+推荐结果近乎随机。目录里中文 MiniMax 预设有 34 个，同时带性别和年龄标签的只有 15 个，完全没有标签的有 10 个。英文 MiniMax 预设有 45 个，同时带两项标签的只有 12 个。推荐器在标签缺失时没有约束，于是出现了：P&P 旁白配 `English_AnimeCharacter`（目录把它标为旁白候选），中年的 Mr. Bennet 配 `DecentYoungMan`、Mrs. Bennet 配 `Kind-heartedGirl`，Darcy 配 `SadTeen`；赵太爷配 `Southern_Young_Man`，男性桩家配 `HK_Flight_Attendant`。选角只影响推荐结果，不改变 App 调用侧的接口，因此不阻塞 App 开发。两家预设的性别、年龄和风格标签作为一份持续维护的信息单逐步补全，缺标签的音色不参与角色推荐，见 [#18](https://github.com/dayeguilaiye/pagestage/issues/18)。
 
 ## 运行中修复的问题
 
@@ -176,20 +176,24 @@
 - 未测试音色设计、广播剧模式和更长的章节（最长 9,555 字符）。
 - 金额未换算，各服务商价格以官网为准，可直接用账本中的计费单位计算。
 
-## 听感（待填）
+## 听感
 
-试听文件位于 `.pagestage/spike/listen/`。
+**总体判断：整体听感可以，选角不准不阻塞 App。**
 
-| 文件 | 内容 | 听感 |
-| --- | --- | --- |
-| `aq-1-minimax.wav` … `aq-4-minimax.wav` | 阿Q 1–4，MiniMax，`阿Q` 词条生效 | |
-| `aq-5-minimax.wav` | 阿Q 5，MiniMax | |
-| `aq-5-minimax-merged.wav` | 阿Q 5，合并旁白 | |
-| `aq-5-bailian.wav` | 阿Q 5，百炼 | |
-| `pp-1-minimax.wav` … `pp-5-minimax.wav` | P&P 1–5，MiniMax | |
-| `pp-1-minimax-merged.wav` | P&P 1，合并旁白 | |
-| `pp-2-bailian.wav` | P&P 2，百炼 | |
+以下几项由数据直接判断，不依赖试听：
 
-重点听：旁白在阿Q第 1 章与第 2 章之间是否换了声音；说话提示由角色声音朗读是否明显；选角与人物的年龄、性别是否相称；两家在中英文上的自然度；合并旁白后的节奏；“阿Q”的读音。
+- 旁白是否换人：看各章的叙述台词是否解析到同一个音色 ID，见 [#17](https://github.com/dayeguilaiye/pagestage/issues/17)。
+- 说话提示是否由角色声音朗读：看请求里的原文和说话人；请求发对了，读出来的内容就对，见 [#16](https://github.com/dayeguilaiye/pagestage/issues/16)。
+- 选角与人物的年龄、性别是否相称：看预设标签，见 [#18](https://github.com/dayeguilaiye/pagestage/issues/18)。
 
-**总体判断：**（待填）
+试听文件位于 `.pagestage/spike/listen/`：
+
+| 文件 | 内容 |
+| --- | --- |
+| `aq-1-minimax.wav` … `aq-4-minimax.wav` | 阿Q 1–4，MiniMax，`阿Q` 词条生效 |
+| `aq-5-minimax.wav` | 阿Q 5，MiniMax |
+| `aq-5-minimax-merged.wav` | 阿Q 5，合并旁白 |
+| `aq-5-bailian.wav` | 阿Q 5，百炼 |
+| `pp-1-minimax.wav` … `pp-5-minimax.wav` | P&P 1–5，MiniMax |
+| `pp-1-minimax-merged.wav` | P&P 1，合并旁白 |
+| `pp-2-bailian.wav` | P&P 2，百炼 |
