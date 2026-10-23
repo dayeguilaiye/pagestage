@@ -77,6 +77,9 @@ class Synthesizer {
   final Map<String, TtsAdapter> adapters;
   final Directory? cacheDirectory;
 
+  // Advance when request semantics or the adapters' direction mapping changes.
+  static const _cacheVersion = 'tts-raw-v3-adapter-direction-v1';
+
   Future<SynthesisResult> synthesize({
     required Chapter chapter,
     required Script script,
@@ -156,14 +159,15 @@ class Synthesizer {
               capabilities.maxCharacters,
               effectiveMatches,
             ))
-              TtsRequest.forCapabilities(
+              TtsRequest(
                 text: chunk,
                 language: language,
                 binding: binding,
                 direction: entry.line.direction,
-                capabilities: capabilities,
-                pronunciations: matchedPronunciations(
-                  pronunciationMatches(chunk, pronunciations),
+                pronunciations: List.unmodifiable(
+                  matchedPronunciations(
+                    pronunciationMatches(chunk, pronunciations),
+                  ),
                 ),
               ),
           ],
@@ -181,7 +185,7 @@ class Synthesizer {
             utf8.encode(
               jsonEncode(
                 _canonical({
-                  'version': 'tts-raw-v2-pronunciation-v1',
+                  'version': _cacheVersion,
                   'requests': [
                     for (final request in item.requests)
                       {
@@ -189,8 +193,6 @@ class Synthesizer {
                         'language': request.language,
                         'binding': request.binding.toJson(),
                         'direction': request.direction.toJson(),
-                        'emotion': request.emotion,
-                        'instruction': request.instruction,
                         'pronunciations': request.pronunciations
                             .map((e) => e.toJson())
                             .toList(),

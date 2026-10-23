@@ -11,70 +11,77 @@ void main() {
   );
   tearDown(() => temp.delete(recursive: true));
 
-  test('maps provider performance and applies source-aware pauses', () async {
-    const chapter = Chapter(number: 1, title: 'Chapter I', text: 'A.B.C.\nD.');
-    final script = _script(chapter, [
-      const ScriptLine(
-        start: 0,
-        end: 2,
-        direction: Direction(speakerId: 'narrator'),
-      ),
-      const ScriptLine(
-        start: 2,
-        end: 4,
-        direction: Direction(speakerId: 'narrator'),
-      ),
-      const ScriptLine(
-        start: 4,
-        end: 7,
-        direction: Direction(
-          speakerId: 'alice',
-          emotion: Emotion.sad,
-          intensity: Intensity.strong,
-          note: 'Speak softly.',
+  test(
+    'passes performance directions and applies source-aware pauses',
+    () async {
+      const chapter = Chapter(
+        number: 1,
+        title: 'Chapter I',
+        text: 'A.B.C.\nD.',
+      );
+      final script = _script(chapter, [
+        const ScriptLine(
+          start: 0,
+          end: 2,
+          direction: Direction(speakerId: 'narrator'),
         ),
-      ),
-      const ScriptLine(
-        start: 7,
-        end: 9,
-        direction: Direction(speakerId: 'alice'),
-      ),
-    ]);
-    final minimax = _FakeTts('minimax', EmotionControl.enumerated);
-    final bailian = _FakeTts('bailian', EmotionControl.instruction);
-    final result =
-        await Synthesizer(
-          adapters: {'minimax': minimax, 'bailian': bailian},
-          cacheDirectory: Directory('${temp.path}/cache'),
-        ).synthesize(
-          chapter: chapter,
-          script: script,
-          language: 'en',
-          voices: _voices,
-          outputPath: '${temp.path}/chapter.wav',
-        );
-    expect(minimax.requests.map((r) => r.text), ['A.', 'B.']);
-    expect(minimax.requests.first.emotion, 'calm');
-    expect(minimax.requests.first.instruction, isNull);
-    expect(bailian.requests.first.emotion, isNull);
-    expect(
-      bailian.requests.first.instruction,
-      'Read with a sad emotion and strong intensity. Speak softly.',
-    );
-    expect(result.duration, const Duration(milliseconds: 620));
-    expect(result.utterances.map((u) => u.pauseBefore.inMilliseconds), [
-      0,
-      100,
-      180,
-      300,
-    ]);
-    expect(result.utterances.map((u) => u.speakerId), [
-      'narrator',
-      'narrator',
-      'alice',
-      'alice',
-    ]);
-  });
+        const ScriptLine(
+          start: 2,
+          end: 4,
+          direction: Direction(speakerId: 'narrator'),
+        ),
+        const ScriptLine(
+          start: 4,
+          end: 7,
+          direction: Direction(
+            speakerId: 'alice',
+            emotion: Emotion.sad,
+            intensity: Intensity.strong,
+            note: 'Speak softly.',
+          ),
+        ),
+        const ScriptLine(
+          start: 7,
+          end: 9,
+          direction: Direction(speakerId: 'alice'),
+        ),
+      ]);
+      final minimax = _FakeTts('minimax');
+      final bailian = _FakeTts('bailian');
+      final result =
+          await Synthesizer(
+            adapters: {'minimax': minimax, 'bailian': bailian},
+            cacheDirectory: Directory('${temp.path}/cache'),
+          ).synthesize(
+            chapter: chapter,
+            script: script,
+            language: 'en',
+            voices: _voices,
+            outputPath: '${temp.path}/chapter.wav',
+          );
+      expect(minimax.requests.map((r) => r.text), ['A.', 'B.']);
+      expect(minimax.requests.first.direction.emotion, Emotion.calm);
+      expect(bailian.requests.first.direction.toJson(), {
+        'speakerId': 'alice',
+        'emotion': 'sad',
+        'intensity': 'strong',
+        'note': 'Speak softly.',
+      });
+      expect(result.duration, const Duration(milliseconds: 620));
+      expect(result.utterances.map((u) => u.pauseBefore.inMilliseconds), [
+        0,
+        100,
+        180,
+        300,
+      ]);
+      expect(result.utterances.map((u) => u.speakerId), [
+        'narrator',
+        'narrator',
+        'alice',
+        'alice',
+      ]);
+    },
+  );
   test(
     'persists raw utterance cache and invalidates only a changed voice',
     () async {
@@ -91,8 +98,8 @@ void main() {
           direction: Direction(speakerId: 'alice'),
         ),
       ]);
-      final first = _FakeTts('minimax', EmotionControl.enumerated);
-      final second = _FakeTts('bailian', EmotionControl.instruction);
+      final first = _FakeTts('minimax');
+      final second = _FakeTts('bailian');
       final cache = Directory('${temp.path}/cache');
       Future<SynthesisResult> run(Map<String, VoiceBinding> voices) =>
           Synthesizer(
@@ -165,8 +172,8 @@ void main() {
         ),
       ]);
       for (final mode in PerformanceMode.values) {
-        final first = _FakeTts('minimax', EmotionControl.enumerated);
-        final second = _FakeTts('bailian', EmotionControl.instruction);
+        final first = _FakeTts('minimax');
+        final second = _FakeTts('bailian');
         final result =
             await Synthesizer(
               adapters: {'minimax': first, 'bailian': second},
@@ -211,7 +218,7 @@ void main() {
           direction: Direction(speakerId: 'narrator', emotion: Emotion.sad),
         ),
       ]);
-      final adapter = _FakeTts('minimax', EmotionControl.enumerated);
+      final adapter = _FakeTts('minimax');
       Future<SynthesisResult> run(bool merge) =>
           Synthesizer(adapters: {'minimax': adapter}).synthesize(
             chapter: chapter,
@@ -234,14 +241,14 @@ void main() {
         [0, 1],
         [2],
       ]);
-      expect(adapter.requests.last.emotion, 'sad');
+      expect(adapter.requests.last.direction.emotion, Emotion.sad);
     },
   );
   test(
     'cache follows exact text, direction and model and repairs a broken entry',
     () async {
       const chapter = Chapter(number: 1, title: 'I', text: 'Hello.');
-      final adapter = _FakeTts('minimax', EmotionControl.enumerated);
+      final adapter = _FakeTts('minimax');
       Future<SynthesisResult> run({
         String text = 'Hello.',
         Direction direction = const Direction(speakerId: 'narrator'),
@@ -299,7 +306,7 @@ void main() {
     'rejects incomplete scripts and missing bindings before requesting audio',
     () async {
       const chapter = Chapter(number: 1, title: 'I', text: 'A.B.');
-      final adapter = _FakeTts('minimax', EmotionControl.enumerated);
+      final adapter = _FakeTts('minimax');
       Future<SynthesisResult> run(List<ScriptLine> lines) =>
           Synthesizer(adapters: {'minimax': adapter}).synthesize(
             chapter: chapter,
@@ -360,19 +367,13 @@ const _voices = {
 };
 
 class _FakeTts implements TtsAdapter {
-  _FakeTts(this.provider, this.control);
+  _FakeTts(this.provider);
   @override
   final String provider;
-  final EmotionControl control;
   final requests = <TtsRequest>[];
   @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
-    supportsVoiceDesign: false,
-    emotionControl: control,
-    supportsPronunciation: false,
-    returnsTimestamps: false,
-    maxCharacters: 9999,
-  );
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      TtsCapabilities(supportsPronunciation: false, maxCharacters: 9999);
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
     requests.add(request);

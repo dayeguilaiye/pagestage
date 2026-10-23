@@ -136,7 +136,7 @@ void main() {
           ],
         ),
       );
-      final bindings = await casting.bindingsForChapter(
+      final bindings = await casting.prepareChapterBindings(
         book,
         1,
         speakerIds: ['a', 'b', 'd'],
@@ -218,12 +218,12 @@ void main() {
         ),
       );
       final result = await casting.recommend(book, exclusiveCount: 1);
-      final before = await casting.bindingsForChapter(
+      final before = await casting.prepareChapterBindings(
         book,
         2,
         speakerIds: ['mask'],
       );
-      final after = await casting.bindingsForChapter(
+      final after = await casting.prepareChapterBindings(
         book,
         3,
         speakerIds: ['mask', 'owner'],
@@ -254,7 +254,7 @@ void main() {
       ),
     );
     final result = await casting.recommend(book, exclusiveCount: 1);
-    final after = await casting.bindingsForChapter(
+    final after = await casting.prepareChapterBindings(
       book,
       3,
       speakerIds: ['owner'],
@@ -263,18 +263,18 @@ void main() {
     expect(after['mask']!.voiceId, result.voices['mask']!.binding.voiceId);
     final inherited = after['owner']!.voiceId;
     await casting.selectPreset(book, 'mask', 'minimax:male-young');
-    final stable = await casting.bindingsForChapter(
+    final stable = await casting.prepareChapterBindings(
       book,
       3,
       speakerIds: ['owner'],
     );
     expect(stable['owner']!.voiceId, inherited);
     expect(
-      (await casting.bindingsForChapter(book, 2))['mask']!.voiceId,
+      (await casting.prepareChapterBindings(book, 2))['mask']!.voiceId,
       'male-young',
     );
     await casting.selectPreset(book, 'owner', 'minimax:zzz-old');
-    final changed = await casting.bindingsForChapter(
+    final changed = await casting.prepareChapterBindings(
       book,
       3,
       speakerIds: ['owner'],
@@ -283,6 +283,63 @@ void main() {
     expect(changed['mask']!.voiceId, 'zzz-old');
   });
 
+  test(
+    'preparation persists the earliest revealed persona voice across multiple reveals',
+    () async {
+      await CastRepository(store).save(
+        Cast(
+          bookId: book.id,
+          profiledThrough: 3,
+          speakers: [
+            Speaker(id: 'narrator', name: '旁白', kind: SpeakerKind.narrator),
+            Speaker(id: 'owner', name: '主人', dialogueCount: 10, chapters: [3]),
+            Speaker(
+              id: 'later',
+              name: '后身份',
+              kind: SpeakerKind.persona,
+              characterId: 'owner',
+              revealChapter: 3,
+              chapters: [1, 3],
+            ),
+            Speaker(
+              id: 'earlier',
+              name: '先身份',
+              kind: SpeakerKind.persona,
+              characterId: 'owner',
+              revealChapter: 2,
+              chapters: [1, 2],
+            ),
+          ],
+        ),
+      );
+      final initial = await casting.recommend(book, exclusiveCount: 1);
+      final prepared = await casting.prepareChapterBindings(
+        book,
+        3,
+        speakerIds: ['owner'],
+      );
+      final expected = initial.voices['earlier']!.binding.voiceId;
+      expect(prepared['owner']!.voiceId, expected);
+      expect(prepared['earlier']!.voiceId, expected);
+      expect(prepared['later']!.voiceId, expected);
+      final reopened = Casting(store, catalog: catalog);
+      final saved = await reopened.getCasting(book.id);
+      expect(saved.voices['owner']!.inheritedFromPersonaId, 'earlier');
+      expect(saved.voices['owner']!.binding.voiceId, expected);
+      final voiceCount = (await store.list('voices')).length;
+      await reopened.prepareChapterBindings(book, 3, speakerIds: ['owner']);
+      expect((await store.list('voices')).length, voiceCount);
+      final beforeReveal = await reopened.prepareChapterBindings(book, 1);
+      expect(
+        beforeReveal['later']!.voiceId,
+        initial.voices['later']!.binding.voiceId,
+      );
+      expect(
+        beforeReveal['earlier']!.voiceId,
+        initial.voices['earlier']!.binding.voiceId,
+      );
+    },
+  );
   test(
     'built-in catalog supports default twenty exclusive characters in both languages',
     () async {
@@ -480,7 +537,7 @@ void main() {
           ],
         ),
       );
-      final filled = await selection.bindingsForChapter(
+      final filled = await selection.prepareChapterBindings(
         book,
         2,
         speakerIds: ['new'],
@@ -568,13 +625,7 @@ class FakeTts implements TtsAdapter {
   String get provider => 'minimax';
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
-      const TtsCapabilities(
-        supportsVoiceDesign: false,
-        emotionControl: EmotionControl.enumerated,
-        supportsPronunciation: true,
-        returnsTimestamps: false,
-        maxCharacters: 9999,
-      );
+      const TtsCapabilities(supportsPronunciation: true, maxCharacters: 9999);
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
     requests.add(request);

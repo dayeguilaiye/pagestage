@@ -8,6 +8,53 @@ import 'package:pagestage_core/pagestage_core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  test(
+    'MiniMax enforces its declared Unicode character limit at the adapter entry',
+    () async {
+      var calls = 0;
+      final wav = PcmAudio(samples: Int16List.fromList([1])).toWav();
+      final adapter = MiniMaxTtsAdapter(
+        apiKey: 'fixture-secret',
+        client: MockClient((_) async {
+          calls++;
+          return http.Response(
+            jsonEncode({
+              'base_resp': {'status_code': 0},
+              'data': {
+                'status': 2,
+                'audio': wav
+                    .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                    .join(),
+              },
+              'extra_info': {'usage_characters': 9999},
+            }),
+            200,
+          );
+        }),
+      );
+      final limit = adapter.capabilitiesFor(_request.binding).maxCharacters;
+      final text = '𠀀' * limit;
+      TtsRequest request(String text) => TtsRequest(
+        text: text,
+        language: 'zh',
+        binding: _request.binding,
+        direction: _request.direction,
+      );
+      await adapter.synthesize(request(text));
+      expect(calls, 1);
+      await expectLater(
+        adapter.synthesize(request('$text。')),
+        throwsA(
+          isA<ProviderException>().having(
+            (e) => e.kind,
+            'kind',
+            ProviderErrorKind.invalidConfiguration,
+          ),
+        ),
+      );
+      expect(calls, 1);
+    },
+  );
   for (final seconds in [1, 60, 120]) {
     for (final design in [false, true]) {
       test(
@@ -161,7 +208,7 @@ void main() {
       );
       addTearDown(adapter.close);
       final result = await adapter.synthesize(
-        TtsRequest.forCapabilities(
+        TtsRequest(
           text: _request.text,
           language: _request.language,
           binding: _request.binding,
@@ -171,7 +218,6 @@ void main() {
             intensity: Intensity.strong,
             note: 'Speak softly.',
           ),
-          capabilities: adapter.capabilitiesFor(_request.binding),
         ),
       );
       expect(result.audio.duration, const Duration(milliseconds: 10));

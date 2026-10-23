@@ -134,7 +134,7 @@ void main() {
       );
       final bindings = await Casting(
         store,
-      ).bindingsForChapter(book, 1, speakerIds: ['hero']);
+      ).prepareChapterBindings(book, 1, speakerIds: ['hero']);
       expect(bindings['hero']!.voiceId, 'designed-2');
       await Synthesizer(adapters: {'minimax': fake}).synthesize(
         chapter: book.chapter(1),
@@ -258,7 +258,7 @@ void main() {
       expect(selected.binding.designed, isTrue);
       expect(bailian.synthesis, isEmpty);
       expect(
-        (await Casting(store).bindingsForChapter(book, 1))['hero']!.voiceId,
+        (await Casting(store).prepareChapterBindings(book, 1))['hero']!.voiceId,
         'designed-1',
       );
     },
@@ -301,13 +301,7 @@ class FakeDesignTts implements TtsAdapter, VoiceDesignAdapter {
   String? repeatedVoiceId;
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
-      const TtsCapabilities(
-        supportsVoiceDesign: true,
-        emotionControl: EmotionControl.enumerated,
-        supportsPronunciation: true,
-        returnsTimestamps: false,
-        maxCharacters: 9999,
-      );
+      const TtsCapabilities(supportsPronunciation: true, maxCharacters: 9999);
   @override
   Future<DesignedVoice> design(VoiceDesignRequest request) async {
     designs.add(request);

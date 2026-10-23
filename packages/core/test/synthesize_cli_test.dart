@@ -152,6 +152,68 @@ void main() {
     );
     expect(tts.requests.single.pronunciations.single.pinyin, 'chang2 le4');
   });
+  test(
+    'CLI rejects a stale script before persisting casting changes',
+    () async {
+      final temp = await Directory.systemTemp.createTemp('stale-script-cli-');
+      addTearDown(() => temp.delete(recursive: true));
+      final source = await File(
+        '${temp.path}/story.txt',
+      ).writeAsString('Chapter I\nHello.');
+      final store = LocalStore('${temp.path}/pagestage.sqlite');
+      final book = await Library(store).importTxt(source.path);
+      await CastRepository(store).save(
+        Cast(
+          bookId: book.id,
+          profiledThrough: 1,
+          speakers: [Speaker(id: 'hero', name: 'Hero')],
+        ),
+      );
+      await Casting(store).recommend(book, providers: {'minimax'});
+      await ScriptRepository(store).save(
+        Script(
+          bookId: book.id,
+          chapterNumber: 1,
+          sourceTextHash: 'stale',
+          model: 'fixture',
+          promptVersion: 'fixture',
+          lines: [
+            ScriptLine(
+              start: 0,
+              end: book.chapter(1).text.length,
+              direction: const Direction(speakerId: 'hero'),
+            ),
+          ],
+        ),
+      );
+      final before = await store.get('casts', book.id);
+      await store.close();
+      final tts = _Tts('minimax');
+      final errors = StringBuffer();
+      final status = await runCli(
+        ['--data-dir', temp.path, 'synthesize', book.id, '1'],
+        output: StringBuffer(),
+        errorOutput: errors,
+        environment: {},
+        ttsAdapters: {'minimax': tts},
+      );
+      expect(status, isNot(0));
+      expect(errors.toString(), contains('Direct the updated chapter'));
+      expect(tts.requests, isEmpty);
+      final reopened = LocalStore('${temp.path}/pagestage.sqlite');
+      try {
+        expect(await reopened.get('casts', book.id), before);
+        expect(
+          (await CastRepository(
+            reopened,
+          ).get(book.id)).speaker('hero').chapters,
+          isEmpty,
+        );
+      } finally {
+        await reopened.close();
+      }
+    },
+  );
 }
 
 class _Profile implements LlmAdapter {
@@ -219,15 +281,8 @@ class _Tts implements TtsAdapter {
   final String provider;
   final requests = <TtsRequest>[];
   @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
-    supportsVoiceDesign: false,
-    emotionControl: provider == 'minimax'
-        ? EmotionControl.enumerated
-        : EmotionControl.instruction,
-    supportsPronunciation: true,
-    returnsTimestamps: false,
-    maxCharacters: 9999,
-  );
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      TtsCapabilities(supportsPronunciation: true, maxCharacters: 9999);
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
     requests.add(request);

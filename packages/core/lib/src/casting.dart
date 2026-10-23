@@ -355,7 +355,9 @@ class Casting {
     return samples;
   }
 
-  Future<Map<String, VoiceBinding>> bindingsForChapter(
+  /// Records chapter appearances, fills missing voices and persists reveal
+  /// inheritance, then returns the effective bindings for this chapter.
+  Future<Map<String, VoiceBinding>> prepareChapterBindings(
     Book book,
     int chapterNumber, {
     Iterable<String> speakerIds = const [],
@@ -397,66 +399,29 @@ class Casting {
     } else {
       current = await getCasting(book.id);
     }
+    final prepared = _inheritRevealedVoices(current, chapterNumber);
+    if (!identical(prepared, current)) {
+      await store.transaction(() async {
+        for (final entry in prepared.voices.entries) {
+          if (entry.value.id != current.voices[entry.key]?.id) {
+            await store.put('voices', entry.value.id, entry.value.toJson());
+          }
+        }
+        await CastRepository(store).save(prepared.cast);
+      });
+      current = prepared;
+    }
     final bindings = {
       for (final entry in current.voices.entries)
         entry.key: entry.value.binding,
     };
-    final personas =
-        current.cast.speakers
-            .where(
-              (speaker) =>
-                  speaker.kind == SpeakerKind.persona &&
-                  speaker.characterId != null &&
-                  speaker.revealChapter != null,
-            )
-            .toList()
-          ..sort((a, b) => a.revealChapter!.compareTo(b.revealChapter!));
-    for (final persona in personas) {
-      if (chapterNumber < persona.revealChapter!) continue;
-      final owner = current.cast.speaker(persona.characterId!);
-      if (current.voices[owner.id]!.manuallySelected ||
-          current.voices[owner.id]!.binding.designed ||
-          owner.chapters.any((chapter) => chapter < persona.revealChapter!)) {
+    for (final persona in current.cast.speakers) {
+      if (persona.kind == SpeakerKind.persona &&
+          persona.characterId != null &&
+          persona.revealChapter != null &&
+          chapterNumber >= persona.revealChapter!) {
+        final owner = current.cast.speaker(persona.characterId!);
         bindings[persona.id] = current.voices[owner.id]!.binding;
-      } else {
-        var ownerVoice = current.voices[owner.id]!;
-        if (ownerVoice.inheritedFromPersonaId == null) {
-          final personaVoice = current.voices[persona.id]!;
-          ownerVoice = Voice(
-            id: sha256
-                .convert(
-                  utf8.encode('${book.id}:${owner.id}:inherited:${persona.id}'),
-                )
-                .toString()
-                .substring(0, 24),
-            bookId: book.id,
-            description: personaVoice.description,
-            binding: personaVoice.binding,
-            samplePath: personaVoice.samplePath,
-            inheritedFromPersonaId: persona.id,
-          );
-          final updatedCast = current.cast.copyWith(
-            speakers: current.cast.speakers
-                .map(
-                  (speaker) => speaker.id == owner.id
-                      ? speaker.copyWith(voiceId: ownerVoice.id)
-                      : speaker,
-                )
-                .toList(),
-          );
-          await store.transaction(() async {
-            await store.put('voices', ownerVoice.id, ownerVoice.toJson());
-            await CastRepository(store).save(updatedCast);
-          });
-          current = CastingResult(
-            cast: updatedCast,
-            voices: {...current.voices, owner.id: ownerVoice},
-            exclusiveSpeakerIds: current.exclusiveSpeakerIds,
-            warnings: current.warnings,
-          );
-        }
-        bindings[persona.id] = ownerVoice.binding;
-        bindings[owner.id] = ownerVoice.binding;
       }
     }
     for (final id in requested) {
@@ -510,4 +475,60 @@ class Casting {
         : (speakerAge - presetAge).abs();
     return gender + age;
   }
+}
+
+// Computes reveal inheritance without changing stored voices or cast snapshots.
+CastingResult _inheritRevealedVoices(CastingResult current, int chapterNumber) {
+  final personas =
+      current.cast.speakers
+          .where(
+            (speaker) =>
+                speaker.kind == SpeakerKind.persona &&
+                speaker.characterId != null &&
+                speaker.revealChapter != null &&
+                chapterNumber >= speaker.revealChapter!,
+          )
+          .toList()
+        ..sort((a, b) => a.revealChapter!.compareTo(b.revealChapter!));
+  for (final persona in personas) {
+    final owner = current.cast.speaker(persona.characterId!);
+    final ownerVoice = current.voices[owner.id]!;
+    if (ownerVoice.manuallySelected ||
+        ownerVoice.binding.designed ||
+        ownerVoice.inheritedFromPersonaId != null ||
+        owner.chapters.any((chapter) => chapter < persona.revealChapter!)) {
+      continue;
+    }
+    final personaVoice = current.voices[persona.id]!;
+    final inherited = Voice(
+      id: sha256
+          .convert(
+            utf8.encode(
+              '${current.cast.bookId}:${owner.id}:inherited:${persona.id}',
+            ),
+          )
+          .toString()
+          .substring(0, 24),
+      bookId: current.cast.bookId,
+      description: personaVoice.description,
+      binding: personaVoice.binding,
+      samplePath: personaVoice.samplePath,
+      inheritedFromPersonaId: persona.id,
+    );
+    current = CastingResult(
+      cast: current.cast.copyWith(
+        speakers: current.cast.speakers
+            .map(
+              (speaker) => speaker.id == owner.id
+                  ? speaker.copyWith(voiceId: inherited.id)
+                  : speaker,
+            )
+            .toList(),
+      ),
+      voices: {...current.voices, owner.id: inherited},
+      exclusiveSpeakerIds: current.exclusiveSpeakerIds,
+      warnings: current.warnings,
+    );
+  }
+  return current;
 }

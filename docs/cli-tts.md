@@ -90,11 +90,11 @@ MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中
 
 ## 适配器能力
 
-`TtsAdapter.capabilitiesFor(binding)` 根据模型、音色和区域返回音色设计、情绪控制、拼音标注、时间戳和请求字符预算。当前适配器采用非流式 WAV，因此时间戳能力为 `false`。
+`TtsAdapter.capabilitiesFor(binding)` 根据模型、音色和区域返回拼音标注能力及请求字符预算。`TtsRequest` 携带原文、语言、音色绑定、表演指令和发音词典条目；适配器将表演指令转换为对应的厂商参数。MiniMax 使用情绪枚举，百炼将情绪、强度和说明组合成自然语言指令。
 
 MiniMax 的预算是 9999 个 Unicode 码点，对应官方“少于 10000 字符”的限制。百炼使用 Qwen-Audio 3.0/3.1 HTTP 接口，默认预算为 600 个码点。这是原型采用的保守实现预算；当前 HTTP 文档没有明确给出数值上限。程序调用方可通过 `BailianTtsAdapter(requestCharacterLimit: ...)` 调整，实际连续性仍需真实音频试听验证。
 
-百炼的音色设计能力按北京区声明。拼音能力仅对当前确认支持的 3.1 预设音色声明；`VoiceBinding.designed` 标记的设计音色尚无官方 SSML 支持保证。
+音色设计使用独立的 `VoiceDesignAdapter.design` 接口，在发送请求前校验模型、地域和 endpoint。百炼要求北京区配置和兼容的 endpoint；设计音色的合成沿用同一地域限制。拼音能力仅对当前确认支持的 3.1 预设音色声明；`VoiceBinding.designed` 标记的设计音色尚无官方 SSML 支持保证。
 
 ## 离线验证
 

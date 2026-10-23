@@ -1,16 +1,15 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/script.dart';
 import '../pcm_audio.dart';
 import '../pronunciation.dart';
 import '../models/voice.dart';
 import 'provider_exception.dart';
-import 'tts_errors.dart';
+import 'tts_http.dart';
 import 'tts_adapter.dart';
 import 'voice_design_adapter.dart';
-import 'voice_design_http.dart';
 
 enum BailianRegion { beijing, singapore }
 
@@ -50,33 +49,36 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
   final bool _ownsClient;
   final BailianRegion region;
   final int requestCharacterLimit;
+  static const _models = {
+    'qwen-audio-3.1-tts-flash',
+    'qwen-audio-3.1-tts-plus',
+    'qwen-audio-3.0-tts-flash',
+    'qwen-audio-3.0-tts-plus',
+  };
+
+  bool get _supportsDesignedVoices =>
+      region == BailianRegion.beijing &&
+      _baseUrl.host != 'dashscope-intl.aliyuncs.com' &&
+      !_baseUrl.host.contains('.ap-southeast-');
+
   @override
   String get provider => 'bailian';
 
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) {
-    const models = {
-      'qwen-audio-3.1-tts-flash',
-      'qwen-audio-3.1-tts-plus',
-      'qwen-audio-3.0-tts-flash',
-      'qwen-audio-3.0-tts-plus',
-    };
     if (binding.provider != provider ||
-        !models.contains(binding.model) ||
-        (binding.designed && region != BailianRegion.beijing)) {
+        !_models.contains(binding.model) ||
+        (binding.designed && !_supportsDesignedVoices)) {
       throw const ProviderException(
         provider: 'bailian',
         kind: ProviderErrorKind.invalidConfiguration,
       );
     }
     return TtsCapabilities(
-      supportsVoiceDesign: region == BailianRegion.beijing,
-      emotionControl: EmotionControl.instruction,
       supportsPronunciation:
           binding.model.startsWith('qwen-audio-3.1-') &&
           !binding.designed &&
           binding.voiceId.endsWith('_v3.1'),
-      returnsTimestamps: false,
       maxCharacters: requestCharacterLimit,
     );
   }
@@ -97,50 +99,21 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
           ? request.pronunciations
           : [],
     );
-    final endpoint = _baseUrl.replace(
-      path:
-          '${_baseUrl.path.replaceFirst(RegExp(r'/+$'), '')}/services/audio/tts/SpeechSynthesizer',
-    );
-    try {
-      final response = await _client
-          .post(
-            endpoint,
-            headers: {
-              'Authorization': 'Bearer $_apiKey',
-              'Content-Type': 'application/json',
-            },
-            body: jsonEncode({
-              'model': request.binding.model,
-              'input': {
-                'text': matches.isEmpty
-                    ? request.text
-                    : pronunciationSsml(request.text, matches),
-                if (matches.isNotEmpty) 'enable_ssml': true,
-                if (request.instruction != null)
-                  'instruction': request.instruction,
-                'voice': request.binding.voiceId,
-                'format': 'wav',
-                'sample_rate': 24000,
-                'language_hints': [request.language],
-              },
-            }),
-          )
-          .timeout(const Duration(seconds: 90));
-      final transportError = ttsHttpError(response.statusCode);
-      if (transportError != null) {
-        throw ProviderException(provider: provider, kind: transportError);
-      }
-      final json =
-          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
-      final code = json['code'];
-      if (response.statusCode != 200 || code != null) {
-        final kind = ttsErrorCode(
-          provider,
-          code,
-          statusCode: response.statusCode,
-        );
-        throw ProviderException(provider: provider, kind: kind);
-      }
+    return withTtsErrors(provider, () async {
+      final json = await _post('services/audio/tts/SpeechSynthesizer', {
+        'model': request.binding.model,
+        'input': {
+          'text': matches.isEmpty
+              ? request.text
+              : pronunciationSsml(request.text, matches),
+          if (matches.isNotEmpty) 'enable_ssml': true,
+          'instruction': _instruction(request.direction, request.language),
+          'voice': request.binding.voiceId,
+          'format': 'wav',
+          'sample_rate': 24000,
+          'language_hints': [request.language],
+        },
+      });
       final output = json['output'] as Map;
       if (output['finish_reason'] != 'stop') {
         throw const FormatException('Incomplete audio.');
@@ -178,54 +151,123 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
         outputTokens: count('output_tokens'),
         totalTokens: count('total_tokens'),
       );
-    } on TimeoutException {
-      throw const ProviderException(
-        provider: 'bailian',
-        kind: ProviderErrorKind.unavailable,
-      );
-    } on http.ClientException {
-      throw const ProviderException(
-        provider: 'bailian',
-        kind: ProviderErrorKind.unavailable,
-      );
-    } on FormatException {
-      throw const ProviderException(
-        provider: 'bailian',
-        kind: ProviderErrorKind.invalidResponse,
-      );
-    } on TypeError {
-      throw const ProviderException(
-        provider: 'bailian',
-        kind: ProviderErrorKind.invalidResponse,
-      );
-    }
+    });
   }
 
   @override
   Future<DesignedVoice> design(VoiceDesignRequest request) async {
-    final binding = VoiceBinding(
-      provider: provider,
-      model: request.model,
-      voiceId: '',
-      designed: true,
-    );
-    if (!capabilitiesFor(binding).supportsVoiceDesign ||
-        _baseUrl.host == 'dashscope-intl.aliyuncs.com' ||
-        _baseUrl.host.contains('.ap-southeast-')) {
+    if (!_supportsDesignedVoices ||
+        !_models.contains(request.model) ||
+        request.description.trim().isEmpty ||
+        request.description.runes.length > 500 ||
+        request.previewText.trim().isEmpty ||
+        request.previewText.runes.length < 15 ||
+        request.previewText.runes.length > 200 ||
+        !['zh', 'en'].contains(request.language)) {
       throw const ProviderException(
         provider: 'bailian',
         kind: ProviderErrorKind.invalidConfiguration,
       );
     }
-    return designBailian(
-      request,
-      apiKey: _apiKey,
-      baseUrl: _baseUrl,
-      client: _client,
-    );
+    return withTtsErrors(provider, () async {
+      final json = await _post('services/audio/tts/customization', {
+        'model': 'voice-enrollment',
+        'input': {
+          'action': 'create_voice',
+          'target_model': request.model,
+          'voice_prompt': request.description,
+          'preview_text': request.previewText,
+          'prefix': 'pagestage',
+          'language_hints': [request.language],
+        },
+        'parameters': {'sample_rate': 24000, 'response_format': 'wav'},
+      }, timeout: const Duration(seconds: 120));
+      final output = json['output'] as Map;
+      final voiceId = output['voice_id'] as String;
+      final model = output['target_model'] as String;
+      final audio = output['preview_audio'] as Map;
+      final preview = VoicePreview.detect(
+        base64Decode(audio['data'] as String),
+      );
+      if (voiceId.trim().isEmpty ||
+          model != request.model ||
+          audio['response_format'] != 'wav' ||
+          preview.extension != 'wav' ||
+          audio['sample_rate'] != 24000) {
+        throw const FormatException('Invalid design response.');
+      }
+      return DesignedVoice(
+        binding: VoiceBinding(
+          provider: provider,
+          model: model,
+          voiceId: voiceId,
+          designed: true,
+          parameters: const {'region': 'beijing'},
+        ),
+        preview: preview,
+      );
+    });
+  }
+
+  Future<Map<String, dynamic>> _post(
+    String path,
+    Map<String, Object?> body, {
+    Duration timeout = const Duration(seconds: 90),
+  }) async {
+    final response = await _client
+        .post(
+          _baseUrl.replace(
+            path: '${_baseUrl.path.replaceFirst(RegExp(r'/+$'), '')}/$path',
+          ),
+          headers: {
+            'Authorization': 'Bearer $_apiKey',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(timeout);
+    final transportError = ttsHttpError(response.statusCode);
+    if (transportError != null) {
+      throw ProviderException(provider: provider, kind: transportError);
+    }
+    final json =
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
+    final code = json['code'];
+    if (response.statusCode != 200 || code != null) {
+      throw ProviderException(
+        provider: provider,
+        kind: _errorKind(code, response.statusCode),
+      );
+    }
+    return json;
   }
 
   void close() {
     if (_ownsClient) _client.close();
   }
 }
+
+String _instruction(Direction direction, String language) {
+  final note = direction.note.trim();
+  if (language == 'zh') {
+    const emotions = ['平静', '开心', '悲伤', '愤怒', '恐惧', '厌恶', '惊讶'];
+    const intensities = ['轻', '中', '强'];
+    return '以${emotions[direction.emotion.index]}的语气、'
+        '强度${intensities[direction.intensity.index]}朗读。$note';
+  }
+  return 'Read with a ${direction.emotion.name} emotion and '
+      '${direction.intensity.name} intensity.${note.isEmpty ? '' : ' $note'}';
+}
+
+ProviderErrorKind _errorKind(Object? code, int statusCode) => switch (code) {
+  'InvalidApiKey' || 'invalid_api_key' => ProviderErrorKind.invalidKey,
+  'Arrearage' => ProviderErrorKind.insufficientBalance,
+  'Throttling' ||
+  'Throttling.RateQuota' ||
+  'Throttling.AllocationQuota' => ProviderErrorKind.rateLimited,
+  'AccessDenied' => ProviderErrorKind.invalidConfiguration,
+  _ =>
+    statusCode == 403
+        ? ProviderErrorKind.invalidConfiguration
+        : ProviderErrorKind.invalidResponse,
+};

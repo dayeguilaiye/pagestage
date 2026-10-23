@@ -182,13 +182,7 @@ void main() {
 class _FakeTts implements TtsAdapter {
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
-      const TtsCapabilities(
-        supportsVoiceDesign: false,
-        emotionControl: EmotionControl.none,
-        supportsPronunciation: false,
-        returnsTimestamps: false,
-        maxCharacters: 9999,
-      );
+      const TtsCapabilities(supportsPronunciation: false, maxCharacters: 9999);
   final requests = <TtsRequest>[];
   @override
   String get provider => 'minimax';
@@ -205,13 +199,7 @@ class _FakeTts implements TtsAdapter {
 class _FailingTts implements TtsAdapter {
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
-      const TtsCapabilities(
-        supportsVoiceDesign: false,
-        emotionControl: EmotionControl.none,
-        supportsPronunciation: false,
-        returnsTimestamps: false,
-        maxCharacters: 9999,
-      );
+      const TtsCapabilities(supportsPronunciation: false, maxCharacters: 9999);
   @override
   String get provider => 'minimax';
   @override

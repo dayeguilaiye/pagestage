@@ -77,7 +77,7 @@ void main() {
         }),
       );
       final result = await adapter.synthesize(
-        TtsRequest.forCapabilities(
+        TtsRequest(
           text: _request.text,
           language: _request.language,
           binding: _request.binding,
@@ -87,7 +87,6 @@ void main() {
             intensity: Intensity.strong,
             note: 'Speak softly.',
           ),
-          capabilities: adapter.capabilitiesFor(_request.binding),
         ),
       );
       expect(result.audio.duration, const Duration(milliseconds: 10));
@@ -96,6 +95,46 @@ void main() {
       expect(result.inputTokens, 6);
       expect(result.outputTokens, 13);
       expect(result.totalTokens, 19);
+    },
+  );
+  test(
+    'Bailian maps Chinese performance from a direct synthesis request',
+    () async {
+      final adapter = BailianTtsAdapter(
+        apiKey: 'fixture-secret',
+        client: MockClient((request) async {
+          if (request.method == 'GET') {
+            return http.Response.bytes(
+              PcmAudio(samples: Int16List.fromList([1])).toWav(),
+              200,
+            );
+          }
+          final body = jsonDecode(request.body) as Map;
+          expect((body['input'] as Map)['instruction'], '以开心的语气、强度强朗读。轻快一些。');
+          return http.Response(
+            jsonEncode({
+              'output': {
+                'finish_reason': 'stop',
+                'audio': {'url': 'https://audio.example.test/result.wav'},
+              },
+            }),
+            200,
+          );
+        }),
+      );
+      await adapter.synthesize(
+        TtsRequest(
+          text: '故事开始了。',
+          language: 'zh',
+          binding: _request.binding,
+          direction: const Direction(
+            speakerId: 'narrator',
+            emotion: Emotion.happy,
+            intensity: Intensity.strong,
+            note: '  轻快一些。  ',
+          ),
+        ),
+      );
     },
   );
   test(
@@ -134,65 +173,69 @@ void main() {
     },
   );
 
-  test('capabilities reflect model, voice origin and Beijing-only design', () {
-    final beijing = BailianTtsAdapter(
-      apiKey: 'fixture-secret',
-      client: MockClient((_) async => throw StateError('No request expected.')),
-    );
-    final singapore = BailianTtsAdapter(
-      apiKey: 'fixture-secret',
-      region: BailianRegion.singapore,
-      client: MockClient((_) async => throw StateError('No request expected.')),
-    );
-    final preset = beijing.capabilitiesFor(_request.binding);
-    expect(preset.maxCharacters, 600);
-    expect(preset.supportsVoiceDesign, isTrue);
-    expect(preset.emotionControl, EmotionControl.instruction);
-    expect(preset.supportsPronunciation, isTrue);
-    expect(preset.returnsTimestamps, isFalse);
-    expect(
-      singapore.capabilitiesFor(_request.binding).supportsVoiceDesign,
-      isFalse,
-    );
-    expect(
-      beijing
-          .capabilitiesFor(
-            const VoiceBinding(
-              provider: 'bailian',
-              model: 'qwen-audio-3.1-tts-flash',
-              voiceId: 'custom',
-              designed: true,
-            ),
-          )
-          .supportsPronunciation,
-      isFalse,
-    );
-    expect(
-      () => beijing.capabilitiesFor(
-        const VoiceBinding(
-          provider: 'bailian',
-          model: 'qwen3-tts-flash',
-          voiceId: 'Cherry',
+  test(
+    'synthesis capabilities reflect model, voice origin and request limit',
+    () {
+      final beijing = BailianTtsAdapter(
+        apiKey: 'fixture-secret',
+        client: MockClient(
+          (_) async => throw StateError('No request expected.'),
         ),
-      ),
-      throwsA(isA<ProviderException>()),
-    );
-    final minimax = MiniMaxTtsAdapter(
-      apiKey: 'fixture-secret',
-      client: MockClient((_) async => throw StateError('No request expected.')),
-    );
-    final capabilities = minimax.capabilitiesFor(
-      const VoiceBinding(
-        provider: 'minimax',
-        model: 'speech-2.8-hd',
-        voiceId: 'English_expressive_narrator',
-      ),
-    );
-    expect(capabilities.maxCharacters, 9999);
-    expect(capabilities.emotionControl, EmotionControl.enumerated);
-    expect(capabilities.supportsPronunciation, isTrue);
-    expect(capabilities.returnsTimestamps, isFalse);
-  });
+      );
+      final singapore = BailianTtsAdapter(
+        apiKey: 'fixture-secret',
+        region: BailianRegion.singapore,
+        client: MockClient(
+          (_) async => throw StateError('No request expected.'),
+        ),
+      );
+      final preset = beijing.capabilitiesFor(_request.binding);
+      expect(preset.maxCharacters, 600);
+      expect(preset.supportsPronunciation, isTrue);
+      expect(
+        singapore.capabilitiesFor(_request.binding).supportsPronunciation,
+        isTrue,
+      );
+      expect(
+        beijing
+            .capabilitiesFor(
+              const VoiceBinding(
+                provider: 'bailian',
+                model: 'qwen-audio-3.1-tts-flash',
+                voiceId: 'custom',
+                designed: true,
+              ),
+            )
+            .supportsPronunciation,
+        isFalse,
+      );
+      expect(
+        () => beijing.capabilitiesFor(
+          const VoiceBinding(
+            provider: 'bailian',
+            model: 'qwen3-tts-flash',
+            voiceId: 'Cherry',
+          ),
+        ),
+        throwsA(isA<ProviderException>()),
+      );
+      final minimax = MiniMaxTtsAdapter(
+        apiKey: 'fixture-secret',
+        client: MockClient(
+          (_) async => throw StateError('No request expected.'),
+        ),
+      );
+      final capabilities = minimax.capabilitiesFor(
+        const VoiceBinding(
+          provider: 'minimax',
+          model: 'speech-2.8-hd',
+          voiceId: 'English_expressive_narrator',
+        ),
+      );
+      expect(capabilities.maxCharacters, 9999);
+      expect(capabilities.supportsPronunciation, isTrue);
+    },
+  );
 }
 
 const _request = TtsRequest(

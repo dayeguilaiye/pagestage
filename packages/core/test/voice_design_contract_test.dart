@@ -156,6 +156,68 @@ void main() {
   );
 
   test(
+    'Bailian rejects international endpoints and unsupported design models before HTTP',
+    () async {
+      for (final (endpoint, model) in [
+        (
+          'https://dashscope-intl.aliyuncs.com/api/v1',
+          'qwen-audio-3.1-tts-flash',
+        ),
+        (
+          'https://workspace.ap-southeast-1.maas.aliyuncs.com/api/v1',
+          'qwen-audio-3.1-tts-flash',
+        ),
+        ('https://dashscope.aliyuncs.com/api/v1', 'unsupported-model'),
+      ]) {
+        var calls = 0;
+        final adapter = BailianTtsAdapter(
+          apiKey: 'fake-key',
+          region: BailianRegion.beijing,
+          baseUrl: Uri.parse(endpoint),
+          client: MockClient((_) async {
+            calls++;
+            return http.Response('{}', 500);
+          }),
+        );
+        final failure = throwsA(
+          isA<ProviderException>().having(
+            (e) => e.kind,
+            'kind',
+            ProviderErrorKind.invalidConfiguration,
+          ),
+        );
+        await expectLater(
+          adapter.design(
+            VoiceDesignRequest(
+              description: 'Warm narrator',
+              previewText: 'The garden was quiet this evening.',
+              language: 'en',
+              model: model,
+            ),
+          ),
+          failure,
+        );
+        await expectLater(
+          adapter.synthesize(
+            TtsRequest(
+              text: 'Hello.',
+              language: 'en',
+              binding: VoiceBinding(
+                provider: 'bailian',
+                model: model,
+                voiceId: 'designed-voice',
+                designed: true,
+              ),
+              direction: const Direction(speakerId: 'narrator'),
+            ),
+          ),
+          failure,
+        );
+        expect(calls, 0);
+      }
+    },
+  );
+  test(
     'design errors and malformed previews remain safe typed failures',
     () async {
       final cases = <(int, Map<String, Object?>, ProviderErrorKind)>[

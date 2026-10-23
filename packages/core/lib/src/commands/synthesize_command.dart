@@ -69,7 +69,7 @@ class SynthesizeCommand extends Command<void> {
         .toSet();
     final bindings = await Casting(
       context.store,
-    ).bindingsForChapter(book, number, speakerIds: speakerIds);
+    ).prepareChapterBindings(book, number, speakerIds: speakerIds);
     final session = TtsProviderSession.open(
       await ProviderConfiguration.load(
         argResults!['config'] as String?,

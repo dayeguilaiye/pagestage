@@ -37,21 +37,15 @@ class TtsProviderSession {
               environmentVariable: 'BAILIAN_REGION',
             ) ??
             'beijing';
-        final endpoint =
-            config.value(
-              provider,
-              'baseUrl',
-              environmentVariable: '${prefix}_BASE_URL',
-            ) ??
-            (provider == 'minimax'
-                ? 'https://api.minimax.io/v1'
-                : region == 'beijing'
-                ? 'https://dashscope.aliyuncs.com/api/v1'
-                : 'https://dashscope-intl.aliyuncs.com/api/v1');
-        final baseUrl = Uri.tryParse(endpoint);
+        final endpoint = config.value(
+          provider,
+          'baseUrl',
+          environmentVariable: '${prefix}_BASE_URL',
+        );
+        final baseUrl = endpoint == null ? null : Uri.tryParse(endpoint);
         if (key == null ||
             key.isEmpty ||
-            baseUrl == null ||
+            (endpoint != null && baseUrl == null) ||
             !['minimax', 'bailian'].contains(provider) ||
             (provider == 'bailian' &&
                 !['beijing', 'singapore'].contains(region))) {

@@ -148,13 +148,7 @@ void main() {
 class _FakeTts implements TtsAdapter {
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
-      const TtsCapabilities(
-        supportsVoiceDesign: false,
-        emotionControl: EmotionControl.none,
-        supportsPronunciation: false,
-        returnsTimestamps: false,
-        maxCharacters: 9999,
-      );
+      const TtsCapabilities(supportsPronunciation: false, maxCharacters: 9999);
   final requests = <TtsRequest>[];
   @override
   String get provider => 'fake';
@@ -177,13 +171,8 @@ class _LimitedTts implements TtsAdapter {
   final int limit;
   final requests = <TtsRequest>[];
   @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
-    supportsVoiceDesign: false,
-    emotionControl: EmotionControl.none,
-    supportsPronunciation: false,
-    returnsTimestamps: false,
-    maxCharacters: limit,
-  );
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      TtsCapabilities(supportsPronunciation: false, maxCharacters: limit);
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
     if (request.text.runes.length > limit) {

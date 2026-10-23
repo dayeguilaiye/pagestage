@@ -170,10 +170,7 @@ class _Tts implements TtsAdapter {
   String get provider => 'fake';
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
-    supportsVoiceDesign: false,
-    emotionControl: EmotionControl.none,
     supportsPronunciation: supportsPronunciation,
-    returnsTimestamps: false,
     maxCharacters: limit,
   );
   @override

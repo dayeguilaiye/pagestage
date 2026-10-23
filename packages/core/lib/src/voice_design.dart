@@ -62,27 +62,19 @@ class VoiceDesign {
     }
     final cast = await CastRepository(store).get(book.id);
     final speaker = cast.speaker(speakerId);
-    final adapter = adapters[provider];
-    final binding = VoiceBinding(
-      provider: provider,
-      model: model,
-      voiceId: '',
-      designed: true,
-    );
-    if (adapter is! VoiceDesignAdapter ||
-        adapter == null ||
-        !adapter.capabilitiesFor(binding).supportsVoiceDesign) {
-      throw ProviderException(
+    final adapter = switch (adapters[provider]) {
+      VoiceDesignAdapter adapter => adapter,
+      _ => throw ProviderException(
         provider: provider,
         kind: ProviderErrorKind.invalidConfiguration,
-      );
-    }
+      ),
+    };
     final directory = Directory(outputDirectory).absolute;
     await directory.create(recursive: true);
     final result = <VoiceCandidate>[];
     final random = Random.secure();
     for (var i = 0; i < count; i++) {
-      final designed = await (adapter as VoiceDesignAdapter).design(
+      final designed = await adapter.design(
         VoiceDesignRequest(
           description: description,
           previewText: previewText,

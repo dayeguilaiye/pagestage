@@ -252,13 +252,8 @@ class _Tts implements TtsAdapter {
   final PcmAudio Function(TtsRequest) audio;
   final int limit;
   @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
-    supportsVoiceDesign: false,
-    emotionControl: EmotionControl.none,
-    supportsPronunciation: true,
-    returnsTimestamps: false,
-    maxCharacters: limit,
-  );
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      TtsCapabilities(supportsPronunciation: true, maxCharacters: limit);
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async =>
       TtsAudio(audio: audio(request), characters: request.text.runes.length);

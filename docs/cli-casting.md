@@ -35,4 +35,4 @@ dart run packages/core/bin/pagestage.dart cast audition <book-id> --speaker <spe
 
 ## 模块接口
 
-`Casting.recommend` 保存选角，`selectPreset` 更换预设，`selectVoice` 保存已选定的自定义音色，`audition` 生成样音。`bindingsForChapter` 提供指定章节的有效绑定，负责身份揭晓和新增临时角色的补选角；合成模块应使用这个入口。`Voice` 与服务商的 `VoiceBinding.voiceId` 分别存储，角色合并可以保留已有的稳定音色引用。
+`Casting.recommend` 保存选角，`selectPreset` 更换预设，`selectVoice` 保存已选定的自定义音色，`audition` 生成样音。`prepareChapterBindings` 保存说话人的章节出场记录、为新增临时角色补选角、保存身份揭晓时的音色继承，返回指定章节的有效绑定；合成模块使用这个入口完成音色准备。`Voice` 与服务商的 `VoiceBinding.voiceId` 分别存储，角色合并可以保留已有的稳定音色引用。

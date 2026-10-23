@@ -5,6 +5,7 @@ import '../pcm_audio.dart';
 
 /// Optional TTS provider capability. Providers without design need only TtsAdapter.
 abstract interface class VoiceDesignAdapter {
+  /// Validates the model, region and endpoint before sending a design request.
   Future<DesignedVoice> design(VoiceDesignRequest request);
 }
 
