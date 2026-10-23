@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../pcm_audio.dart';
+import '../pronunciation.dart';
 import '../models/voice.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
@@ -89,6 +90,12 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
         kind: ProviderErrorKind.invalidConfiguration,
       );
     }
+    final matches = pronunciationMatches(
+      request.text,
+      request.language == 'zh' && capabilities.supportsPronunciation
+          ? request.pronunciations
+          : [],
+    );
     final endpoint = _baseUrl.replace(
       path:
           '${_baseUrl.path.replaceFirst(RegExp(r'/+$'), '')}/services/audio/tts/SpeechSynthesizer',
@@ -104,7 +111,10 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
             body: jsonEncode({
               'model': request.binding.model,
               'input': {
-                'text': request.text,
+                'text': matches.isEmpty
+                    ? request.text
+                    : pronunciationSsml(request.text, matches),
+                if (matches.isNotEmpty) 'enable_ssml': true,
                 if (request.instruction != null)
                   'instruction': request.instruction,
                 'voice': request.binding.voiceId,

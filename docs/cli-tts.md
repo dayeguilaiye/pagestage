@@ -48,9 +48,9 @@ MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中
 
 ### 音频缓存
 
-`.pagestage/audio/cache/` 保存每个 utterance 的原始 PCM WAV，已经拼好服务商分块。缓存身份包含完整原文、语言、服务商、模型、音色绑定参数以及完整演出指令。相同内容跨 CLI 调用复用；换掉一个说话人的音色，仅他的台词重新请求。修改原文、模型或演出指令会产生新缓存。缓存文件丢失或损坏时自动重新合成。
+`.pagestage/audio/cache/` 保存每个 utterance 的原始 PCM WAV，已经拼好服务商分块。缓存身份包含实际分块原文、语言、服务商、模型、音色绑定参数、完整演出指令、映射后的请求说明以及规范化的匹配发音词典。相同内容跨 CLI 调用复用；换掉一个说话人的音色，仅他的台词重新请求。修改原文、模型或演出指令会产生新缓存。缓存文件丢失或损坏时自动重新合成。
 
-缓存保留原始 utterance 音频，章节停顿在组装时添加。开关演播模式可复用保留台词的缓存；合并旁白改变 utterance 的原文组合，因此第一次会生成对应缓存。`requests`、`characters` 和 token 字段只统计本次新请求；全部命中时请求数、字符用量为 0，未报告的 token 用量为 `null`。程序调用方可通过 `Synthesizer(cacheDirectory: ...)` 选定缓存目录；默认在输出目录下的 `.utterances/`。
+缓存保留原始 utterance 音频。每次组装先从原始音频统一响度，再添加章节停顿。`rawAudioPath` 指向原始缓存，`audioPath` 指向 `normalized/` 下处理后的台词音频，详见 [发音词典与响度](cli-pronunciation-loudness.md)。开关演播模式可复用保留台词的缓存；合并旁白改变 utterance 的原文组合，因此第一次会生成对应缓存。`requests`、`characters` 和 token 字段只统计本次新请求；全部命中时请求数、字符用量为 0，未报告的 token 用量为 `null`。程序调用方可通过 `Synthesizer(cacheDirectory: ...)` 选定缓存目录；默认在输出目录下的 `.utterances/`。
 
 ## 配置
 

@@ -1,4 +1,5 @@
 import '../models/script.dart';
+import '../models/cast.dart';
 import '../models/voice.dart';
 import '../pcm_audio.dart';
 
@@ -16,6 +17,7 @@ class TtsRequest {
     required this.direction,
     this.emotion,
     this.instruction,
+    this.pronunciations = const [],
   });
   final String text;
   final String language;
@@ -23,6 +25,7 @@ class TtsRequest {
   final Direction direction;
   final String? emotion;
   final String? instruction;
+  final List<PronunciationEntry> pronunciations;
 
   factory TtsRequest.forCapabilities({
     required String text,
@@ -30,11 +33,13 @@ class TtsRequest {
     required VoiceBinding binding,
     required Direction direction,
     required TtsCapabilities capabilities,
+    List<PronunciationEntry> pronunciations = const [],
   }) => TtsRequest(
     text: text,
     language: language,
     binding: binding,
     direction: direction,
+    pronunciations: List.unmodifiable(pronunciations),
     emotion: capabilities.emotionControl == EmotionControl.enumerated
         ? direction.emotion.name
         : null,

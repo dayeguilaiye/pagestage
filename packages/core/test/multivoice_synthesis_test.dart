@@ -287,7 +287,9 @@ void main() {
         1,
       );
       expect((await run(model: 'speech-2.8-turbo')).requests, 1);
-      await File(initial.utterances.single.audioPath).writeAsString('broken');
+      await File(
+        initial.utterances.single.rawAudioPath,
+      ).writeAsString('broken');
       expect((await run()).requests, 1);
       expect((await run()).requests, 0);
     },

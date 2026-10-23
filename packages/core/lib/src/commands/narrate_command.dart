@@ -3,6 +3,7 @@ import 'package:path/path.dart' as p;
 
 import '../cli.dart';
 import '../models/script.dart';
+import '../models/cast.dart';
 import '../models/voice.dart';
 import '../provider_configuration.dart';
 import '../providers/minimax_tts_adapter.dart';
@@ -133,11 +134,13 @@ class NarrateCommand extends Command<void> {
       }
     }
     try {
+      final cast = await CastRepository(context.store).get(book.id);
       final result = await Synthesizer(adapters: {provider: adapter})
           .synthesize(
             chapter: chapter,
             script: Script.narration(bookId: book.id, chapter: chapter),
             language: book.language,
+            lexicon: cast.lexicon,
             voices: {
               'narrator': VoiceBinding(
                 provider: provider,
@@ -167,6 +170,17 @@ class NarrateCommand extends Command<void> {
         'outputTokens': result.outputTokens,
         'totalTokens': result.totalTokens,
         'model': model,
+        'utterances': [
+          for (final utterance in result.utterances)
+            {
+              'audioPath': utterance.audioPath,
+              'rawAudioPath': utterance.rawAudioPath,
+              'loudness': utterance.loudness.toJson(),
+              'pronunciationApplied': utterance.pronunciationApplied,
+              if (utterance.pronunciationWarning != null)
+                'pronunciationWarning': utterance.pronunciationWarning,
+            },
+        ],
       });
     } finally {
       closeAdapter?.call();

@@ -42,6 +42,7 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --config .pages
 | [音色设计](docs/cli-voice-design.md) | 生成候选、选择并激活设计音色 |
 | [导演](docs/cli-directing.md) | 原文对齐、演出指令和非正文标记 |
 | [语音合成](docs/cli-tts.md) | 服务商配置、多角色、演播模式、缓存和停顿 |
+| [读音与响度](docs/cli-pronunciation-loudness.md) | 中文词典、拼音请求、统一响度和音频路径 |
 | [归属评估](docs/cli-evaluation.md) | 人工参考标注、命中率和错例导出 |
 | [产品规格](docs/spec.md) | 原型目标与产品设计 |
 | [领域词汇](GLOSSARY.md) | Script、Speaker、VoiceBinding 等术语 |

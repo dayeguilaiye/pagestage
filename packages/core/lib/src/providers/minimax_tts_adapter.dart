@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../pcm_audio.dart';
+import '../pronunciation.dart';
 import '../models/voice.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
@@ -63,6 +64,12 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
         kind: ProviderErrorKind.invalidConfiguration,
       );
     }
+    final pronunciations = matchedPronunciations(
+      pronunciationMatches(
+        request.text,
+        request.language == 'zh' ? request.pronunciations : [],
+      ),
+    );
     final endpoint = _baseUrl.replace(
       path: '${_baseUrl.path.replaceFirst(RegExp(r'/+$'), '')}/t2a_v2',
     );
@@ -77,6 +84,13 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
             body: jsonEncode({
               'model': request.binding.model,
               'text': request.text,
+              if (pronunciations.isNotEmpty)
+                'pronunciation_dict': {
+                  'tone': [
+                    for (final entry in pronunciations)
+                      '${entry.term}/${entry.pinyin.split(' ').map((s) => '($s)').join()}',
+                  ],
+                },
               'stream': false,
               'output_format': 'hex',
               'language_boost': request.language == 'zh'

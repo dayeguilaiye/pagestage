@@ -5,6 +5,10 @@ import 'dart:typed_data';
 import 'package:crypto/crypto.dart';
 
 import 'models/book.dart';
+import 'models/loudness.dart';
+import 'audio/loudness.dart';
+import 'models/cast.dart';
+import 'pronunciation.dart';
 import 'models/script.dart';
 import 'models/voice.dart';
 import 'pcm_audio.dart';
@@ -19,20 +23,28 @@ class SynthesizedUtterance {
     required this.lineIndices,
     required this.speakerId,
     required this.audioPath,
+    required this.rawAudioPath,
+    required this.loudness,
     required this.cacheKey,
     required this.cacheHit,
     required this.duration,
     required this.pauseBefore,
+    this.pronunciationApplied = false,
+    this.pronunciationWarning,
   });
   final int start;
   final int end;
   final List<int> lineIndices;
   final String speakerId;
   final String audioPath;
+  final String rawAudioPath;
+  final LoudnessReport loudness;
   final String cacheKey;
   final bool cacheHit;
   final Duration duration;
   final Duration pauseBefore;
+  final bool pronunciationApplied;
+  final String? pronunciationWarning;
 }
 
 class SynthesisResult {
@@ -71,6 +83,8 @@ class Synthesizer {
     required String language,
     required Map<String, VoiceBinding> voices,
     required String outputPath,
+    List<PronunciationEntry> lexicon = const [],
+    LoudnessSettings loudness = const LoudnessSettings(),
     PerformanceMode mode = PerformanceMode.audiobook,
     bool mergeAdjacentNarrator = false,
     Duration paragraphPause = const Duration(milliseconds: 300),
@@ -88,6 +102,19 @@ class Synthesizer {
     ]) {
       if (pause.isNegative) throw ArgumentError.value(pause, 'pause');
     }
+    if (!loudness.targetLufs.isFinite ||
+        loudness.targetLufs <= -70 ||
+        loudness.targetLufs > 0 ||
+        !loudness.maxBoostDb.isFinite ||
+        loudness.maxBoostDb < 0 ||
+        loudness.maxBoostDb > 60 ||
+        !loudness.samplePeakDbfs.isFinite ||
+        loudness.samplePeakDbfs < -60 ||
+        loudness.samplePeakDbfs > 0) {
+      throw ArgumentError(
+        'Invalid loudness target, boost or sample-peak ceiling.',
+      );
+    }
     _validateRanges(chapter.text, script);
     final stopwatch = Stopwatch()..start();
     final samples = <int>[];
@@ -98,21 +125,10 @@ class Synthesizer {
     int? sampleRate;
     ScriptLine? previous;
     final plan = _utterances(chapter.text, script, mode, mergeAdjacentNarrator);
-    // Validate every audible voice before the first potentially paid request.
+    // Prepare all effective requests before the first potentially paid call.
+    final prepared = <_PreparedUtterance>[];
     for (final entry in plan) {
       final binding = voices[entry.line.direction.speakerId];
-      if (binding == null) throw StateError('A speaker has no voice binding.');
-      final adapter = adapters[binding.provider];
-      if (adapter == null) {
-        throw StateError('The voice provider is not configured.');
-      }
-      if (adapter.capabilitiesFor(binding).maxCharacters < 1) {
-        throw StateError('The provider request limit must be positive.');
-      }
-    }
-    for (final entry in plan) {
-      final line = entry.line;
-      final binding = voices[line.direction.speakerId];
       if (binding == null) throw StateError('A speaker has no voice binding.');
       final adapter = adapters[binding.provider];
       if (adapter == null) {
@@ -122,17 +138,64 @@ class Synthesizer {
       if (capabilities.maxCharacters < 1) {
         throw StateError('The provider request limit must be positive.');
       }
-      final text = line.textIn(chapter.text);
+      final text = entry.line.textIn(chapter.text);
+      final matches = language == 'zh'
+          ? pronunciationMatches(text, lexicon)
+          : <PronunciationMatch>[];
+      final effectiveMatches = capabilities.supportsPronunciation
+          ? matches
+          : <PronunciationMatch>[];
+      final pronunciations = matchedPronunciations(effectiveMatches);
+      prepared.add(
+        _PreparedUtterance(
+          entry,
+          adapter,
+          [
+            for (final chunk in _sourceChunks(
+              text,
+              capabilities.maxCharacters,
+              effectiveMatches,
+            ))
+              TtsRequest.forCapabilities(
+                text: chunk,
+                language: language,
+                binding: binding,
+                direction: entry.line.direction,
+                capabilities: capabilities,
+                pronunciations: matchedPronunciations(
+                  pronunciationMatches(chunk, pronunciations),
+                ),
+              ),
+          ],
+          matches.isNotEmpty && !capabilities.supportsPronunciation
+              ? 'Selected voice does not support pronunciation; synthesized plain text.'
+              : null,
+        ),
+      );
+    }
+    for (final item in prepared) {
+      final entry = item.entry;
+      final line = entry.line;
       final cacheKey = sha256
           .convert(
             utf8.encode(
               jsonEncode(
                 _canonical({
-                  'version': 'tts-raw-v1',
-                  'text': text,
-                  'language': language,
-                  'binding': binding.toJson(),
-                  'direction': line.direction.toJson(),
+                  'version': 'tts-raw-v2-pronunciation-v1',
+                  'requests': [
+                    for (final request in item.requests)
+                      {
+                        'text': request.text,
+                        'language': request.language,
+                        'binding': request.binding.toJson(),
+                        'direction': request.direction.toJson(),
+                        'emotion': request.emotion,
+                        'instruction': request.instruction,
+                        'pronunciations': request.pronunciations
+                            .map((e) => e.toJson())
+                            .toList(),
+                      },
+                  ],
                 }),
               ),
             ),
@@ -146,16 +209,8 @@ class Synthesizer {
       if (raw == null) {
         final utteranceSamples = <int>[];
         int? utteranceRate;
-        for (final chunk in _sourceChunks(text, capabilities.maxCharacters)) {
-          final result = await adapter.synthesize(
-            TtsRequest.forCapabilities(
-              text: chunk,
-              language: language,
-              binding: binding,
-              direction: line.direction,
-              capabilities: capabilities,
-            ),
-          );
+        for (final request in item.requests) {
+          final result = await item.adapter.synthesize(request);
           utteranceRate ??= result.audio.sampleRate;
           if (utteranceRate != result.audio.sampleRate) {
             throw StateError('Audio sample rates must match.');
@@ -179,6 +234,14 @@ class Synthesizer {
       if (sampleRate != raw.sampleRate) {
         throw StateError('Audio sample rates must match.');
       }
+      final normalized = normalizeLoudness(raw, loudness);
+      final settingsKey = sha256
+          .convert(utf8.encode(jsonEncode(_canonical(loudness.toJson()))))
+          .toString();
+      final normalizedFile = File(
+        '${cacheFile.parent.path}/normalized/$cacheKey-$settingsKey.wav',
+      );
+      await _writeCache(normalizedFile, normalized.audio);
       final pause = previous == null
           ? Duration.zero
           : _pauseBefore(
@@ -192,18 +255,24 @@ class Synthesizer {
       samples.addAll(
         List.filled(sampleRate * pause.inMicroseconds ~/ 1000000, 0),
       );
-      samples.addAll(raw.samples);
+      samples.addAll(normalized.audio.samples);
       utterances.add(
         SynthesizedUtterance(
           start: line.start,
           end: line.end,
           lineIndices: List.unmodifiable(entry.indices),
           speakerId: line.direction.speakerId,
-          audioPath: cacheFile.absolute.path,
+          audioPath: normalizedFile.absolute.path,
+          rawAudioPath: cacheFile.absolute.path,
+          loudness: normalized.report,
           cacheKey: cacheKey,
           cacheHit: cacheHit,
           duration: raw.duration,
           pauseBefore: pause,
+          pronunciationApplied: item.requests.any(
+            (r) => r.pronunciations.isNotEmpty,
+          ),
+          pronunciationWarning: item.warning,
         ),
       );
       previous = line;
@@ -254,6 +323,19 @@ void _validateRanges(String source, Script script) {
       !(script.lines.isEmpty && source.trim().isEmpty)) {
     throw StateError('Script lines must cover the original chapter in order.');
   }
+}
+
+class _PreparedUtterance {
+  const _PreparedUtterance(
+    this.entry,
+    this.adapter,
+    this.requests,
+    this.warning,
+  );
+  final _PlannedUtterance entry;
+  final TtsAdapter adapter;
+  final List<TtsRequest> requests;
+  final String? warning;
 }
 
 class _PlannedUtterance {
@@ -354,7 +436,23 @@ Duration _pauseBefore(
 int? _addReported(int? total, int? value) =>
     value == null ? total : (total ?? 0) + value;
 
-Iterable<String> _sourceChunks(String text, int limit) sync* {
+Iterable<String> _sourceChunks(
+  String text,
+  int limit,
+  List<PronunciationMatch> matches,
+) sync* {
+  final ranges = [
+    for (final match in matches)
+      (
+        text.substring(0, match.start).runes.length,
+        text.substring(0, match.end).runes.length,
+      ),
+  ];
+  if (ranges.any((range) => range.$2 - range.$1 > limit)) {
+    throw StateError(
+      'A pronunciation term exceeds the provider request limit.',
+    );
+  }
   final runes = text.runes.toList();
   const sentenceEnds = {0x2e, 0x21, 0x3f, 0x3b, 0x3002, 0xff01, 0xff1f, 0xff1b};
   const closingMarks = {
@@ -389,6 +487,12 @@ Iterable<String> _sourceChunks(String text, int limit) sync* {
       } else if (wordEnd != null &&
           runes.sublist(start, wordEnd).any((rune) => !whitespace(rune))) {
         end = wordEnd;
+      }
+    }
+    for (final range in ranges) {
+      if (range.$1 < end && end < range.$2) {
+        end = range.$1 > start ? range.$1 : range.$2;
+        break;
       }
     }
     yield String.fromCharCodes(runes.sublist(start, end));

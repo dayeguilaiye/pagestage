@@ -26,3 +26,5 @@ export 'src/providers/tts_settings.dart';
 
 export 'src/voice_design.dart';
 export 'src/providers/voice_design_adapter.dart';
+
+export 'src/models/loudness.dart';

@@ -44,9 +44,21 @@ void main() {
       expect(String.fromCharCodes(bytes.take(4)), 'RIFF');
       expect(data.getUint32(24, Endian.little), 24000);
       expect(data.getUint32(40, Endian.little), 15360);
-      expect(data.getInt16(44, Endian.little), 1000);
+      final first = PcmAudio.fromWav(
+        await File(result.utterances.first.audioPath).readAsBytes(),
+      );
+      final last = PcmAudio.fromWav(
+        await File(result.utterances.last.audioPath).readAsBytes(),
+      );
+      expect(data.getInt16(44, Endian.little), first.samples.first);
+      expect(
+        PcmAudio.fromWav(
+          await File(result.utterances.first.rawAudioPath).readAsBytes(),
+        ).samples.first,
+        1000,
+      );
       expect(data.getInt16(44 + 240 * 2, Endian.little), 0);
-      expect(data.getInt16(44 + 7440 * 2, Endian.little), 2000);
+      expect(data.getInt16(44 + 7440 * 2, Endian.little), last.samples.first);
     },
   );
   for (final provider in ['minimax', 'bailian']) {
@@ -83,9 +95,21 @@ void main() {
         final data = ByteData.sublistView(
           await File(result.path).readAsBytes(),
         );
-        expect(data.getInt16(44 + 240 * 2, Endian.little), 2000);
+        final first = PcmAudio.fromWav(
+          await File(result.utterances.first.audioPath).readAsBytes(),
+        );
+        final last = PcmAudio.fromWav(
+          await File(result.utterances.last.audioPath).readAsBytes(),
+        );
+        expect(data.getInt16(44 + 240 * 2, Endian.little), first.samples[240]);
+        expect(
+          PcmAudio.fromWav(
+            await File(result.utterances.first.rawAudioPath).readAsBytes(),
+          ).samples[240],
+          2000,
+        );
         expect(data.getInt16(44 + 480 * 2, Endian.little), 0);
-        expect(data.getInt16(44 + 7680 * 2, Endian.little), 3000);
+        expect(data.getInt16(44 + 7680 * 2, Endian.little), last.samples.first);
       },
     );
   }

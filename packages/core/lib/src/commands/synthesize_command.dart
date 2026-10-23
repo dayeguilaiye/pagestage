@@ -85,6 +85,7 @@ class SynthesizeCommand extends Command<void> {
       overrides: context.ttsAdapters,
     );
     try {
+      final cast = await CastRepository(context.store).get(book.id);
       final result =
           await Synthesizer(
             adapters: session.adapters,
@@ -95,6 +96,7 @@ class SynthesizeCommand extends Command<void> {
             chapter: chapter,
             script: script,
             language: book.language,
+            lexicon: cast.lexicon,
             voices: bindings,
             mode: mode,
             mergeAdjacentNarrator: argResults!['merge-narrator'] as bool,
@@ -107,7 +109,6 @@ class SynthesizeCommand extends Command<void> {
                   'chapter-$number-${mode.name}.wav',
                 ),
           );
-      final cast = await CastRepository(context.store).get(book.id);
       final byLine = {
         for (final utterance in result.utterances)
           for (final index in utterance.lineIndices) index: utterance,
@@ -140,6 +141,11 @@ class SynthesizeCommand extends Command<void> {
               'skipped': skipped(script.lines[index]),
               if (byLine[index] case final utterance?) ...{
                 'audioPath': utterance.audioPath,
+                'rawAudioPath': utterance.rawAudioPath,
+                'loudness': utterance.loudness.toJson(),
+                'pronunciationApplied': utterance.pronunciationApplied,
+                if (utterance.pronunciationWarning != null)
+                  'pronunciationWarning': utterance.pronunciationWarning,
                 'cacheKey': utterance.cacheKey,
                 'cacheHit': utterance.cacheHit,
                 'utteranceLineIndices': utterance.lineIndices,

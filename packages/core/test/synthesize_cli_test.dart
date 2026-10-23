@@ -100,6 +100,58 @@ void main() {
       expect(minimax.requests.last.text, contains('Hello!'));
     },
   );
+  test('CLI applies the saved Chinese cast lexicon', () async {
+    final temp = await Directory.systemTemp.createTemp('lexicon-cli-');
+    addTearDown(() => temp.delete(recursive: true));
+    final source = await File(
+      '${temp.path}/zh.txt',
+    ).writeAsString('第一章\n长乐来了。');
+    final store = LocalStore('${temp.path}/pagestage.sqlite');
+    final book = await Library(store).importTxt(source.path);
+    final repository = CastRepository(store);
+    final cast = await repository.get(book.id);
+    await repository.save(
+      cast.copyWith(
+        profiledThrough: 1,
+        lexicon: const [PronunciationEntry('长乐', 'chang2 le4')],
+      ),
+    );
+    await Casting(store).recommend(book, providers: {'minimax'});
+    await ScriptRepository(
+      store,
+    ).save(Script.narration(bookId: book.id, chapter: book.chapter(1)));
+    await store.close();
+    final tts = _Tts('minimax');
+    final out = StringBuffer();
+    expect(
+      await runCli(
+        ['--data-dir', temp.path, 'synthesize', book.id, '1'],
+        output: out,
+        errorOutput: StringBuffer(),
+        environment: {},
+        ttsAdapters: {'minimax': tts},
+      ),
+      0,
+    );
+    expect(tts.requests.single.pronunciations.single.pinyin, 'chang2 le4');
+    final line =
+        ((jsonDecode(out.toString()) as Map)['lines'] as List).first as Map;
+    expect(line['pronunciationApplied'], isTrue);
+    expect(line['audioPath'], isNot(line['rawAudioPath']));
+    expect((line['loudness'] as Map)['targetLufs'], -20);
+    tts.requests.clear();
+    expect(
+      await runCli(
+        ['--data-dir', temp.path, 'narrate', book.id, '1'],
+        output: StringBuffer(),
+        errorOutput: StringBuffer(),
+        environment: {},
+        ttsAdapters: {'minimax': tts},
+      ),
+      0,
+    );
+    expect(tts.requests.single.pronunciations.single.pinyin, 'chang2 le4');
+  });
 }
 
 class _Profile implements LlmAdapter {
@@ -172,7 +224,7 @@ class _Tts implements TtsAdapter {
     emotionControl: provider == 'minimax'
         ? EmotionControl.enumerated
         : EmotionControl.instruction,
-    supportsPronunciation: false,
+    supportsPronunciation: true,
     returnsTimestamps: false,
     maxCharacters: 9999,
   );
