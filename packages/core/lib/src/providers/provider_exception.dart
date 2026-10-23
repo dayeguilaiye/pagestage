@@ -32,7 +32,7 @@ class ProviderException implements Exception {
           'connection_error' => 'The provider connection failed or was interrupted. Retry the command.',
           _ => 'The provider is unavailable. Try again later.',
         },
-        ProviderErrorKind.invalidResponse => 'The provider returned an invalid response.',
+        ProviderErrorKind.invalidResponse => 'The provider returned an invalid response.${code == null ? '' : ' ($code)'}',
         ProviderErrorKind.invalidVoice => 'The voice binding is unavailable.',
         ProviderErrorKind.invalidConfiguration => 'The provider configuration is invalid.',
       }}';

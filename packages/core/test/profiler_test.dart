@@ -319,11 +319,14 @@ void main() {
       await expectLater(
         Profiler(store, FakeLlm([malformed])).profile(book, throughChapter: 1),
         throwsA(
-          isA<ProviderException>().having(
-            (e) => e.kind,
-            'kind',
-            ProviderErrorKind.invalidResponse,
-          ),
+          isA<ProviderException>()
+              .having((e) => e.kind, 'kind', ProviderErrorKind.invalidResponse)
+              .having((e) => e.code, 'code', 'Invalid dialogue count.')
+              .having(
+                (e) => e.toString(),
+                'message',
+                contains('Invalid dialogue count.'),
+              ),
         ),
       );
       expect(

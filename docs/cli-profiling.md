@@ -15,6 +15,8 @@ dart run packages/core/bin/pagestage.dart profile <book-id> --through 5 --batch-
 
 `LLM_API` 接受 `chat-completions` 或 `responses`，默认 `chat-completions`。`LLM_MODEL` 可为两个模型槽位提供共同值；`LLM_PROFILE_MODEL` 覆盖建档槽位，`LLM_DIRECTOR_MODEL` 覆盖导演槽位，导演默认沿用建档模型。`LLM_JSON_MODE` 默认 `schema`，使用严格 JSON Schema 输出；兼容服务商可显式设置为 `object`，建档模块仍会校验输出结构和角色关联。
 
+`LLM_STREAM` 或配置字段 `llm.stream` 取 `"true"` 或 `"false"`，默认 `false`。开启后以服务端事件流接收回复，Responses 读取 `response.completed` 事件，Chat Completions 拼接增量并请求 `stream_options.include_usage`；连接在生成期间持续有数据，避免代理或移动网络在长回复完成前断开空闲连接。原型实测经透明代理时，非流式请求约 25 秒无数据即被断开，开启流式后正常完成，见[原型报告](spike-report.md)。
+
 `LLM_REASONING_EFFORT` 或配置字段 `llm.reasoningEffort` 指定建档和导演的思考强度。Responses 请求发送 `reasoning.effort`，Chat Completions 请求发送 `reasoning_effort`；可用值以服务商对应接口为准。省略时使用服务商默认值。[DeepSeek Responses](https://api-docs.deepseek.com/api/create-response/) 默认开启思考；快速试听可使用 `deepseek-flash`、`api: "responses"`、`jsonMode: "schema"`、`reasoningEffort: "none"`。
 
 也可在默认忽略的 `.pagestage/providers.json` 中配置：

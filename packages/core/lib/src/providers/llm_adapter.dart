@@ -63,6 +63,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
     this.api = LlmApi.chatCompletions,
     this.jsonSchema = true,
     this.reasoningEffort,
+    this.stream = false,
     http.Client? client,
     UsageLedger? usageLedger,
     this.timeout = const Duration(minutes: 3),
@@ -92,6 +93,10 @@ class OpenAiLlmAdapter implements LlmAdapter {
   final LlmApi api;
   final bool jsonSchema;
   final String? reasoningEffort;
+
+  /// Streams server-sent events so the connection never sits idle; proxies
+  /// and mobile networks may drop a silent connection before a long answer.
+  final bool stream;
   final Duration timeout;
   final http.Client _client;
   final bool _ownsClient;
@@ -141,28 +146,11 @@ class OpenAiLlmAdapter implements LlmAdapter {
               : {'type': 'json_object'},
         },
       if (!isChat) 'store': false,
+      if (stream) 'stream': true,
+      if (stream && isChat) 'stream_options': {'include_usage': true},
     };
     try {
-      final response = await _client
-          .post(
-            endpoint,
-            headers: {
-              'authorization': 'Bearer $_apiKey',
-              'content-type': 'application/json',
-            },
-            body: jsonEncode(body),
-          )
-          .timeout(timeout);
-      Object? decoded;
-      try {
-        decoded = jsonDecode(utf8.decode(response.bodyBytes));
-      } catch (_) {
-        if (response.statusCode >= 200 && response.statusCode < 300) rethrow;
-      }
-      if (response.statusCode < 200 || response.statusCode >= 300) {
-        throw _error(response.statusCode, decoded);
-      }
-      final data = Map<String, Object?>.from(decoded as Map);
+      final data = await _send(endpoint, body, isChat).timeout(timeout);
       // Record before validating content: a rejected answer is still billed.
       _usageLedger?.record(
         UsageRecord(
@@ -242,6 +230,80 @@ class OpenAiLlmAdapter implements LlmAdapter {
         kind: ProviderErrorKind.invalidResponse,
       );
     }
+  }
+
+  Future<Map<String, Object?>> _send(
+    Uri endpoint,
+    Map<String, Object?> body,
+    bool isChat,
+  ) async {
+    final response = await _client.send(
+      http.Request('POST', endpoint)
+        ..headers.addAll({
+          'authorization': 'Bearer $_apiKey',
+          'content-type': 'application/json',
+        })
+        ..body = jsonEncode(body),
+    );
+    final ok = response.statusCode >= 200 && response.statusCode < 300;
+    if (ok && stream) return _readEvents(response.stream, isChat);
+    final bytes = await response.stream.toBytes();
+    Object? decoded;
+    try {
+      decoded = jsonDecode(utf8.decode(bytes));
+    } catch (_) {
+      if (ok) rethrow;
+    }
+    if (!ok) throw _error(response.statusCode, decoded);
+    return Map<String, Object?>.from(decoded as Map);
+  }
+
+  /// Rebuilds the non-streaming response shape so one parser serves both.
+  Future<Map<String, Object?>> _readEvents(
+    Stream<List<int>> bytes,
+    bool isChat,
+  ) async {
+    Map<String, Object?>? completed;
+    final content = StringBuffer();
+    Object? id, finishReason, refusal, usage;
+    final lines = bytes.transform(utf8.decoder).transform(const LineSplitter());
+    await for (final line in lines) {
+      if (!line.startsWith('data:')) continue;
+      final payload = line.substring(5).trim();
+      if (payload.isEmpty || payload == '[DONE]') continue;
+      final event = jsonDecode(payload) as Map;
+      if (isChat) {
+        id ??= event['id'];
+        usage = event['usage'] ?? usage;
+        for (final choice in event['choices'] as List? ?? const []) {
+          final delta = (choice as Map)['delta'] as Map? ?? const {};
+          if (delta['content'] case final String text) content.write(text);
+          refusal = delta['refusal'] ?? refusal;
+          finishReason = choice['finish_reason'] ?? finishReason;
+        }
+      } else if (const [
+        'response.completed',
+        'response.incomplete',
+        'response.failed',
+      ].contains(event['type'])) {
+        completed = Map<String, Object?>.from(event['response'] as Map);
+      }
+    }
+    if (isChat) {
+      if (finishReason == null) throw const FormatException('Stream ended.');
+      return {
+        'id': id,
+        'choices': [
+          {
+            'finish_reason': finishReason,
+            'message': {'content': content.toString(), 'refusal': refusal},
+          },
+        ],
+        'usage': usage,
+      };
+    }
+    if (completed == null) throw const FormatException('Stream ended.');
+    return completed;
   }
 
   ProviderException _error(int status, Object? body) {
