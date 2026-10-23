@@ -4,8 +4,10 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 
-import 'commands/narrate_command.dart';
+import 'commands/profile_command.dart';
+import 'providers/llm_adapter.dart';
 import 'providers/provider_exception.dart';
+import 'commands/narrate_command.dart';
 import 'providers/tts_adapter.dart';
 import 'library.dart';
 import 'local_store.dart';
@@ -16,6 +18,8 @@ class CliContext {
     required this.dataDirectory,
     required this.output,
     Map<String, String>? environment,
+    this.profileLlm,
+    this.directorLlm,
     Map<String, TtsAdapter>? ttsAdapters,
   }) : environment = Map.unmodifiable(environment ?? Platform.environment),
        ttsAdapters = Map.unmodifiable(ttsAdapters ?? {}) {
@@ -26,6 +30,8 @@ class CliContext {
   final Directory dataDirectory;
   final StringSink output;
   final Map<String, String> environment;
+  final LlmAdapter? profileLlm;
+  final LlmAdapter? directorLlm;
   final Map<String, TtsAdapter> ttsAdapters;
   late final LocalStore store;
   late final Library library;
@@ -41,6 +47,7 @@ class PagestageCommandRunner extends CommandRunner<void> {
     addCommand(_ImportCommand(context));
     addCommand(_ChaptersCommand(context));
     addCommand(_BooksCommand(context));
+    addCommand(ProfileCommand(context));
     addCommand(NarrateCommand(context));
   }
 
@@ -53,6 +60,8 @@ Future<int> runCli(
   StringSink? output,
   StringSink? errorOutput,
   Map<String, String>? environment,
+  LlmAdapter? profileLlm,
+  LlmAdapter? directorLlm,
   Map<String, TtsAdapter>? ttsAdapters,
 }) async {
   final out = output ?? stdout;
@@ -70,6 +79,8 @@ Future<int> runCli(
     dataDirectory: Directory(dataPath),
     output: out,
     environment: environment,
+    profileLlm: profileLlm,
+    directorLlm: directorLlm,
     ttsAdapters: ttsAdapters,
   );
   try {
