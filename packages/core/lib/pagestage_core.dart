@@ -15,6 +15,8 @@ export 'src/pcm_audio.dart';
 export 'src/providers/tts_adapter.dart';
 export 'src/synthesizer.dart';
 export 'src/providers/minimax_tts_adapter.dart';
+export 'src/director.dart';
+export 'src/script_repository.dart';
 export 'src/providers/bailian_tts_adapter.dart';
 export 'src/preset_catalog.dart';
 export 'src/casting.dart';
