@@ -45,7 +45,7 @@ class Director {
   final LlmAdapter llm;
   final int chunkCharacters;
   final int contextLines;
-  static const promptVersion = 'director-v4';
+  static const promptVersion = 'director-v5';
 
   Future<DirectingResult> direct(Book book, int chapterNumber) async {
     final cast = await CastRepository(store).get(book.id);
@@ -302,8 +302,8 @@ String _instructions(String language) => language == 'zh'
 ## 说话人归属
 
 - 人物说出口的话归实际说话人。
-- 第三人称叙述归旁白 `narrator`，包括环境、动作、外貌、神态和说话提示。描述某个角色，不代表由该角色朗读。
-- 第一人称叙述归叙述者“我”，不能默认归主角；立传者、书信作者、日记作者应按各自身份判断。
+- 全书使用统一的旁白 `narrator` 朗读叙述文字，包括第一人称和第三人称叙述，以及环境、动作、外貌、神态和说话提示。按内容区分叙述与角色表达，叙述中出现“我”或描述某个角色都不改变旁白归属。
+- 故事中的书信、日记等内容，有署名或明确上下文表明作者时，由该作者朗读；作者不明时归旁白 `narrator`。依据语义识别正文的起止和跨段延续，即使长篇正文前后没有引号，也按此规则指派；信件接收人不等于作者。正文之外的引入和后续叙述归旁白。
 - 明确直接呈现某个人物心中原话的心理独白，归该人物，在 `note` 中注明内心独白；叙述者对人物心理的描述仍归旁白。
 - 系统消息归对应系统。
 - 已知说话人使用 `cast` 中的 ID；未知说话人使用稳定、明确的称呼，不为凑用已有 ID 而指派给其他人物。
@@ -315,7 +315,7 @@ String _instructions(String language) => language == 'zh'
 
 - 对白前、后或中间的旁白，分别输出。
 - 同一说话人的连续内容，若表演方式和标记一致，可保持为一条。
-- 引号只是线索，应结合语义判断。人物对白内部的引用仍由当前人物朗读；旁白中的称谓、书名或强调用语，不因带引号就变成人物对白。
+- 引号只是线索，应结合语义判断；没有引号的对白、书信和日记也可以由明确的说话人或作者朗读。人物对白内部的引用仍由当前人物朗读；旁白中的称谓、书名或强调用语，不因带引号就变成人物对白。
 
 例如：
 
@@ -326,6 +326,10 @@ String _instructions(String language) => language == 'zh'
 `他推开门：“请进。”`
 
 依次输出：旁白的 `他推开门：`、角色的 `“请进。”`。
+
+`我拆开林舟寄来的信。\n明天我就回来。\n请在车站等我。\n读完信，我把它收进抽屉。`
+
+依次输出：旁白的 `我拆开林舟寄来的信。`、林舟的 `明天我就回来。\n请在车站等我。`、旁白的 `读完信，我把它收进抽屉。`。如果上下文只说明是一封来历不明、没有署名的信，信的正文也归旁白。
 
 ## 可省略的说话提示：`isDialogueTag`
 
@@ -347,7 +351,7 @@ String _instructions(String language) => language == 'zh'
 
 混合说话提示与故事信息的叙述可以作为一条旁白保留，标为 `false`。不要为去掉“他说”而改写句子。无法确定是否可省略时，设为 `false`。
 
-角色对白和心理独白的 `isDialogueTag` 均为 `false`。
+角色对白、心理独白以及书信和日记正文的 `isDialogueTag` 均为 `false`。
 
 ## 非故事内容：`isNonStory`
 
@@ -395,8 +399,8 @@ Output only JSON matching the schema.
 ## Speaker assignment
 
 - Assign spoken words to the actual speaker.
-- Assign third-person narration to `narrator`, including settings, actions, appearance, expressions and speech attribution. Describing a character does not make that character the speaker.
-- Assign first-person narration to the actual I narrator, not automatically to the protagonist. Identify biographers, letter writers and diary writers by their own identities.
+- Use the same `narrator` throughout the book for first-person and third-person narration, including settings, actions, appearance, expressions and speech attribution. Distinguish narration from character expression by meaning; an I pronoun or a character being described does not change the narration's speaker.
+- For in-story letters, diaries and similar writing, assign the content to its author when a signature or clear context identifies them; otherwise assign it to `narrator`. Identify the content's beginning, end and continuation across paragraphs by meaning, even when a long passage has no enclosing quotation marks. The recipient is not necessarily the author. Assign introductory and subsequent narration outside the written content to `narrator`.
 - Assign an explicit direct inner monologue to the character whose thoughts it presents, and identify it as inner monologue in `note`. A narrator's description of a character's thoughts remains narration.
 - Assign system messages to the corresponding system.
 - Use IDs from `cast` for known speakers. Use stable, descriptive names for unknown speakers; do not assign them to other characters just to reuse an existing ID.
@@ -408,7 +412,7 @@ Each line belongs to only one speaker. Split when the speaker or content type ch
 
 - Output narration before, after or between dialogue separately.
 - Consecutive content from the same speaker may remain in one line when its performance and flags are consistent.
-- Quotation marks are clues; interpret them in context. Quotations within a character's speech remain with that speaker. Quoted names, book titles or emphasized phrases in narration do not automatically become character dialogue.
+- Quotation marks are clues; interpret them in context. Unquoted dialogue, letters and diaries can also belong to an identifiable speaker or author. Quotations within a character's speech remain with that speaker. Quoted names, book titles or emphasized phrases in narration do not automatically become character dialogue.
 
 For example:
 
@@ -419,6 +423,10 @@ Output, in order: the character's `“Let's go,”`, the narrator's `she said,`,
 `He opened the door. “Come in.”`
 
 Output, in order: the narrator's `He opened the door.` and the character's `“Come in.”`.
+
+`I opened Alice's letter.\nI will return tomorrow.\nPlease meet me at the station.\nAfter reading it, I put the letter in a drawer.`
+
+Output, in order: the narrator's `I opened Alice's letter.`, Alice's `I will return tomorrow.\nPlease meet me at the station.`, and the narrator's `After reading it, I put the letter in a drawer.` If the context only establishes an unsigned letter of unknown origin, assign its content to the narrator as well.
 
 ## Omissible speech attribution: `isDialogueTag`
 
@@ -440,7 +448,7 @@ Set it to `false` when the line includes physical actions, visual expressions, t
 
 Narration combining speech attribution and story information may remain a single narration line marked `false`. Do not rewrite a sentence to remove “he said”. When unsure whether a line is omissible, set the flag to `false`.
 
-Set `isDialogueTag=false` for character dialogue and inner monologue.
+Set `isDialogueTag=false` for character dialogue, inner monologue, and the content of letters and diaries.
 
 ## Non-story content: `isNonStory`
 

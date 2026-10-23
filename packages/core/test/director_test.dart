@@ -114,7 +114,7 @@ void main() {
       expect(result.script.lines.first.isDialogueTag, true);
       expect(result.script.lines.last.isNonStory, true);
       expect(result.script.model, 'fake-director');
-      expect(result.script.promptVersion, 'director-v4');
+      expect(result.script.promptVersion, 'director-v5');
       expect(result.usage.totalTokens, 14);
       expect(
         (await ScriptRepository(store).get(book.id, 1))!.toJson(),
@@ -261,12 +261,17 @@ void main() {
     },
   );
   test(
-    'unknown first-person, letter and system speakers persist as stable provisionals',
+    'unquoted letter authors and system speakers persist alongside unified narration',
     () async {
-      final book = novel('我提笔。\n“等我。”\n系统提示：成功。');
+      final book = novel(
+        '我拆开小雨寄来的信。\n明天我就回来。\n请在车站等我。\n'
+        '读完信，我又打开一封来历不明、没有署名的信。\n今晚别出门。\n系统提示：成功。',
+      );
       final data = response([
-        line('我提笔。', '我（立传者）'),
-        line('“等我。”', '写信人'),
+        line('我拆开小雨寄来的信。', 'narrator'),
+        line('明天我就回来。\n请在车站等我。', '小雨'),
+        line('读完信，我又打开一封来历不明、没有署名的信。', 'narrator'),
+        line('今晚别出门。', 'narrator'),
         line('系统提示：成功。', '系统'),
       ]);
       final first = await Director(
@@ -277,10 +282,21 @@ void main() {
       final provisional = saved.speakers
           .where((s) => s.kind == SpeakerKind.provisional)
           .toList();
-      expect(provisional.map((s) => s.name), ['我（立传者）', '写信人', '系统']);
+      expect(provisional.map((s) => s.name), ['小雨', '系统']);
+      expect(first.script.lines.map((l) => l.direction.speakerId), [
+        'narrator',
+        provisional[0].id,
+        'narrator',
+        'narrator',
+        provisional[1].id,
+      ]);
       expect(
-        first.script.lines.map((l) => l.direction.speakerId),
-        provisional.map((s) => s.id),
+        first.script.lines.map((l) => l.textIn(book.chapter(1).text)).join(),
+        book.chapter(1).text,
+      );
+      expect(
+        first.script.lines.every((l) => !l.isDialogueTag && !l.isNonStory),
+        true,
       );
       final second = await Director(
         store,
@@ -294,7 +310,7 @@ void main() {
         (await CastRepository(store).get(book.id)).speakers
             .where((s) => s.kind == SpeakerKind.provisional)
             .map((s) => s.dialogueCount),
-        [1, 1, 1],
+        [1, 1],
       );
     },
   );
