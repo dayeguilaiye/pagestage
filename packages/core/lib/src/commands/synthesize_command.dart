@@ -83,6 +83,7 @@ class SynthesizeCommand extends Command<void> {
         return binding.provider;
       }),
       overrides: context.ttsAdapters,
+      usageLedger: context.usageLedger,
     );
     try {
       final cast = await CastRepository(context.store).get(book.id);

@@ -1,6 +1,7 @@
 import '../provider_configuration.dart';
 import 'llm_adapter.dart';
 import 'provider_exception.dart';
+import 'usage_ledger.dart';
 
 /// Two model slots sharing one explicit endpoint and API protocol.
 class LlmSettings {
@@ -83,20 +84,24 @@ class LlmSettings {
     );
   }
 
-  OpenAiLlmAdapter createProfileAdapter() => OpenAiLlmAdapter(
-    baseUrl: baseUrl,
-    apiKey: _key,
-    model: profileModel,
-    api: api,
-    jsonSchema: jsonSchema,
-    reasoningEffort: reasoningEffort,
-  );
-  OpenAiLlmAdapter createDirectorAdapter() => OpenAiLlmAdapter(
-    baseUrl: baseUrl,
-    apiKey: _key,
-    model: directorModel,
-    api: api,
-    jsonSchema: jsonSchema,
-    reasoningEffort: reasoningEffort,
-  );
+  OpenAiLlmAdapter createProfileAdapter({UsageLedger? usageLedger}) =>
+      OpenAiLlmAdapter(
+        baseUrl: baseUrl,
+        apiKey: _key,
+        model: profileModel,
+        api: api,
+        jsonSchema: jsonSchema,
+        reasoningEffort: reasoningEffort,
+        usageLedger: usageLedger,
+      );
+  OpenAiLlmAdapter createDirectorAdapter({UsageLedger? usageLedger}) =>
+      OpenAiLlmAdapter(
+        baseUrl: baseUrl,
+        apiKey: _key,
+        model: directorModel,
+        api: api,
+        jsonSchema: jsonSchema,
+        reasoningEffort: reasoningEffort,
+        usageLedger: usageLedger,
+      );
 }

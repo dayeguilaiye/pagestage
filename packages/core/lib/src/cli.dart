@@ -14,6 +14,7 @@ import 'providers/llm_adapter.dart';
 import 'providers/provider_exception.dart';
 import 'commands/narrate_command.dart';
 import 'providers/tts_adapter.dart';
+import 'providers/usage_ledger.dart';
 import 'library.dart';
 import 'local_store.dart';
 
@@ -26,8 +27,12 @@ class CliContext {
     this.profileLlm,
     this.directorLlm,
     Map<String, TtsAdapter>? ttsAdapters,
+    UsageLedger? usageLedger,
   }) : environment = Map.unmodifiable(environment ?? Platform.environment),
-       ttsAdapters = Map.unmodifiable(ttsAdapters ?? {}) {
+       ttsAdapters = Map.unmodifiable(ttsAdapters ?? {}),
+       usageLedger =
+           usageLedger ??
+           JsonlUsageLedger(File(p.join(dataDirectory.path, 'usage.jsonl'))) {
     store = LocalStore(p.join(dataDirectory.path, 'pagestage.sqlite'));
     library = Library(store);
   }
@@ -38,6 +43,9 @@ class CliContext {
   final LlmAdapter? profileLlm;
   final LlmAdapter? directorLlm;
   final Map<String, TtsAdapter> ttsAdapters;
+
+  /// Receives billing fields of every real provider response in this run.
+  final UsageLedger usageLedger;
   late final LocalStore store;
   late final Library library;
 
@@ -92,6 +100,13 @@ Future<int> runCli(
     profileLlm: profileLlm,
     directorLlm: directorLlm,
     ttsAdapters: ttsAdapters,
+    usageLedger: JsonlUsageLedger(
+      File(p.join(dataPath, 'usage.jsonl')),
+      labels: {
+        'run': '${DateTime.now().toUtc().toIso8601String()}-$pid',
+        'arguments': arguments,
+      },
+    ),
   );
   try {
     await PagestageCommandRunner(context).run(arguments);

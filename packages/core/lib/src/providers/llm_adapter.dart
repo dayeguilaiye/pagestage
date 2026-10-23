@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'provider_exception.dart';
+import 'usage_ledger.dart';
 
 enum LlmApi { chatCompletions, responses }
 
@@ -63,9 +64,11 @@ class OpenAiLlmAdapter implements LlmAdapter {
     this.jsonSchema = true,
     this.reasoningEffort,
     http.Client? client,
+    UsageLedger? usageLedger,
     this.timeout = const Duration(minutes: 3),
   }) : _baseUrl = baseUrl,
        _apiKey = apiKey,
+       _usageLedger = usageLedger,
        _client = client ?? http.Client(),
        _ownsClient = client == null {
     if (!['https', 'http'].contains(baseUrl.scheme) ||
@@ -83,6 +86,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
   }
   final Uri _baseUrl;
   final String _apiKey;
+  final UsageLedger? _usageLedger;
   @override
   final String model;
   final LlmApi api;
@@ -159,6 +163,16 @@ class OpenAiLlmAdapter implements LlmAdapter {
         throw _error(response.statusCode, decoded);
       }
       final data = Map<String, Object?>.from(decoded as Map);
+      // Record before validating content: a rejected answer is still billed.
+      _usageLedger?.record(
+        UsageRecord(
+          provider: 'llm',
+          endpoint: endpoint.toString(),
+          model: model,
+          requestId: data['id']?.toString(),
+          usage: usageFields(data['usage']),
+        ),
+      );
       String content;
       if (isChat) {
         final choice = (data['choices'] as List).first as Map;

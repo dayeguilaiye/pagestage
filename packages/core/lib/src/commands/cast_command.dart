@@ -180,6 +180,7 @@ class _Audition extends Command<void> {
       config,
       providers: voices.map((v) => v.binding.provider),
       overrides: context.ttsAdapters,
+      usageLedger: context.usageLedger,
     );
     try {
       final samples = await Casting(context.store, adapters: session.adapters)

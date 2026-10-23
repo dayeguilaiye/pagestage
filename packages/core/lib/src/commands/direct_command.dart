@@ -49,7 +49,7 @@ class DirectCommand extends Command<void> {
               argResults!['config'] as String?,
               environment: context.environment,
             ),
-          ).createDirectorAdapter()
+          ).createDirectorAdapter(usageLedger: context.usageLedger)
         : null;
     try {
       final result = await Director(

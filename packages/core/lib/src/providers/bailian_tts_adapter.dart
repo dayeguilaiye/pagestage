@@ -9,6 +9,7 @@ import '../models/voice.dart';
 import 'provider_exception.dart';
 import 'tts_http.dart';
 import 'tts_adapter.dart';
+import 'usage_ledger.dart';
 import 'voice_design_adapter.dart';
 
 enum BailianRegion { beijing, singapore }
@@ -20,7 +21,9 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
     this.requestCharacterLimit = 600,
     Uri? baseUrl,
     http.Client? client,
+    UsageLedger? usageLedger,
   }) : _apiKey = apiKey,
+       _usageLedger = usageLedger,
        _baseUrl =
            baseUrl ??
            Uri.parse(
@@ -44,6 +47,7 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
     }
   }
   final String _apiKey;
+  final UsageLedger? _usageLedger;
   final Uri _baseUrl;
   final http.Client _client;
   final bool _ownsClient;
@@ -214,11 +218,12 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
     Map<String, Object?> body, {
     Duration timeout = const Duration(seconds: 90),
   }) async {
+    final endpoint = _baseUrl.replace(
+      path: '${_baseUrl.path.replaceFirst(RegExp(r'/+$'), '')}/$path',
+    );
     final response = await _client
         .post(
-          _baseUrl.replace(
-            path: '${_baseUrl.path.replaceFirst(RegExp(r'/+$'), '')}/$path',
-          ),
+          endpoint,
           headers: {
             'Authorization': 'Bearer $_apiKey',
             'Content-Type': 'application/json',
@@ -239,6 +244,15 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
         kind: _errorKind(code, response.statusCode),
       );
     }
+    _usageLedger?.record(
+      UsageRecord(
+        provider: provider,
+        endpoint: endpoint.toString(),
+        model: body['model'] as String?,
+        requestId: json['request_id']?.toString(),
+        usage: usageFields(json['usage']),
+      ),
+    );
     return json;
   }
 
