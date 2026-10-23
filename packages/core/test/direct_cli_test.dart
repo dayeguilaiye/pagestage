@@ -64,7 +64,7 @@ void main() {
       expect(line['text'], '甲说。');
       expect(line['speakerName'], '林舟');
       expect(script['model'], 'fake-director-cli');
-      expect(script['promptVersion'], 'director-v1');
+      expect(script['promptVersion'], 'director-v4');
       expect((result['usage'] as Map)['totalTokens'], 5);
       expect(result['elapsedMs'], isA<int>());
     },
