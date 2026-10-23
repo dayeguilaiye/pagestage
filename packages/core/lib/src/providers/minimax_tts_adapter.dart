@@ -8,6 +8,7 @@ import '../pcm_audio.dart';
 import '../pronunciation.dart';
 import '../models/voice.dart';
 import 'provider_exception.dart';
+import 'tts_errors.dart';
 import 'tts_adapter.dart';
 import 'voice_design_adapter.dart';
 import 'voice_design_http.dart';
@@ -111,19 +112,9 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
             }),
           )
           .timeout(const Duration(seconds: 90));
-      if (response.statusCode == 401 ||
-          response.statusCode == 402 ||
-          response.statusCode == 429 ||
-          response.statusCode >= 500) {
-        throw ProviderException(
-          provider: provider,
-          kind: switch (response.statusCode) {
-            401 => ProviderErrorKind.invalidKey,
-            402 => ProviderErrorKind.insufficientBalance,
-            429 => ProviderErrorKind.rateLimited,
-            _ => ProviderErrorKind.unavailable,
-          },
-        );
+      final transportError = ttsHttpError(response.statusCode);
+      if (transportError != null) {
+        throw ProviderException(provider: provider, kind: transportError);
       }
       final json =
           jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
@@ -131,14 +122,7 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
       if (response.statusCode != 200 || status != 0) {
         throw ProviderException(
           provider: provider,
-          kind: switch (status) {
-            1004 || 2049 => ProviderErrorKind.invalidKey,
-            1008 || 2053 => ProviderErrorKind.insufficientBalance,
-            1002 || 1039 || 1045 => ProviderErrorKind.rateLimited,
-            1000 || 1001 || 1024 || 1033 => ProviderErrorKind.unavailable,
-            20132 || 2042 || 2043 || 2054 => ProviderErrorKind.invalidVoice,
-            _ => ProviderErrorKind.invalidResponse,
-          },
+          kind: ttsErrorCode(provider, status, statusCode: response.statusCode),
           code: status is int ? status.toString() : null,
         );
       }

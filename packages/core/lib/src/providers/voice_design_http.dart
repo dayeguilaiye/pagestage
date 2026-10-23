@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/voice.dart';
 import 'provider_exception.dart';
+import 'tts_errors.dart';
 import 'voice_design_adapter.dart';
 
 Future<DesignedVoice> designMiniMax(
@@ -80,17 +81,9 @@ Future<DesignedVoice> _send({
           body: jsonEncode(body),
         )
         .timeout(const Duration(seconds: 120));
-    if ([401, 402, 429].contains(response.statusCode) ||
-        response.statusCode >= 500) {
-      throw ProviderException(
-        provider: provider,
-        kind: switch (response.statusCode) {
-          401 => ProviderErrorKind.invalidKey,
-          402 => ProviderErrorKind.insufficientBalance,
-          429 => ProviderErrorKind.rateLimited,
-          _ => ProviderErrorKind.unavailable,
-        },
-      );
+    final transportError = ttsHttpError(response.statusCode);
+    if (transportError != null) {
+      throw ProviderException(provider: provider, kind: transportError);
     }
     final json =
         jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
@@ -101,26 +94,7 @@ Future<DesignedVoice> _send({
         (provider == 'minimax' ? code != 0 : code != null)) {
       throw ProviderException(
         provider: provider,
-        kind: switch (code) {
-          1004 ||
-          2049 ||
-          'InvalidApiKey' ||
-          'invalid_api_key' => ProviderErrorKind.invalidKey,
-          1008 || 2053 || 'Arrearage' => ProviderErrorKind.insufficientBalance,
-          1002 ||
-          1039 ||
-          1045 ||
-          'Throttling' ||
-          'Throttling.RateQuota' ||
-          'Throttling.AllocationQuota' => ProviderErrorKind.rateLimited,
-          1000 || 1001 || 1024 || 1033 => ProviderErrorKind.unavailable,
-          20132 || 2042 || 2043 || 2054 => ProviderErrorKind.invalidVoice,
-          'AccessDenied' => ProviderErrorKind.invalidConfiguration,
-          _ =>
-            response.statusCode == 403
-                ? ProviderErrorKind.invalidConfiguration
-                : ProviderErrorKind.invalidResponse,
-        },
+        kind: ttsErrorCode(provider, code, statusCode: response.statusCode),
       );
     }
     return decode(json);

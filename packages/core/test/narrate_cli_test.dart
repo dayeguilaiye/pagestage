@@ -149,6 +149,33 @@ void main() {
     expect(fake.requests.single.binding.model, 'qwen-audio-3.1-tts-plus');
     expect(fake.requests.single.binding.voiceId, 'Luna_v3.1');
     expect((jsonDecode(output.toString()) as Map)['provider'], 'bailian');
+    final overridden = StringBuffer();
+    expect(
+      await runCli(
+        [
+          '--data-dir',
+          directory.path,
+          'narrate',
+          bookId,
+          '1',
+          '--provider',
+          'bailian',
+          '--model',
+          'qwen-audio-3.1-tts-flash',
+          '--voice',
+          'Emily_v3.1',
+        ],
+        output: overridden,
+        environment: {
+          'BAILIAN_MODEL': 'qwen-audio-3.1-tts-plus',
+          'BAILIAN_VOICE': 'Luna_v3.1',
+        },
+        ttsAdapters: {'bailian': fake},
+      ),
+      0,
+    );
+    expect(fake.requests.last.binding.model, 'qwen-audio-3.1-tts-flash');
+    expect(fake.requests.last.binding.voiceId, 'Emily_v3.1');
   });
 }
 

@@ -276,4 +276,63 @@ void main() {
       );
     },
   );
+
+  test(
+    'Bailian design and synthesis use the same safe provider error categories',
+    () async {
+      for (final entry in [
+        ('InvalidApiKey', ProviderErrorKind.invalidKey),
+        ('Arrearage', ProviderErrorKind.insufficientBalance),
+        ('Throttling.RateQuota', ProviderErrorKind.rateLimited),
+      ]) {
+        final adapter = BailianTtsAdapter(
+          apiKey: 'fixture-secret',
+          client: MockClient(
+            (_) async => http.Response(
+              jsonEncode({
+                'code': entry.$1,
+                'message': 'fixture-secret raw-body',
+              }),
+              400,
+            ),
+          ),
+        );
+        final failure = throwsA(
+          isA<ProviderException>()
+              .having((error) => error.kind, 'kind', entry.$2)
+              .having(
+                (error) => error.toString(),
+                'safe message',
+                isNot(contains('fixture-secret')),
+              ),
+        );
+        await expectLater(
+          adapter.design(
+            const VoiceDesignRequest(
+              description: 'Warm narrator',
+              previewText: 'The garden was quiet this evening.',
+              language: 'en',
+              model: 'qwen-audio-3.1-tts-flash',
+            ),
+          ),
+          failure,
+        );
+        await expectLater(
+          adapter.synthesize(
+            const TtsRequest(
+              text: 'Hello.',
+              language: 'en',
+              binding: VoiceBinding(
+                provider: 'bailian',
+                model: 'qwen-audio-3.1-tts-flash',
+                voiceId: 'Emily_v3.1',
+              ),
+              direction: Direction(speakerId: 'narrator'),
+            ),
+          ),
+          failure,
+        );
+      }
+    },
+  );
 }

@@ -10,7 +10,7 @@ dart run packages/core/bin/pagestage.dart cast catalog --language zh
 
 `recommend` 默认让台词量前 20 个正式角色独占音色，用 `--exclusive-count 5` 调整数量。旁白按书的语言选择，身份在揭晓前另有音色。`--provider minimax` 或 `--provider bailian` 限定推荐目录；默认 `all` 使用两家目录。百炼目录可用 `--region beijing|singapore` 指定区域，默认北京。目录容量不足时返回错误，保留已保存的选角。
 
-群演按性别、年龄段匹配，优先避免同章共用音色；目录不足时输出复用提示。现有音色在延伸建档、补入临时角色时保持稳定，新增临时角色沿用已保存的专属数量、服务商和区域选择。手动换音色和设计音色在重新推荐时继续保留。
+群演先按性别、年龄段选取最匹配的音色，再在同等匹配的音色中避免同章复用。精确年龄段缺少音色时依次使用同性别的相近年龄段、未知年龄段；性别未知的音色也可作为兜底。同等匹配音色用尽后复用并输出提示。现有音色在延伸建档、补入临时角色时保持稳定，新增临时角色沿用已保存的专属数量、服务商和区域选择。明确使用新的服务商或区域重新推荐时，自动选角更新为该目录内的音色；手动换音色和设计音色继续保留。
 
 ```sh
 dart run packages/core/bin/pagestage.dart cast set <book-id> <speaker-id> 'minimax:Chinese (Mandarin)_Gentleman'

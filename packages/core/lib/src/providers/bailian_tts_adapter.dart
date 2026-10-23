@@ -7,6 +7,7 @@ import '../pcm_audio.dart';
 import '../pronunciation.dart';
 import '../models/voice.dart';
 import 'provider_exception.dart';
+import 'tts_errors.dart';
 import 'tts_adapter.dart';
 import 'voice_design_adapter.dart';
 import 'voice_design_http.dart';
@@ -125,34 +126,19 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
             }),
           )
           .timeout(const Duration(seconds: 90));
-      if (response.statusCode == 401 ||
-          response.statusCode == 429 ||
-          response.statusCode >= 500) {
-        throw ProviderException(
-          provider: provider,
-          kind: switch (response.statusCode) {
-            401 => ProviderErrorKind.invalidKey,
-            429 => ProviderErrorKind.rateLimited,
-            _ => ProviderErrorKind.unavailable,
-          },
-        );
+      final transportError = ttsHttpError(response.statusCode);
+      if (transportError != null) {
+        throw ProviderException(provider: provider, kind: transportError);
       }
       final json =
           jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       final code = json['code'];
       if (response.statusCode != 200 || code != null) {
-        final kind = switch (code) {
-          'InvalidApiKey' || 'invalid_api_key' => ProviderErrorKind.invalidKey,
-          'Arrearage' => ProviderErrorKind.insufficientBalance,
-          'Throttling' ||
-          'Throttling.RateQuota' ||
-          'Throttling.AllocationQuota' => ProviderErrorKind.rateLimited,
-          'AccessDenied' => ProviderErrorKind.invalidConfiguration,
-          _ =>
-            response.statusCode == 403
-                ? ProviderErrorKind.invalidConfiguration
-                : ProviderErrorKind.invalidResponse,
-        };
+        final kind = ttsErrorCode(
+          provider,
+          code,
+          statusCode: response.statusCode,
+        );
         throw ProviderException(provider: provider, kind: kind);
       }
       final output = json['output'] as Map;

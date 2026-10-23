@@ -105,6 +105,12 @@ class Casting {
     if (candidates.isEmpty) {
       throw StateError('No presets match this language and provider region.');
     }
+    final eligibleBindings = candidates
+        .map((preset) => _bindingKey(preset.binding))
+        .toSet();
+    bool eligibleAutomatic(Voice voice) =>
+        fixedExclusiveIds != null ||
+        eligibleBindings.contains(_bindingKey(voice.binding));
     final ranked =
         previous.cast.speakers
             .where((s) => s.kind == SpeakerKind.character)
@@ -134,8 +140,9 @@ class Casting {
       if (voice != null &&
           (voice.manuallySelected ||
               voice.binding.designed ||
-              !reserved.contains(_bindingKey(voice.binding)) ||
-              _inheritsPersona(previous.cast, speaker, voice))) {
+              (eligibleAutomatic(voice) &&
+                  (!reserved.contains(_bindingKey(voice.binding)) ||
+                      _inheritsPersona(previous.cast, speaker, voice))))) {
         if (!reserved.add(_bindingKey(voice.binding)) &&
             !_inheritsPersona(previous.cast, speaker, voice)) {
           warnings.add(
@@ -180,7 +187,8 @@ class Casting {
       if (old != null &&
           (old.manuallySelected ||
               old.binding.designed ||
-              !reserved.contains(_bindingKey(old.binding)))) {
+              (eligibleAutomatic(old) &&
+                  !reserved.contains(_bindingKey(old.binding))))) {
         allocatedExtras.add(speaker);
         continue;
       }
@@ -201,13 +209,13 @@ class Casting {
           )
           .length;
       pool.sort((a, b) {
-        final overlap = overlaps(a).compareTo(overlaps(b));
-        if (overlap != 0) return overlap;
         final score = _matchScore(
           speaker,
           a,
         ).compareTo(_matchScore(speaker, b));
-        return score == 0 ? a.id.compareTo(b.id) : score;
+        if (score != 0) return score;
+        final overlap = overlaps(a).compareTo(overlaps(b));
+        return overlap == 0 ? a.id.compareTo(b.id) : overlap;
       });
       if (overlaps(pool.first) > 0) {
         warnings.add(

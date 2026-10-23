@@ -73,8 +73,8 @@ void main() {
       expect(result.exclusiveSpeakerIds, {'hero', 'heroine'});
       expect(result.voices['narrator']!.binding.voiceId, 'narrator-zh');
       expect(result.voices['hero']!.binding.voiceId, 'male-young');
-      expect(result.voices['heroine']!.binding.voiceId, 'female-young');
-      expect(result.voices['minor']!.binding.voiceId, 'female-spare');
+      expect(result.voices['heroine']!.binding.voiceId, 'female-young-a');
+      expect(result.voices['minor']!.binding.voiceId, 'female-young-b');
       expect(
         (await casting.getCasting(book.id)).voices['hero']!.id,
         result.voices['hero']!.id,
@@ -120,9 +120,9 @@ void main() {
         exclusiveCount: 0,
         providers: {'minimax'},
       );
-      expect(initial.voices['a']!.binding.voiceId, 'female-young');
-      expect(initial.voices['b']!.binding.voiceId, 'female-spare');
-      expect(initial.voices['c']!.binding.voiceId, 'female-young');
+      expect(initial.voices['a']!.binding.voiceId, 'female-young-a');
+      expect(initial.voices['b']!.binding.voiceId, 'female-young-b');
+      expect(initial.voices['c']!.binding.voiceId, 'female-young-a');
       await CastRepository(store).save(
         initial.cast.copyWith(
           speakers: [
@@ -141,12 +141,9 @@ void main() {
         1,
         speakerIds: ['a', 'b', 'd'],
       );
-      expect(bindings['a']!.voiceId, 'female-young');
-      expect(bindings['b']!.voiceId, 'female-spare');
-      expect(
-        bindings['d']!.voiceId,
-        isNot(anyOf('female-young', 'female-spare')),
-      );
+      expect(bindings['a']!.voiceId, 'female-young-a');
+      expect(bindings['b']!.voiceId, 'female-young-b');
+      expect(bindings['d']!.voiceId, 'female-young-a');
       expect((await casting.getCasting(book.id)).exclusiveSpeakerIds, isEmpty);
     },
   );
@@ -383,6 +380,162 @@ void main() {
     final result = await casting.recommend(book, exclusiveCount: 0);
     expect(result.voices['elder']!.binding.voiceId, 'zzz-old');
   });
+
+  test(
+    'explicit provider and region recommendation updates automatic voices only',
+    () async {
+      VoicePreset regional(
+        String provider,
+        String id,
+        List<String> regions, {
+        bool narrator = false,
+      }) => VoicePreset(
+        id: '$provider:$id',
+        binding: VoiceBinding(provider: provider, model: 'fake', voiceId: id),
+        languages: ['zh'],
+        gender: 'female',
+        ageGroup: 'youngAdult',
+        narratorCandidate: narrator,
+        regions: regions,
+      );
+      final selection = Casting(
+        store,
+        catalog: [
+          regional('bailian', 'beijing-narrator', ['beijing'], narrator: true),
+          regional('bailian', 'beijing-character', ['beijing']),
+          regional('bailian', 'singapore-narrator', [
+            'singapore',
+          ], narrator: true),
+          regional('bailian', 'singapore-character', ['singapore']),
+          regional('minimax', 'narrator', [
+            'beijing',
+            'singapore',
+          ], narrator: true),
+          regional('minimax', 'character', ['beijing', 'singapore']),
+        ],
+      );
+      await CastRepository(store).save(
+        Cast(
+          bookId: book.id,
+          profiledThrough: 3,
+          speakers: [
+            Speaker(id: 'narrator', name: '旁白', kind: SpeakerKind.narrator),
+            Speaker(
+              id: 'automatic',
+              name: '甲',
+              gender: 'female',
+              ageGroup: 'youngAdult',
+              chapters: [1],
+            ),
+            Speaker(
+              id: 'manual',
+              name: '乙',
+              gender: 'female',
+              ageGroup: 'youngAdult',
+              chapters: [2],
+            ),
+          ],
+        ),
+      );
+      await selection.recommend(
+        book,
+        exclusiveCount: 0,
+        providers: {'bailian'},
+      );
+      await selection.selectPreset(book, 'manual', 'bailian:beijing-character');
+      final singapore = await selection.recommend(
+        book,
+        exclusiveCount: 0,
+        providers: {'bailian'},
+        bailianRegion: 'singapore',
+      );
+      expect(
+        singapore.voices['narrator']!.binding.voiceId,
+        'singapore-narrator',
+      );
+      expect(
+        singapore.voices['automatic']!.binding.voiceId,
+        'singapore-character',
+      );
+      expect(singapore.voices['manual']!.binding.voiceId, 'beijing-character');
+      final minimax = await selection.recommend(
+        book,
+        exclusiveCount: 0,
+        providers: {'minimax'},
+      );
+      expect(minimax.voices['narrator']!.binding.provider, 'minimax');
+      expect(minimax.voices['automatic']!.binding.provider, 'minimax');
+      expect(minimax.voices['manual']!.binding.provider, 'bailian');
+      await CastRepository(store).save(
+        minimax.cast.copyWith(
+          speakers: [
+            ...minimax.cast.speakers,
+            Speaker(
+              id: 'new',
+              name: '新角色',
+              kind: SpeakerKind.provisional,
+              gender: 'female',
+              ageGroup: 'youngAdult',
+            ),
+          ],
+        ),
+      );
+      final filled = await selection.bindingsForChapter(
+        book,
+        2,
+        speakerIds: ['new'],
+      );
+      expect(filled['new']!.provider, 'minimax');
+      expect(filled['manual']!.provider, 'bailian');
+      expect(
+        (await selection.getCasting(book.id)).exclusiveSpeakerIds,
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'unknown demographic fallbacks are deterministic and avoid compatible collisions',
+    () async {
+      final selection = Casting(
+        store,
+        catalog: [
+          preset('narrator-zh', 'unknown', narrator: true),
+          preset('a-unknown', 'unknown'),
+          preset('b-male', 'male'),
+        ],
+      );
+      await CastRepository(store).save(
+        Cast(
+          bookId: book.id,
+          profiledThrough: 3,
+          speakers: [
+            Speaker(id: 'narrator', name: '旁白', kind: SpeakerKind.narrator),
+            Speaker(
+              id: 'a',
+              name: '甲',
+              gender: 'female',
+              ageGroup: 'youngAdult',
+              chapters: [1],
+            ),
+            Speaker(
+              id: 'b',
+              name: '乙',
+              gender: 'female',
+              ageGroup: 'youngAdult',
+              chapters: [1],
+            ),
+            Speaker(id: 'c', name: '丙', chapters: [1]),
+          ],
+        ),
+      );
+      final result = await selection.recommend(book, exclusiveCount: 0);
+      expect(result.voices['a']!.binding.voiceId, 'a-unknown');
+      expect(result.voices['b']!.binding.voiceId, 'a-unknown');
+      expect(result.voices['c']!.binding.voiceId, 'b-male');
+      expect(result.warnings, hasLength(1));
+    },
+  );
 }
 
 VoicePreset preset(
@@ -404,8 +557,8 @@ final catalog = [
   preset('narrator-zh', 'unknown', narrator: true),
   preset('narrator-en', 'unknown', narrator: true, language: 'en'),
   preset('male-young', 'male'),
-  preset('female-young', 'female'),
-  preset('female-spare', 'female', age: 'middleAged'),
+  preset('female-young-a', 'female'),
+  preset('female-young-b', 'female'),
   preset('zzz-old', 'male', age: 'senior'),
 ];
 

@@ -182,8 +182,7 @@ class _ReaderCast {
   );
   Cast cast;
   final int chapter;
-  bool _appeared(Speaker speaker) =>
-      speaker.chapters.isEmpty || speaker.chapters.any((n) => n <= chapter);
+  bool _appeared(Speaker speaker) => speaker.chapters.any((n) => n <= chapter);
   bool _known(Speaker speaker) =>
       speaker.kind == SpeakerKind.narrator ||
       _appeared(speaker) ||

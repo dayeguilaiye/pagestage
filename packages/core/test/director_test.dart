@@ -418,4 +418,37 @@ void main() {
       );
     },
   );
+
+  test(
+    'hidden owner without appearances resolves to persona before reveal',
+    () async {
+      final book = novel('你好。旁白。');
+      await CastRepository(store).save(
+        Cast(
+          bookId: book.id,
+          profiledThrough: 1,
+          speakers: [
+            Speaker(id: 'narrator', name: '旁白', kind: SpeakerKind.narrator),
+            Speaker(id: 'owner', name: '真实身份', chapters: []),
+            Speaker(
+              id: 'mask',
+              name: '黑袍人',
+              kind: SpeakerKind.persona,
+              characterId: 'owner',
+              revealChapter: 3,
+              chapters: [1],
+            ),
+          ],
+        ),
+      );
+      final llm = FakeDirectorLlm([
+        response([line('你好。', 'owner'), line('旁白。', 'narrator')]),
+      ]);
+      final result = await Director(store, llm).direct(book, 1);
+      expect(result.script.lines.map((line) => line.direction.speakerId), [
+        'mask',
+        'narrator',
+      ]);
+    },
+  );
 }

@@ -6,9 +6,7 @@ import '../models/script.dart';
 import '../models/cast.dart';
 import '../models/voice.dart';
 import '../provider_configuration.dart';
-import '../providers/minimax_tts_adapter.dart';
-import '../providers/bailian_tts_adapter.dart';
-import '../providers/provider_exception.dart';
+import '../providers/tts_settings.dart';
 import '../synthesizer.dart';
 
 class NarrateCommand extends Command<void> {
@@ -51,33 +49,14 @@ class NarrateCommand extends Command<void> {
     );
     final provider = argResults!['provider'] as String;
     final envPrefix = provider.toUpperCase();
-    final regionName = provider == 'bailian'
-        ? config.value(
-                'bailian',
-                'region',
-                environmentVariable: 'BAILIAN_REGION',
-              ) ??
-              'beijing'
-        : 'beijing';
-    if (!['beijing', 'singapore'].contains(regionName)) {
-      throw const ProviderException(
-        provider: 'bailian',
-        kind: ProviderErrorKind.invalidConfiguration,
-      );
-    }
-    final region = BailianRegion.values.byName(regionName);
     final defaults = provider == 'minimax'
         ? (
             model: 'speech-2.8-hd',
-            baseUrl: 'https://api.minimax.io/v1',
             zhVoice: 'Chinese (Mandarin)_Male_Announcer',
             enVoice: 'English_expressive_narrator',
           )
         : (
             model: 'qwen-audio-3.1-tts-flash',
-            baseUrl: region == BailianRegion.beijing
-                ? 'https://dashscope.aliyuncs.com/api/v1'
-                : 'https://dashscope-intl.aliyuncs.com/api/v1',
             zhVoice: 'longsanshu_v3.1',
             enVoice: 'Emily_v3.1',
           );
@@ -97,66 +76,34 @@ class NarrateCommand extends Command<void> {
           environmentVariable: '${envPrefix}_VOICE',
         ) ??
         (book.language == 'zh' ? defaults.zhVoice : defaults.enVoice);
-    var adapter = context.ttsAdapters[provider];
-    void Function()? closeAdapter;
-    if (adapter == null) {
-      final key = config.value(
-        provider,
-        'key',
-        environmentVariable: '${envPrefix}_API_KEY',
-      );
-      final baseUrl = Uri.tryParse(
-        config.value(
-              provider,
-              'baseUrl',
-              environmentVariable: '${envPrefix}_BASE_URL',
-            ) ??
-            defaults.baseUrl,
-      );
-      if (key == null || baseUrl == null) {
-        throw ProviderException(
-          provider: provider,
-          kind: ProviderErrorKind.invalidConfiguration,
-        );
-      }
-      if (provider == 'minimax') {
-        final created = MiniMaxTtsAdapter(apiKey: key, baseUrl: baseUrl);
-        adapter = created;
-        closeAdapter = created.close;
-      } else {
-        final created = BailianTtsAdapter(
-          apiKey: key,
-          baseUrl: baseUrl,
-          region: region,
-        );
-        adapter = created;
-        closeAdapter = created.close;
-      }
-    }
+    final session = TtsProviderSession.open(
+      config,
+      providers: [provider],
+      overrides: context.ttsAdapters,
+    );
     try {
       final cast = await CastRepository(context.store).get(book.id);
-      final result = await Synthesizer(adapters: {provider: adapter})
-          .synthesize(
-            chapter: chapter,
-            script: Script.narration(bookId: book.id, chapter: chapter),
-            language: book.language,
-            lexicon: cast.lexicon,
-            voices: {
-              'narrator': VoiceBinding(
-                provider: provider,
-                model: model,
-                voiceId: voice,
-              ),
-            },
-            outputPath:
-                argResults!['output'] as String? ??
-                p.join(
-                  context.dataDirectory.path,
-                  'audio',
-                  book.id,
-                  'chapter-$number.wav',
-                ),
-          );
+      final result = await Synthesizer(adapters: session.adapters).synthesize(
+        chapter: chapter,
+        script: Script.narration(bookId: book.id, chapter: chapter),
+        language: book.language,
+        lexicon: cast.lexicon,
+        voices: {
+          'narrator': VoiceBinding(
+            provider: provider,
+            model: model,
+            voiceId: voice,
+          ),
+        },
+        outputPath:
+            argResults!['output'] as String? ??
+            p.join(
+              context.dataDirectory.path,
+              'audio',
+              book.id,
+              'chapter-$number.wav',
+            ),
+      );
       context.writeJson({
         'bookId': book.id,
         'chapter': number,
@@ -183,7 +130,7 @@ class NarrateCommand extends Command<void> {
         ],
       });
     } finally {
-      closeAdapter?.call();
+      session.close();
     }
   }
 }
