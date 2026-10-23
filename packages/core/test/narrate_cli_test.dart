@@ -107,9 +107,61 @@ void main() {
       );
     },
   );
+  test('CLI selects Bailian and its configured model and preset', () async {
+    final directory = await Directory.systemTemp.createTemp(
+      'pagestage-bailian-cli-',
+    );
+    addTearDown(() => directory.delete(recursive: true));
+    final file = await File(
+      '${directory.path}/book.txt',
+    ).writeAsString('Chapter I.\nFirst.');
+    final imported = StringBuffer();
+    await runCli([
+      '--data-dir',
+      directory.path,
+      'import',
+      file.path,
+    ], output: imported);
+    final bookId = (jsonDecode(imported.toString()) as Map)['bookId'] as String;
+    final output = StringBuffer();
+    final fake = _FakeTts();
+    expect(
+      await runCli(
+        [
+          '--data-dir',
+          directory.path,
+          'narrate',
+          bookId,
+          '1',
+          '--provider',
+          'bailian',
+        ],
+        output: output,
+        environment: {
+          'BAILIAN_MODEL': 'qwen-audio-3.1-tts-plus',
+          'BAILIAN_VOICE': 'Luna_v3.1',
+        },
+        ttsAdapters: {'bailian': fake},
+      ),
+      0,
+    );
+    expect(fake.requests.single.binding.provider, 'bailian');
+    expect(fake.requests.single.binding.model, 'qwen-audio-3.1-tts-plus');
+    expect(fake.requests.single.binding.voiceId, 'Luna_v3.1');
+    expect((jsonDecode(output.toString()) as Map)['provider'], 'bailian');
+  });
 }
 
 class _FakeTts implements TtsAdapter {
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      const TtsCapabilities(
+        supportsVoiceDesign: false,
+        emotionControl: EmotionControl.none,
+        supportsPronunciation: false,
+        returnsTimestamps: false,
+        maxCharacters: 9999,
+      );
   final requests = <TtsRequest>[];
   @override
   String get provider => 'minimax';
@@ -124,6 +176,15 @@ class _FakeTts implements TtsAdapter {
 }
 
 class _FailingTts implements TtsAdapter {
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      const TtsCapabilities(
+        supportsVoiceDesign: false,
+        emotionControl: EmotionControl.none,
+        supportsPronunciation: false,
+        returnsTimestamps: false,
+        maxCharacters: 9999,
+      );
   @override
   String get provider => 'minimax';
   @override

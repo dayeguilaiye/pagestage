@@ -49,9 +49,88 @@ void main() {
       expect(data.getInt16(44 + 7440 * 2, Endian.little), 2000);
     },
   );
+  for (final provider in ['minimax', 'bailian']) {
+    test(
+      'splits long $provider text at its declared limit without chunk pauses',
+      () async {
+        final directory = await Directory.systemTemp.createTemp(
+          'pagestage-chunks-',
+        );
+        addTearDown(() => directory.delete(recursive: true));
+        final limit = provider == 'minimax' ? 9999 : 600;
+        final prefix = '${'文' * (limit - 2)}𠀀。';
+        final chapter = Chapter(number: 1, title: '章', text: '$prefix尾句。\n再见。');
+        final tts = _LimitedTts(provider, limit);
+        final result = await Synthesizer(adapters: {provider: tts}).synthesize(
+          chapter: chapter,
+          script: Script.narration(bookId: 'book', chapter: chapter),
+          language: 'zh',
+          voices: {
+            'narrator': VoiceBinding(
+              provider: provider,
+              model: 'fake',
+              voiceId: 'voice',
+            ),
+          },
+          outputPath: '${directory.path}/chapter.wav',
+        );
+        expect(tts.requests.map((r) => r.text), [prefix, '尾句。\n', '再见。']);
+        expect(result.duration, const Duration(milliseconds: 330));
+        expect(result.requests, 3);
+        expect(result.inputTokens, 6);
+        expect(result.outputTokens, 9);
+        expect(result.totalTokens, 15);
+        final data = ByteData.sublistView(
+          await File(result.path).readAsBytes(),
+        );
+        expect(data.getInt16(44 + 240 * 2, Endian.little), 2000);
+        expect(data.getInt16(44 + 480 * 2, Endian.little), 0);
+        expect(data.getInt16(44 + 7680 * 2, Endian.little), 3000);
+      },
+    );
+  }
+  test(
+    'prefers a sentence boundary and preserves every original character',
+    () async {
+      final directory = await Directory.systemTemp.createTemp(
+        'pagestage-sentences-',
+      );
+      addTearDown(() => directory.delete(recursive: true));
+      const chapter = Chapter(
+        number: 1,
+        title: 'Chapter I.',
+        text: 'First. Nextpart.',
+      );
+      final tts = _LimitedTts('fake', 10);
+      final result = await Synthesizer(adapters: {'fake': tts}).synthesize(
+        chapter: chapter,
+        script: Script.narration(bookId: 'book', chapter: chapter),
+        language: 'en',
+        voices: {
+          'narrator': const VoiceBinding(
+            provider: 'fake',
+            model: 'fake',
+            voiceId: 'voice',
+          ),
+        },
+        outputPath: '${directory.path}/chapter.wav',
+      );
+      expect(tts.requests.map((r) => r.text), ['First. ', 'Nextpart.']);
+      expect(result.duration, const Duration(milliseconds: 20));
+    },
+  );
 }
 
 class _FakeTts implements TtsAdapter {
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      const TtsCapabilities(
+        supportsVoiceDesign: false,
+        emotionControl: EmotionControl.none,
+        supportsPronunciation: false,
+        returnsTimestamps: false,
+        maxCharacters: 9999,
+      );
   final requests = <TtsRequest>[];
   @override
   String get provider => 'fake';
@@ -63,6 +142,38 @@ class _FakeTts implements TtsAdapter {
         samples: Int16List.fromList(List.filled(240, requests.length * 1000)),
       ),
       characters: request.text.runes.length,
+    );
+  }
+}
+
+class _LimitedTts implements TtsAdapter {
+  _LimitedTts(this.provider, this.limit);
+  @override
+  final String provider;
+  final int limit;
+  final requests = <TtsRequest>[];
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
+    supportsVoiceDesign: false,
+    emotionControl: EmotionControl.none,
+    supportsPronunciation: false,
+    returnsTimestamps: false,
+    maxCharacters: limit,
+  );
+  @override
+  Future<TtsAudio> synthesize(TtsRequest request) async {
+    if (request.text.runes.length > limit) {
+      throw StateError('Source request exceeds provider limit.');
+    }
+    requests.add(request);
+    return TtsAudio(
+      audio: PcmAudio(
+        samples: Int16List.fromList(List.filled(240, requests.length * 1000)),
+      ),
+      characters: request.text.runes.length,
+      inputTokens: 2,
+      outputTokens: 3,
+      totalTokens: 5,
     );
   }
 }

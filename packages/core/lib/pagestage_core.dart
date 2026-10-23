@@ -11,3 +11,4 @@ export 'src/synthesizer.dart';
 export 'src/provider_configuration.dart';
 export 'src/providers/provider_exception.dart';
 export 'src/providers/minimax_tts_adapter.dart';
+export 'src/providers/bailian_tts_adapter.dart';

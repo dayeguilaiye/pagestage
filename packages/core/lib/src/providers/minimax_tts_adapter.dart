@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 import '../pcm_audio.dart';
+import '../models/voice.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
 
@@ -32,6 +33,23 @@ class MiniMaxTtsAdapter implements TtsAdapter {
   final bool _ownsClient;
   @override
   String get provider => 'minimax';
+
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) {
+    if (binding.provider != provider) {
+      throw const ProviderException(
+        provider: 'minimax',
+        kind: ProviderErrorKind.invalidConfiguration,
+      );
+    }
+    return const TtsCapabilities(
+      supportsVoiceDesign: true,
+      emotionControl: EmotionControl.enumerated,
+      supportsPronunciation: true,
+      returnsTimestamps: false,
+      maxCharacters: 9999,
+    );
+  }
 
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {

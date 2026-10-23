@@ -6,15 +6,22 @@ import '../models/script.dart';
 import '../models/voice.dart';
 import '../provider_configuration.dart';
 import '../providers/minimax_tts_adapter.dart';
+import '../providers/bailian_tts_adapter.dart';
 import '../providers/provider_exception.dart';
 import '../synthesizer.dart';
 
 class NarrateCommand extends Command<void> {
   NarrateCommand(this.context) {
     argParser
+      ..addOption(
+        'provider',
+        allowed: ['minimax', 'bailian'],
+        defaultsTo: 'minimax',
+        help: 'TTS provider.',
+      )
       ..addOption('config', help: 'Local provider JSON configuration file.')
-      ..addOption('model', help: 'MiniMax speech model.')
-      ..addOption('voice', help: 'MiniMax preset voice identifier.')
+      ..addOption('model', help: 'Provider speech model.')
+      ..addOption('voice', help: 'Provider preset voice parameter.')
       ..addOption('output', help: 'Destination WAV path.');
   }
   final CliContext context;
@@ -41,58 +48,99 @@ class NarrateCommand extends Command<void> {
       argResults!['config'] as String?,
       environment: context.environment,
     );
+    final provider = argResults!['provider'] as String;
+    final envPrefix = provider.toUpperCase();
+    final regionName = provider == 'bailian'
+        ? config.value(
+                'bailian',
+                'region',
+                environmentVariable: 'BAILIAN_REGION',
+              ) ??
+              'beijing'
+        : 'beijing';
+    if (!['beijing', 'singapore'].contains(regionName)) {
+      throw const ProviderException(
+        provider: 'bailian',
+        kind: ProviderErrorKind.invalidConfiguration,
+      );
+    }
+    final region = BailianRegion.values.byName(regionName);
+    final defaults = provider == 'minimax'
+        ? (
+            model: 'speech-2.8-hd',
+            baseUrl: 'https://api.minimax.io/v1',
+            zhVoice: 'Chinese (Mandarin)_Male_Announcer',
+            enVoice: 'English_expressive_narrator',
+          )
+        : (
+            model: 'qwen-audio-3.1-tts-flash',
+            baseUrl: region == BailianRegion.beijing
+                ? 'https://dashscope.aliyuncs.com/api/v1'
+                : 'https://dashscope-intl.aliyuncs.com/api/v1',
+            zhVoice: 'longsanshu_v3.1',
+            enVoice: 'Emily_v3.1',
+          );
     final model =
         argResults!['model'] as String? ??
         config.value(
-          'minimax',
+          provider,
           'model',
-          environmentVariable: 'MINIMAX_MODEL',
+          environmentVariable: '${envPrefix}_MODEL',
         ) ??
-        'speech-2.8-hd';
+        defaults.model;
     final voice =
         argResults!['voice'] as String? ??
         config.value(
-          'minimax',
+          provider,
           'voice',
-          environmentVariable: 'MINIMAX_VOICE',
+          environmentVariable: '${envPrefix}_VOICE',
         ) ??
-        (book.language == 'zh'
-            ? 'Chinese (Mandarin)_Male_Announcer'
-            : 'English_expressive_narrator');
-    var adapter = context.ttsAdapters['minimax'];
-    MiniMaxTtsAdapter? ownedAdapter;
+        (book.language == 'zh' ? defaults.zhVoice : defaults.enVoice);
+    var adapter = context.ttsAdapters[provider];
+    void Function()? closeAdapter;
     if (adapter == null) {
       final key = config.value(
-        'minimax',
+        provider,
         'key',
-        environmentVariable: 'MINIMAX_API_KEY',
+        environmentVariable: '${envPrefix}_API_KEY',
       );
       final baseUrl = Uri.tryParse(
         config.value(
-              'minimax',
+              provider,
               'baseUrl',
-              environmentVariable: 'MINIMAX_BASE_URL',
+              environmentVariable: '${envPrefix}_BASE_URL',
             ) ??
-            'https://api.minimax.io/v1',
+            defaults.baseUrl,
       );
       if (key == null || baseUrl == null) {
-        throw const ProviderException(
-          provider: 'minimax',
+        throw ProviderException(
+          provider: provider,
           kind: ProviderErrorKind.invalidConfiguration,
         );
       }
-      ownedAdapter = MiniMaxTtsAdapter(apiKey: key, baseUrl: baseUrl);
-      adapter = ownedAdapter;
+      if (provider == 'minimax') {
+        final created = MiniMaxTtsAdapter(apiKey: key, baseUrl: baseUrl);
+        adapter = created;
+        closeAdapter = created.close;
+      } else {
+        final created = BailianTtsAdapter(
+          apiKey: key,
+          baseUrl: baseUrl,
+          region: region,
+        );
+        adapter = created;
+        closeAdapter = created.close;
+      }
     }
     try {
-      final result = await Synthesizer(adapters: {'minimax': adapter})
+      final result = await Synthesizer(adapters: {provider: adapter})
           .synthesize(
             chapter: chapter,
             script: Script.narration(bookId: book.id, chapter: chapter),
             language: book.language,
             voices: {
               'narrator': VoiceBinding(
-                provider: 'minimax',
+                provider: provider,
                 model: model,
                 voiceId: voice,
               ),
@@ -114,11 +162,14 @@ class NarrateCommand extends Command<void> {
         'characters': result.characters,
         'requests': result.requests,
         'elapsedMs': result.elapsed.inMilliseconds,
-        'provider': 'minimax',
+        'provider': provider,
+        'inputTokens': result.inputTokens,
+        'outputTokens': result.outputTokens,
+        'totalTokens': result.totalTokens,
         'model': model,
       });
     } finally {
-      ownedAdapter?.close();
+      closeAdapter?.call();
     }
   }
 }
