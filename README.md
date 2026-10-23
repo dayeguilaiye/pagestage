@@ -22,7 +22,9 @@ TXT 先严格按 UTF-8 解码，再尝试 GB18030。GB18030 解码使用 WHATWG 
 
 ## 从章节到多角色音频
 
-完成导入后，按 [LLM 配置](docs/cli-profiling.md) 和 [TTS 配置](docs/cli-tts.md) 准备环境变量，或创建被 Git 忽略的 `.pagestage/providers.json`。以下 `<book-id>` 使用导入结果中的 ID：
+完成导入后，把 key 写进被 Git 忽略的 `.pagestage/providers.json`，字段见 [LLM 配置](docs/cli-profiling.md) 和 [TTS 配置](docs/cli-tts.md)，并用 `chmod 600` 限制读取权限。CLI 只在命令带 `--config` 时读取这个文件，付费请求因此始终是显式的。环境变量同样可用且优先于文件；写进 shell 启动文件会让每条命令都带上 key，建议只在单条命令前临时设置。该文件位于默认数据目录内，清空 `.pagestage/` 前先把它移出。Agent 使用 key 的规则见 [AGENTS.md](AGENTS.md)。
+
+以下 `<book-id>` 使用导入结果中的 ID：
 
 ```sh
 dart run packages/core/bin/pagestage.dart profile <book-id> --through 1 --config .pagestage/providers.json
