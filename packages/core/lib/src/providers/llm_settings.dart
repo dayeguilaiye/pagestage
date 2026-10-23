@@ -1,6 +1,7 @@
 import '../provider_configuration.dart';
 import 'llm_adapter.dart';
 import 'provider_exception.dart';
+import 'usage_ledger.dart';
 
 /// Two model slots sharing one explicit endpoint and API protocol.
 class LlmSettings {
@@ -12,6 +13,7 @@ class LlmSettings {
     required this.directorModel,
     required this.jsonSchema,
     required this.reasoningEffort,
+    required this.stream,
   }) : _key = key;
   final Uri baseUrl;
   final LlmApi api;
@@ -20,6 +22,7 @@ class LlmSettings {
   final String directorModel;
   final bool jsonSchema;
   final String? reasoningEffort;
+  final bool stream;
 
   factory LlmSettings.fromConfiguration(ProviderConfiguration config) {
     final common = config.value(
@@ -51,6 +54,9 @@ class LlmSettings {
     final mode =
         config.value('llm', 'jsonMode', environmentVariable: 'LLM_JSON_MODE') ??
         'schema';
+    final stream =
+        config.value('llm', 'stream', environmentVariable: 'LLM_STREAM') ??
+        'false';
     final url = Uri.tryParse(endpoint);
     if (profile == null ||
         director == null ||
@@ -62,7 +68,8 @@ class LlmSettings {
         url.hasQuery ||
         url.hasFragment ||
         !['chat-completions', 'responses'].contains(api) ||
-        !['schema', 'object'].contains(mode)) {
+        !['schema', 'object'].contains(mode) ||
+        !['true', 'false'].contains(stream)) {
       throw const ProviderException(
         provider: 'llm',
         kind: ProviderErrorKind.invalidConfiguration,
@@ -80,23 +87,30 @@ class LlmSettings {
         'reasoningEffort',
         environmentVariable: 'LLM_REASONING_EFFORT',
       ),
+      stream: stream == 'true',
     );
   }
 
-  OpenAiLlmAdapter createProfileAdapter() => OpenAiLlmAdapter(
-    baseUrl: baseUrl,
-    apiKey: _key,
-    model: profileModel,
-    api: api,
-    jsonSchema: jsonSchema,
-    reasoningEffort: reasoningEffort,
-  );
-  OpenAiLlmAdapter createDirectorAdapter() => OpenAiLlmAdapter(
-    baseUrl: baseUrl,
-    apiKey: _key,
-    model: directorModel,
-    api: api,
-    jsonSchema: jsonSchema,
-    reasoningEffort: reasoningEffort,
-  );
+  OpenAiLlmAdapter createProfileAdapter({UsageLedger? usageLedger}) =>
+      OpenAiLlmAdapter(
+        baseUrl: baseUrl,
+        apiKey: _key,
+        model: profileModel,
+        api: api,
+        jsonSchema: jsonSchema,
+        reasoningEffort: reasoningEffort,
+        stream: stream,
+        usageLedger: usageLedger,
+      );
+  OpenAiLlmAdapter createDirectorAdapter({UsageLedger? usageLedger}) =>
+      OpenAiLlmAdapter(
+        baseUrl: baseUrl,
+        apiKey: _key,
+        model: directorModel,
+        api: api,
+        jsonSchema: jsonSchema,
+        reasoningEffort: reasoningEffort,
+        stream: stream,
+        usageLedger: usageLedger,
+      );
 }

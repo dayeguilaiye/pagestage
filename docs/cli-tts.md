@@ -35,7 +35,7 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --merge-narrato
 | --- | --- |
 | `--mode audiobook`（默认） | 朗读正文和说话提示，跳过非正文 |
 | `--mode drama` | 朗读正文，跳过说话提示和非正文 |
-| `--merge-narrator` | 合并原文中相邻、表演指令相同的旁白台词；原文逐字保留，长请求仍按服务商预算拆分 |
+| `--merge-narrator` | 合并原文中相邻、情绪和强度相同的旁白台词，沿用第一行的表演说明；原文逐字保留，长请求仍按服务商预算拆分 |
 | 连续同一说话人 | 100 ms 停顿 |
 | 切换说话人 | 180 ms 停顿 |
 | 原文换段 | 300 ms 停顿，优先于说话人规则 |

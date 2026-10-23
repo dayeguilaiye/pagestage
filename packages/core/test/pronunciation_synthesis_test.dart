@@ -33,6 +33,26 @@ void main() {
     },
   );
   test(
+    'skips profiled entries whose pinyin does not cover each character',
+    () async {
+      final tts = _Tts();
+      const chapter = Chapter(number: 1, title: '章', text: '小D和长乐。');
+      await _run(
+        temp,
+        tts,
+        chapter,
+        lexicon: const [
+          PronunciationEntry('小D', 'xiao3 D'),
+          PronunciationEntry('小Don', 'xiao3 Don'),
+          PronunciationEntry('长乐', 'chang2 le4'),
+        ],
+      );
+      expect(tts.requests.single.pronunciations.map((e) => e.toJson()), [
+        {'term': '长乐', 'pinyin': 'chang2 le4'},
+      ]);
+    },
+  );
+  test(
     'raw cache follows effective pronunciation and provider request changes',
     () async {
       const chapter = Chapter(number: 1, title: '章', text: '长乐来了。');
@@ -114,19 +134,19 @@ void main() {
     );
     expect(tts.requests, isEmpty);
   });
-  test('rejects incomplete pinyin before sending any chapter audio', () async {
+  test('reads terms with incomplete or invalid pinyin as written', () async {
     final tts = _Tts();
     const chapter = Chapter(number: 1, title: '章', text: '第一句。\n长乐来了。');
-    await expectLater(
-      _run(
-        temp,
-        tts,
-        chapter,
-        lexicon: const [PronunciationEntry('长乐', 'chang2')],
-      ),
-      throwsFormatException,
+    await _run(
+      temp,
+      tts,
+      chapter,
+      lexicon: const [
+        PronunciationEntry('长乐', 'chang2'),
+        PronunciationEntry('来了', 'lai2 l!'),
+      ],
     );
-    expect(tts.requests, isEmpty);
+    expect(tts.requests.every((r) => r.pronunciations.isEmpty), isTrue);
   });
   test(
     'protected terms and adjacent supplementary CJK preserve the source',

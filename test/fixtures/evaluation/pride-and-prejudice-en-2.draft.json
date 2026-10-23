@@ -152,7 +152,8 @@
     {
       "start": 1354,
       "end": 1376,
-      "speakerId": "elizabeth-bennet"
+      "speakerId": "elizabeth-bennet",
+      "note": "Unattributed reply; Elizabeth answers the question Kitty addressed to Lizzy."
     },
     {
       "start": 1376,
@@ -341,11 +342,6 @@
     }
   ],
   "notes": [
-    "DRAFT — awaiting human correction.",
-    "Source: test/fixtures/books/pride-and-prejudice-en.txt, Chapter II..",
-    "DRAFT — awaiting human correction. Speaker assignments were read individually from attribution, address and conversational context; only span location was automated.",
-    "Quoted speech includes its opening/closing quotation marks. Attribution outside the quotation marks remains narrator. Paragraph separators are narrator for complete interval coverage.",
-    "Mrs. Bennet reporting what Mrs. Long said remains Mrs. Bennet; indirect reported speech outside quotation marks remains narrator.",
-    "The reply “To-morrow fortnight.” is Elizabeth answering Kitty’s direct question to Lizzy. Mary has no spoken line; she wishes to speak but does not."
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed."
   ]
 }

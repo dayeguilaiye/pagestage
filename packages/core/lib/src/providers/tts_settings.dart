@@ -3,6 +3,7 @@ import 'bailian_tts_adapter.dart';
 import 'minimax_tts_adapter.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
+import 'usage_ledger.dart';
 
 /// Opens only the TTS providers needed by an operation; closes owned clients.
 class TtsProviderSession {
@@ -14,6 +15,7 @@ class TtsProviderSession {
     ProviderConfiguration config, {
     required Iterable<String> providers,
     Map<String, TtsAdapter> overrides = const {},
+    UsageLedger? usageLedger,
   }) {
     final adapters = <String, TtsAdapter>{};
     final closers = <void Function()>[];
@@ -55,7 +57,11 @@ class TtsProviderSession {
           );
         }
         if (provider == 'minimax') {
-          final adapter = MiniMaxTtsAdapter(apiKey: key, baseUrl: baseUrl);
+          final adapter = MiniMaxTtsAdapter(
+            apiKey: key,
+            baseUrl: baseUrl,
+            usageLedger: usageLedger,
+          );
           adapters[provider] = adapter;
           closers.add(adapter.close);
         } else {
@@ -63,6 +69,7 @@ class TtsProviderSession {
             apiKey: key,
             baseUrl: baseUrl,
             region: BailianRegion.values.byName(region),
+            usageLedger: usageLedger,
           );
           adapters[provider] = adapter;
           closers.add(adapter.close);

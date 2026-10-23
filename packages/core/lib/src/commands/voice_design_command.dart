@@ -84,6 +84,7 @@ class _Generate extends Command<void> {
       config,
       providers: [provider],
       overrides: context.ttsAdapters,
+      usageLedger: context.usageLedger,
     );
     try {
       final candidates =
@@ -157,6 +158,7 @@ class _Select extends Command<void> {
       config,
       providers: provider == 'minimax' ? [provider] : [],
       overrides: context.ttsAdapters,
+      usageLedger: context.usageLedger,
     );
     try {
       final selected = await VoiceDesign(

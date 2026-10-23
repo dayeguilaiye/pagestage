@@ -18,15 +18,22 @@ class PcmAudio {
     if (bytes.length < 12 || tag(0) != 'RIFF' || tag(8) != 'WAVE') {
       throw const FormatException('Expected RIFF/WAVE audio.');
     }
-    final end = data.getUint32(4, Endian.little) + 8;
+    // Streamed WAV files (e.g. Bailian results) declare placeholder sizes
+    // near 2^31 or 2^32; such a chunk runs to the end of the file.
+    bool placeholder(int size) => size >= 0x7FFF0000;
+    final declared = data.getUint32(4, Endian.little);
+    final end = placeholder(declared) ? bytes.length : declared + 8;
     if (end > bytes.length || end < 12) {
       throw const FormatException('Truncated WAV audio.');
     }
     int? sampleRate;
     Uint8List? pcm;
     for (var offset = 12; offset + 8 <= end;) {
-      final size = data.getUint32(offset + 4, Endian.little);
+      var size = data.getUint32(offset + 4, Endian.little);
       final start = offset + 8;
+      if (tag(offset) == 'data' && placeholder(size)) {
+        size = (end - start) & ~1;
+      }
       if (start + size > end) {
         throw const FormatException('Truncated WAV chunk.');
       }

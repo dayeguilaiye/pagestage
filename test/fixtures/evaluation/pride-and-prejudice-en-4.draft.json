@@ -1,0 +1,134 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "utf16",
+  "bookId": "e29cb883376b4e31947bb861",
+  "chapterNumber": 4,
+  "sourceTextHash": "4b6ef742a2c8ad8339ab04a853a1106d5f3d7653974a20760e75e410077a6d40",
+  "humanReviewed": false,
+  "speakers": {
+    "narrator": "旁白",
+    "jane-bennet": "Jane Bennet",
+    "elizabeth-bennet": "Elizabeth Bennet"
+  },
+  "spans": [
+    {
+      "start": 0,
+      "end": 164,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 164,
+      "end": 206,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 206,
+      "end": 217,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 217,
+      "end": 334,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 334,
+      "end": 336,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 336,
+      "end": 358,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 358,
+      "end": 378,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 378,
+      "end": 473,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 473,
+      "end": 475,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 475,
+      "end": 579,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 579,
+      "end": 581,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 581,
+      "end": 1012,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 1012,
+      "end": 1014,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1014,
+      "end": 1027,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 1027,
+      "end": 1029,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1029,
+      "end": 1243,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 1243,
+      "end": 1245,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1245,
+      "end": 1329,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 1329,
+      "end": 1331,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1331,
+      "end": 1796,
+      "speakerId": "elizabeth-bennet"
+    },
+    {
+      "start": 1796,
+      "end": 1798,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1798,
+      "end": 2026,
+      "speakerId": "jane-bennet"
+    },
+    {
+      "start": 2026,
+      "end": 5927,
+      "speakerId": "narrator"
+    }
+  ],
+  "notes": [
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed.",
+    "Bingley’s and Darcy’s summarized opinions of the Meryton assembly are indirect speech, so narrator."
+  ]
+}

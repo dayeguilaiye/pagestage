@@ -17,11 +17,17 @@ List<PronunciationMatch> pronunciationMatches(
   final entries = <String, PronunciationEntry>{};
   for (final entry in lexicon) {
     if (entry.term.isEmpty || !text.contains(entry.term)) continue;
-    final normalized = PronunciationEntry(entry.term, _pinyin(entry.pinyin));
+    // Profiled entries can be malformed ("小D" / "xiao3 D", missing
+    // syllables); reading the text as written beats failing the chapter.
+    if (!_hanTerm.hasMatch(entry.term)) continue;
+    final PronunciationEntry normalized;
+    try {
+      normalized = PronunciationEntry(entry.term, _pinyin(entry.pinyin));
+    } on FormatException {
+      continue;
+    }
     if (normalized.pinyin.split(' ').length != entry.term.runes.length) {
-      throw const FormatException(
-        'Pinyin needs one syllable per term character.',
-      );
+      continue;
     }
     final previous = entries[entry.term];
     if (previous != null && previous.pinyin != normalized.pinyin) {
@@ -60,6 +66,8 @@ List<PronunciationEntry> matchedPronunciations(
   final terms = byTerm.keys.toList()..sort();
   return [for (final term in terms) byTerm[term]!];
 }
+
+final _hanTerm = RegExp(r'^\p{Script=Han}+$', unicode: true);
 
 String _pinyin(String source) {
   const accented = ['āáǎà', 'ēéěè', 'īíǐì', 'ōóǒò', 'ūúǔù', 'ǖǘǚǜ'];

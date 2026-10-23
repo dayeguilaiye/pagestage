@@ -94,10 +94,12 @@ class Profiler {
       try {
         _validateBatch(response.data, first, last, book.chapters.length);
         cast = _merge(cast, response.data, last);
-      } catch (_) {
-        throw const ProviderException(
+      } catch (error) {
+        // Validation messages are fixed strings, never model output.
+        throw ProviderException(
           provider: 'llm',
           kind: ProviderErrorKind.invalidResponse,
+          code: error is FormatException ? error.message : null,
         );
       }
       await _casts.save(cast);

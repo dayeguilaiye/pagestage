@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "utf16",
+  "bookId": "15bad7444de48233ea12c39c",
+  "chapterNumber": 3,
+  "sourceTextHash": "89c9713d52a3bcd3dc482ac19cc7545cf284bb3f5dcfac621408baac776bb473",
+  "humanReviewed": false,
+  "speakers": {
+    "narrator": "旁白（立传者“我”）",
+    "aq": "阿Q",
+    "wang-hu": "王胡",
+    "fake-foreigner-mother": "假洋鬼子的母亲",
+    "little-nun": "小尼姑",
+    "idle-villagers": "未庄闲人（无名村民）"
+  },
+  "spans": [
+    {
+      "start": 0,
+      "end": 55,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 55,
+      "end": 74,
+      "speakerId": "aq"
+    },
+    {
+      "start": 74,
+      "end": 836,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 836,
+      "end": 844,
+      "speakerId": "aq"
+    },
+    {
+      "start": 844,
+      "end": 856,
+      "speakerId": "wang-hu"
+    },
+    {
+      "start": 856,
+      "end": 936,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 936,
+      "end": 946,
+      "speakerId": "aq"
+    },
+    {
+      "start": 946,
+      "end": 959,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 959,
+      "end": 971,
+      "speakerId": "wang-hu"
+    },
+    {
+      "start": 971,
+      "end": 1059,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1059,
+      "end": 1073,
+      "speakerId": "aq"
+    },
+    {
+      "start": 1073,
+      "end": 1386,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1386,
+      "end": 1422,
+      "speakerId": "fake-foreigner-mother",
+      "note": "“到处说”的反复性言语，但有引号、直接引语形式，归说话人本人。"
+    },
+    {
+      "start": 1422,
+      "end": 1542,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1542,
+      "end": 1552,
+      "speakerId": "aq"
+    },
+    {
+      "start": 1552,
+      "end": 1685,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1685,
+      "end": 1693,
+      "speakerId": "aq"
+    },
+    {
+      "start": 1693,
+      "end": 1873,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1873,
+      "end": 1901,
+      "speakerId": "aq"
+    },
+    {
+      "start": 1901,
+      "end": 1920,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1920,
+      "end": 1928,
+      "speakerId": "aq",
+      "note": "阿Q吐唾沫时发出的声音，归 aq。"
+    },
+    {
+      "start": 1928,
+      "end": 1973,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1973,
+      "end": 1991,
+      "speakerId": "aq"
+    },
+    {
+      "start": 1991,
+      "end": 2004,
+      "speakerId": "little-nun"
+    },
+    {
+      "start": 2004,
+      "end": 2054,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2054,
+      "end": 2068,
+      "speakerId": "aq"
+    },
+    {
+      "start": 2068,
+      "end": 2191,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2191,
+      "end": 2204,
+      "speakerId": "little-nun"
+    },
+    {
+      "start": 2204,
+      "end": 2219,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2219,
+      "end": 2227,
+      "speakerId": "aq"
+    },
+    {
+      "start": 2227,
+      "end": 2236,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2236,
+      "end": 2244,
+      "speakerId": "idle-villagers",
+      "note": "酒店里的人：无名村民群体，并入 idle-villagers。"
+    },
+    {
+      "start": 2244,
+      "end": 2259,
+      "speakerId": "narrator"
+    }
+  ],
+  "notes": [
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed.",
+    "Source: test/fixtures/books/aq-zh.txt, 第三章　续优胜记略.",
+    "“看不上眼的王胡尚且那么多……”“这样满脸胡子的东西，他敢出言无状么？”“难道真如市上所说……”为自由间接叙述，归 narrator；“拍！拍拍！”是拟声，归 narrator。"
+  ]
+}

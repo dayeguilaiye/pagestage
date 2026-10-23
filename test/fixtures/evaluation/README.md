@@ -1,20 +1,30 @@
-# 说话人标准答案草稿
+# 说话人标准答案
 
-这四份 JSON 由代理逐句阅读公版文本后起草，**全部等待人工校对**，均设置 `humanReviewed: false`。来源是[书籍素材](../books/README.md)经过 `Library.importTxt` 导入的章节正文。格式与使用方法见[CLI 评测说明](../../../docs/cli-evaluation.md)。
+两本测试书前五章各一份，共十份。由代理逐句阅读公版文本起草，再由另一轮代理逐句复核；**未经人工校对**，均设置 `humanReviewed: false`。用户确认原型阶段直接采用这些答案（2026-10-23）。来源是[书籍素材](../books/README.md)经过 `Library.importTxt` 导入的章节正文。格式与使用方法见[CLI 评测说明](../../../docs/cli-evaluation.md)。
 
-| 文件 | 章节 | 书 ID | 区间数 |
-| --- | --- | --- | --- |
-| `aq-zh-1.draft.json` | 第一章　序 | `15bad7444de48233ea12c39c` | 7 |
-| `aq-zh-2.draft.json` | 第二章　优胜记略 | `15bad7444de48233ea12c39c` | 33 |
-| `pride-and-prejudice-en-1.draft.json` | Chapter I. | `e29cb883376b4e31947bb861` | 65 |
-| `pride-and-prejudice-en-2.draft.json` | Chapter II. | `e29cb883376b4e31947bb861` | 65 |
+| 书 | 文件 | 书 ID |
+| --- | --- | --- |
+| 《阿Q正传》 | `aq-zh-1.draft.json` 至 `aq-zh-5.draft.json` | `15bad7444de48233ea12c39c` |
+| *Pride and Prejudice* | `pride-and-prejudice-en-1.draft.json` 至 `-5.draft.json` | `e29cb883376b4e31947bb861` |
 
-各文件保存完整正文的哈希和连续的 UTF-16 区间。说话人 ID 是用于人工校对的语义标识；运行评测时，通过显式 `speaker-map.json` 对应到当前演员表的稳定 ID。
+同一本书各章使用同一套语义说话人 ID，一份 `speaker-map.json` 即可覆盖整本书。每个文件只列出本章用到的说话人。
 
-《阿Q正传》第一章的叙述由第一人称“我（立传者）”承担，使用 `aq-author`，与阿Q区分。赵太爷的三次直接对白单独划出。孔子名言和文体名称等引用由立传者朗读。
+## 判定口径
 
-第二章把明确“他想”“心里想”引出的直接思想归阿Q，把叙述内的术语引号与自由间接叙述归旁白。人工需重点确认这些边界、未庄闲人应拆成几名角色，以及“穿堂一百——一百五十！”是否归阿Q。文件中的 `notes` 和区间 `note` 已标出这些判定。
+- 直接引语的区间包含引号；`……说：`、`said Mrs. Bennet` 等说话提示归旁白。
+- 《阿Q正传》的叙述者是第一人称立传者“我”，各章统一使用 `narrator`。用“他想”“心里想”明确引出、并以阿Q口吻说出的思想归阿Q；自由间接叙述、转述以及叙述中引用的术语、名言归旁白。
+- 无名群众按类别合并，例如 `idle-villagers`；英文中一次性出场的无名说话人单独设 ID，例如 `young-lucas`。
+- 没有说话提示的连续对白按轮次和内容判定。有争议的判定写在文件的 `notes` 或区间 `note` 中。
 
-英文两章根据说话提示、称呼和上下文逐段判定。引号之间的 `said`、`replied` 等说话提示归旁白。第二章 Elizabeth 回答 Kitty 的舞会时间问题，Mary 想要发言但实际没有开口。所有这些判定都需与原文逐句复核。
+## 编写工具
 
-人审时同时检查角色身份、台词边界、引用和思想的处理口径，以及每章原文是否完整覆盖。评测输出会随草稿保留 `status: "draft"`；草稿的区间数仅描述划分方式。
+`packages/core/tool/gold.dart` 根据锚点生成文件，偏移量由程序计算：
+
+```sh
+cd packages/core
+dart run tool/gold.dart dump ../../test/fixtures/books/aq-zh.txt <输出目录>
+dart run tool/gold.dart build ../../test/fixtures/books/aq-zh.txt <anchors.json> <gold.json>
+dart run tool/gold.dart render ../../test/fixtures/books/aq-zh.txt <gold.json>
+```
+
+`dump` 导出各章正文和哈希。`build` 读取 `{"chapterNumber", "speakers", "notes", "segments"}`，每个 segment 写 `speakerId` 和 `until`：区间在上一边界之后首次出现 `until` 的末尾处结束，最后一段省略 `until`。`render` 校验覆盖与哈希，并按 `[speakerId] 原文` 逐段打印，便于逐句复核。

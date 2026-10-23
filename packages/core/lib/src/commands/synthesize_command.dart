@@ -24,7 +24,8 @@ class SynthesizeCommand extends Command<void> {
       ..addFlag(
         'merge-narrator',
         defaultsTo: false,
-        help: 'Join adjacent narrator lines with identical direction.',
+        help:
+            'Join adjacent narrator lines with the same emotion and intensity.',
       )
       ..addOption('output', help: 'Destination chapter WAV path.');
   }
@@ -83,6 +84,7 @@ class SynthesizeCommand extends Command<void> {
         return binding.provider;
       }),
       overrides: context.ttsAdapters,
+      usageLedger: context.usageLedger,
     );
     try {
       final cast = await CastRepository(context.store).get(book.id);

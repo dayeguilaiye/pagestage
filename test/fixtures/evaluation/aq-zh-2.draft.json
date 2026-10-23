@@ -6,20 +6,20 @@
   "sourceTextHash": "4c357e16d9f5c3ab28d0216bb686dd5d915ac71af7855efc6495754ef74ea008",
   "humanReviewed": false,
   "speakers": {
-    "narrator": "旁白",
+    "narrator": "旁白（立传者“我”）",
     "aq": "阿Q",
     "old-man": "颂扬阿Q的老头子",
-    "idle-villagers": "未庄闲人",
+    "idle-villagers": "未庄闲人（无名村民）",
     "dealer": "桩家"
   },
   "spans": [
     {
       "start": 0,
-      "end": 96,
+      "end": 94,
       "speakerId": "narrator"
     },
     {
-      "start": 96,
+      "start": 94,
       "end": 119,
       "speakerId": "aq"
     },
@@ -41,8 +41,7 @@
     {
       "start": 443,
       "end": 453,
-      "speakerId": "aq",
-      "note": "原文“他想：”引出的直接思想内容，草稿交给阿Q。"
+      "speakerId": "aq"
     },
     {
       "start": 453,
@@ -52,8 +51,7 @@
     {
       "start": 527,
       "end": 535,
-      "speakerId": "aq",
-      "note": "原文“他想：”引出的直接思想内容。"
+      "speakerId": "aq"
     },
     {
       "start": 535,
@@ -63,36 +61,35 @@
     {
       "start": 567,
       "end": 576,
-      "speakerId": "aq",
-      "note": "原文“他想：”引出的直接思想内容。"
+      "speakerId": "aq"
     },
     {
       "start": 576,
-      "end": 900,
+      "end": 898,
       "speakerId": "narrator"
     },
     {
-      "start": 900,
+      "start": 898,
       "end": 909,
       "speakerId": "idle-villagers"
     },
     {
       "start": 909,
-      "end": 929,
+      "end": 927,
       "speakerId": "narrator"
     },
     {
-      "start": 929,
+      "start": 927,
       "end": 941,
       "speakerId": "idle-villagers"
     },
     {
       "start": 941,
-      "end": 969,
+      "end": 967,
       "speakerId": "narrator"
     },
     {
-      "start": 969,
+      "start": 967,
       "end": 977,
       "speakerId": "aq"
     },
@@ -104,46 +101,40 @@
     {
       "start": 1124,
       "end": 1146,
-      "speakerId": "aq",
-      "note": "原文“心里想”引出的直接思想内容。"
+      "speakerId": "aq"
     },
     {
       "start": 1146,
-      "end": 1235,
+      "end": 1233,
       "speakerId": "narrator"
     },
     {
-      "start": 1235,
+      "start": 1233,
       "end": 1264,
       "speakerId": "idle-villagers"
     },
     {
       "start": 1264,
-      "end": 1290,
+      "end": 1288,
       "speakerId": "narrator"
     },
     {
-      "start": 1290,
+      "start": 1288,
       "end": 1311,
       "speakerId": "aq"
     },
     {
       "start": 1311,
-      "end": 1567,
+      "end": 1565,
       "speakerId": "narrator"
     },
     {
-      "start": 1567,
+      "start": 1565,
       "end": 1574,
       "speakerId": "aq"
     },
     {
       "start": 1574,
-      "end": 1576,
-      "speakerId": "narrator"
-    },
-    {
-      "start": 1576,
       "end": 1586,
       "speakerId": "dealer"
     },
@@ -159,22 +150,17 @@
     },
     {
       "start": 1637,
-      "end": 1639,
-      "speakerId": "narrator"
-    },
-    {
-      "start": 1639,
       "end": 1652,
       "speakerId": "aq",
-      "note": "下注者未再次署名，根据本段上下文草稿判为阿Q，需人工确认。"
+      "note": "无说话标签；按“青龙四百”之后阿Q再次下注、加码的赌局上下文判为阿Q。"
     },
     {
       "start": 1652,
-      "end": 1879,
+      "end": 1877,
       "speakerId": "narrator"
     },
     {
-      "start": 1879,
+      "start": 1877,
       "end": 1886,
       "speakerId": "aq"
     },
@@ -185,11 +171,9 @@
     }
   ],
   "notes": [
-    "DRAFT — awaiting human correction.",
+    "Agent-drafted and agent-reviewed sentence by sentence; not human-reviewed.",
     "Source: test/fixtures/books/aq-zh.txt, 第二章　优胜记略.",
-    "待人工校对：第三人称叙述由旁白负责；明确“他想”“心里想”引出的直接思想语句由阿Q负责。",
-    "“行状”“先前阔”“自轻自贱”等叙述内的术语引号，以及“状元不也是……你算是什么东西呢”这段间接/自由间接叙述，草稿保留旁白。此边界应在人审时统一。",
-    "未庄闲人没有足够身份信息，暂合为 idle-villagers。评测前人工决定应分成几名角色并建立标识映射。",
-    "“穿堂一百——一百五十！”按赌局上下文标阿Q；它没有紧邻的显式说话人标签，需复核。"
+    "无引号但由“他想：”明确引出、用阿Q自己口吻的思想（我的儿子会阔得多啦！／这是错的，可笑！）归 aq；“状元不也是『第一个』么？『你算是什么东西』呢！？”等自由间接叙述与术语引号归 narrator。",
+    "未庄闲人不分个体，合为 idle-villagers。"
   ]
 }

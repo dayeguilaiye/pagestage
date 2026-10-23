@@ -62,7 +62,7 @@ dart run packages/core/bin/pagestage.dart evaluate <book-id> 1 \
 
 `start` 和 `end` 使用 Dart UTF-16 偏移量，表示闭开区间 `[start,end)`；例如 `𠀀` 占两个偏移单位。所有区间必须按顺序连续覆盖整章正文，边界落在 Unicode 标量之间。`speakers` 提供语义 ID 与显示名称，`spans[].speakerId` 引用该名录。`note` 和顶层 `notes` 可记录待复核事项。
 
-`humanReviewed` 明确表示这份标准答案是否已由人完整校对。仓库中的四份草稿都为 `false`。人工确认角色、对白边界和全文覆盖后，在自行维护的标准答案中将其设为 `true`。
+`humanReviewed` 明确表示这份标准答案是否已由人完整校对。仓库中的十份标准答案都为 `false`。人工确认角色、对白边界和全文覆盖后，在自行维护的标准答案中将其设为 `true`。
 
 ## 计分与输出
 
@@ -81,4 +81,4 @@ dart run packages/core/bin/pagestage.dart evaluate <book-id> 1 \
 
 ## 公版草稿
 
-[四份草稿及复核说明](../test/fixtures/evaluation/README.md)覆盖《阿Q正传》和 *Pride and Prejudice* 各前两章。它们由代理逐句阅读起草，等待人工校对；离线测试验证的是比对逻辑，真实模型的说话人准确率需使用人工确认后的标准答案另行测量。
+[十份标准答案及判定口径](../test/fixtures/evaluation/README.md)覆盖《阿Q正传》和 *Pride and Prejudice* 各前五章。它们由代理起草并逐句复核，未经人工校对，原型阶段经用户确认直接采用；真实模型的测量结果见[原型报告](spike-report.md)。离线测试验证的是比对逻辑。
