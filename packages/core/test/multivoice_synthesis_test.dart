@@ -198,19 +198,19 @@ void main() {
     },
   );
   test(
-    'merges adjacent narrator source without changing text or directions',
+    'merges adjacent narrator lines sharing emotion and intensity',
     () async {
       const chapter = Chapter(number: 1, title: 'I', text: 'A. B. C.');
       final script = _script(chapter, [
         const ScriptLine(
           start: 0,
           end: 3,
-          direction: Direction(speakerId: 'narrator'),
+          direction: Direction(speakerId: 'narrator', note: 'Dry.'),
         ),
         const ScriptLine(
           start: 3,
           end: 6,
-          direction: Direction(speakerId: 'narrator'),
+          direction: Direction(speakerId: 'narrator', note: 'Wry.'),
         ),
         const ScriptLine(
           start: 6,
@@ -241,6 +241,7 @@ void main() {
         [0, 1],
         [2],
       ]);
+      expect(adapter.requests.first.direction.note, 'Dry.');
       expect(adapter.requests.last.direction.emotion, Emotion.sad);
     },
   );

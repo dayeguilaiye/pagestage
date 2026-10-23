@@ -366,12 +366,15 @@ List<_PlannedUtterance> _utterances(
         previous.indices.last == index - 1 &&
         previous.line.end == line.start &&
         line.direction.speakerId == 'narrator' &&
-        jsonEncode(previous.line.direction.toJson()) ==
-            jsonEncode(line.direction.toJson())) {
+        previous.line.direction.speakerId == 'narrator' &&
+        // Notes are unique per line, so they cannot gate merging; the
+        // merged block keeps the first line's note.
+        previous.line.direction.emotion == line.direction.emotion &&
+        previous.line.direction.intensity == line.direction.intensity) {
       previous.line = ScriptLine(
         start: previous.line.start,
         end: line.end,
-        direction: line.direction,
+        direction: previous.line.direction,
       );
       previous.indices.add(index);
     } else {
