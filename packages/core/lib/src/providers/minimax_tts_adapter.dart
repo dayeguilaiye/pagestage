@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
 import '../pcm_audio.dart';
 import '../pronunciation.dart';
 import '../models/voice.dart';
+import 'hex_audio.dart';
 import 'provider_exception.dart';
 import 'tts_errors.dart';
 import 'tts_adapter.dart';
@@ -129,16 +129,7 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
       final data = json['data'] as Map;
       if (data['status'] != 2) throw const FormatException('Incomplete audio.');
       final hex = data['audio'] as String;
-      if (hex.isEmpty ||
-          hex.length.isOdd ||
-          !RegExp(r'^[0-9a-fA-F]+$').hasMatch(hex)) {
-        throw const FormatException('Invalid audio encoding.');
-      }
-      final wav = Uint8List.fromList([
-        for (var i = 0; i < hex.length; i += 2)
-          int.parse(hex.substring(i, i + 2), radix: 16),
-      ]);
-      final audio = PcmAudio.fromWav(wav);
+      final audio = PcmAudio.fromWav(decodeHexAudio(hex));
       if (audio.samples.isEmpty) throw const FormatException('Empty audio.');
       final characters = (json['extra_info'] as Map)['usage_characters'] as int;
       if (characters < 0) throw const FormatException('Invalid usage.');

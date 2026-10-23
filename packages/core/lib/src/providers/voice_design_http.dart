@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 
 import '../models/voice.dart';
+import 'hex_audio.dart';
 import 'provider_exception.dart';
 import 'tts_errors.dart';
 import 'voice_design_adapter.dart';
@@ -35,10 +35,7 @@ Future<DesignedVoice> designMiniMax(
     decode: (json) {
       final voiceId = json['voice_id'] as String;
       final hex = json['trial_audio'] as String;
-      if (voiceId.trim().isEmpty ||
-          hex.isEmpty ||
-          hex.length.isOdd ||
-          !RegExp(r'^[a-fA-F0-9]+$').hasMatch(hex)) {
+      if (voiceId.trim().isEmpty) {
         throw const FormatException('Invalid design response.');
       }
       return DesignedVoice(
@@ -48,12 +45,7 @@ Future<DesignedVoice> designMiniMax(
           voiceId: voiceId,
           designed: true,
         ),
-        preview: VoicePreview.detect(
-          Uint8List.fromList([
-            for (var i = 0; i < hex.length; i += 2)
-              int.parse(hex.substring(i, i + 2), radix: 16),
-          ]),
-        ),
+        preview: VoicePreview.detect(decodeHexAudio(hex)),
       );
     },
   );

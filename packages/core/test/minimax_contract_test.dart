@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -7,6 +8,113 @@ import 'package:pagestage_core/pagestage_core.dart';
 import 'package:test/test.dart';
 
 void main() {
+  for (final seconds in [1, 60, 120]) {
+    for (final design in [false, true]) {
+      test(
+        'MiniMax decodes $seconds-second ${design ? 'voice preview' : 'speech'} hex audio',
+        () async {
+          final samples = Int16List(24000 * seconds);
+          for (var i = 0; i < samples.length; i++) {
+            samples[i] = i.isEven ? 0x1234 : -0x5678;
+          }
+          final wav = PcmAudio(samples: samples).toWav();
+          final hex = StringBuffer();
+          for (var i = 0; i < wav.length; i++) {
+            final pair = wav[i].toRadixString(16).padLeft(2, '0');
+            hex.write(i.isEven ? pair : pair.toUpperCase());
+          }
+          final adapter = MiniMaxTtsAdapter(
+            apiKey: 'fixture-secret',
+            client: MockClient(
+              (_) async => http.Response(
+                jsonEncode({
+                  'base_resp': {'status_code': 0},
+                  if (design) ...{
+                    'voice_id': 'designed-test',
+                    'trial_audio': hex.toString(),
+                  } else ...{
+                    'data': {'status': 2, 'audio': hex.toString()},
+                    'extra_info': {'usage_characters': 4},
+                  },
+                }),
+                200,
+              ),
+            ),
+          );
+          addTearDown(adapter.close);
+          final PcmAudio audio;
+          if (design) {
+            final result = await adapter.design(
+              const VoiceDesignRequest(
+                description: 'Warm narrator',
+                previewText: 'The garden was quiet.',
+                language: 'en',
+                model: 'speech-2.8-hd',
+              ),
+            );
+            audio = PcmAudio.fromWav(result.preview.bytes);
+          } else {
+            final result = await adapter.synthesize(_request);
+            expect(result.characters, 4);
+            audio = result.audio;
+          }
+          expect(audio.duration, Duration(seconds: seconds));
+          expect(audio.samples, samples);
+        },
+      );
+    }
+  }
+  test('MiniMax rejects malformed hex in speech and voice previews', () async {
+    final valid = PcmAudio(
+      samples: Int16List.fromList([1234]),
+    ).toWav().map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
+    for (final hex in [
+      '',
+      '0',
+      '0g',
+      '-1',
+      '+1',
+      '０0',
+      '00\n0',
+      '$valid-1',
+      '${'00' * (24000 * 60 * 2)}0g',
+    ]) {
+      final adapter = MiniMaxTtsAdapter(
+        apiKey: 'fixture-secret',
+        client: MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'base_resp': {'status_code': 0},
+              'data': {'status': 2, 'audio': hex},
+              'extra_info': {'usage_characters': 4},
+              'voice_id': 'designed-test',
+              'trial_audio': hex,
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          ),
+        ),
+      );
+      addTearDown(adapter.close);
+      final invalid = isA<ProviderException>().having(
+        (e) => e.kind,
+        'kind',
+        ProviderErrorKind.invalidResponse,
+      );
+      await expectLater(adapter.synthesize(_request), throwsA(invalid));
+      await expectLater(
+        adapter.design(
+          const VoiceDesignRequest(
+            description: 'Warm narrator',
+            previewText: 'The garden was quiet.',
+            language: 'en',
+            model: 'speech-2.8-hd',
+          ),
+        ),
+        throwsA(invalid),
+      );
+    }
+  });
   test(
     'MiniMax sends a WAV request and decodes documented hex audio',
     () async {
