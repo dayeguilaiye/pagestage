@@ -18,3 +18,5 @@ export 'src/providers/minimax_tts_adapter.dart';
 export 'src/director.dart';
 export 'src/script_repository.dart';
 export 'src/providers/bailian_tts_adapter.dart';
+export 'src/models/gold_reference.dart';
+export 'src/evaluator.dart';

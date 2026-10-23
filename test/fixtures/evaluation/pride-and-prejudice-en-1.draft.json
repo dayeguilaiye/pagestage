@@ -1,0 +1,347 @@
+{
+  "schemaVersion": 1,
+  "offsetUnit": "utf16",
+  "bookId": "e29cb883376b4e31947bb861",
+  "chapterNumber": 1,
+  "sourceTextHash": "8eb861ffb12504abdc8408b55d0325909adbb143bf9e8e8853e29d54c4045b85",
+  "humanReviewed": false,
+  "speakers": {
+    "narrator": "旁白",
+    "mrs-bennet": "Mrs. Bennet",
+    "mr-bennet": "Mr. Bennet"
+  },
+  "spans": [
+    {
+      "start": 0,
+      "end": 381,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 381,
+      "end": 402,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 402,
+      "end": 433,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 433,
+      "end": 487,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 487,
+      "end": 526,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 526,
+      "end": 538,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 538,
+      "end": 553,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 553,
+      "end": 618,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 618,
+      "end": 648,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 648,
+      "end": 691,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 691,
+      "end": 722,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 722,
+      "end": 783,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 783,
+      "end": 814,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 814,
+      "end": 1211,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1211,
+      "end": 1213,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1213,
+      "end": 1232,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 1232,
+      "end": 1234,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1234,
+      "end": 1244,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1244,
+      "end": 1246,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1246,
+      "end": 1272,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 1272,
+      "end": 1274,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1274,
+      "end": 1402,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1402,
+      "end": 1404,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1404,
+      "end": 1437,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 1437,
+      "end": 1439,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1439,
+      "end": 1460,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1460,
+      "end": 1479,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1479,
+      "end": 1570,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1570,
+      "end": 1572,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1572,
+      "end": 1610,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 1610,
+      "end": 1612,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1612,
+      "end": 1771,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 1771,
+      "end": 1773,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1773,
+      "end": 1993,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 1993,
+      "end": 1995,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 1995,
+      "end": 2210,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 2210,
+      "end": 2212,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2212,
+      "end": 2275,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 2275,
+      "end": 2277,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2277,
+      "end": 2369,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 2369,
+      "end": 2371,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2371,
+      "end": 2416,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 2416,
+      "end": 2418,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2418,
+      "end": 2717,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 2717,
+      "end": 2719,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2719,
+      "end": 2983,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 2983,
+      "end": 2985,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 2985,
+      "end": 3198,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3198,
+      "end": 3200,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3200,
+      "end": 3248,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 3248,
+      "end": 3261,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3261,
+      "end": 3372,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 3372,
+      "end": 3374,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3374,
+      "end": 3511,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3511,
+      "end": 3513,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3513,
+      "end": 3681,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 3681,
+      "end": 3683,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3683,
+      "end": 3719,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3719,
+      "end": 3721,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3721,
+      "end": 3839,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 3839,
+      "end": 3841,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3841,
+      "end": 3926,
+      "speakerId": "mrs-bennet"
+    },
+    {
+      "start": 3926,
+      "end": 3928,
+      "speakerId": "narrator"
+    },
+    {
+      "start": 3928,
+      "end": 4005,
+      "speakerId": "mr-bennet"
+    },
+    {
+      "start": 4005,
+      "end": 4478,
+      "speakerId": "narrator"
+    }
+  ],
+  "notes": [
+    "DRAFT — awaiting human correction.",
+    "Source: test/fixtures/books/pride-and-prejudice-en.txt, Chapter I..",
+    "DRAFT — awaiting human correction. Speaker assignments were read individually from attribution, address and conversational context; only span location was automated.",
+    "Quoted speech includes its opening/closing quotation marks. Attribution outside the quotation marks remains narrator. Paragraph separators are narrator for complete interval coverage.",
+    "Mrs. Bennet reporting what Mrs. Long said remains Mrs. Bennet; indirect reported speech outside quotation marks remains narrator."
+  ]
+}
