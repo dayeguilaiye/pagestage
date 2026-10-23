@@ -4,18 +4,29 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 
+import 'commands/narrate_command.dart';
+import 'providers/provider_exception.dart';
+import 'providers/tts_adapter.dart';
 import 'library.dart';
 import 'local_store.dart';
 
 /// Resources shared by commands during a single CLI invocation.
 class CliContext {
-  CliContext({required this.dataDirectory, required this.output}) {
+  CliContext({
+    required this.dataDirectory,
+    required this.output,
+    Map<String, String>? environment,
+    Map<String, TtsAdapter>? ttsAdapters,
+  }) : environment = Map.unmodifiable(environment ?? Platform.environment),
+       ttsAdapters = Map.unmodifiable(ttsAdapters ?? {}) {
     store = LocalStore(p.join(dataDirectory.path, 'pagestage.sqlite'));
     library = Library(store);
   }
 
   final Directory dataDirectory;
   final StringSink output;
+  final Map<String, String> environment;
+  final Map<String, TtsAdapter> ttsAdapters;
   late final LocalStore store;
   late final Library library;
 
@@ -30,6 +41,7 @@ class PagestageCommandRunner extends CommandRunner<void> {
     addCommand(_ImportCommand(context));
     addCommand(_ChaptersCommand(context));
     addCommand(_BooksCommand(context));
+    addCommand(NarrateCommand(context));
   }
 
   final CliContext context;
@@ -40,6 +52,8 @@ Future<int> runCli(
   List<String> arguments, {
   StringSink? output,
   StringSink? errorOutput,
+  Map<String, String>? environment,
+  Map<String, TtsAdapter>? ttsAdapters,
 }) async {
   final out = output ?? stdout;
   final err = errorOutput ?? stderr;
@@ -52,10 +66,18 @@ Future<int> runCli(
       dataPath = arguments[i].substring('--data-dir='.length);
     }
   }
-  final context = CliContext(dataDirectory: Directory(dataPath), output: out);
+  final context = CliContext(
+    dataDirectory: Directory(dataPath),
+    output: out,
+    environment: environment,
+    ttsAdapters: ttsAdapters,
+  );
   try {
     await PagestageCommandRunner(context).run(arguments);
     return 0;
+  } on ProviderException catch (error) {
+    err.writeln(error);
+    return 69;
   } on UsageException catch (error) {
     err.writeln(error);
     return 64;
