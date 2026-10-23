@@ -105,6 +105,8 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
               'model': request.binding.model,
               'input': {
                 'text': request.text,
+                if (request.instruction != null)
+                  'instruction': request.instruction,
                 'voice': request.binding.voiceId,
                 'format': 'wav',
                 'sample_rate': 24000,

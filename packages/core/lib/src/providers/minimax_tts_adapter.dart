@@ -87,7 +87,7 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
                 'speed': 1,
                 'vol': 1,
                 'pitch': 0,
-                'emotion': request.direction.emotion.name,
+                'emotion': request.emotion ?? request.direction.emotion.name,
               },
               'audio_setting': {
                 'sample_rate': 24000,

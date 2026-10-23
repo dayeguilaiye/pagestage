@@ -9,6 +9,7 @@ import 'commands/voice_design_command.dart';
 import 'commands/evaluate_command.dart';
 import 'commands/cast_command.dart';
 import 'commands/direct_command.dart';
+import 'commands/synthesize_command.dart';
 import 'providers/llm_adapter.dart';
 import 'providers/provider_exception.dart';
 import 'commands/narrate_command.dart';
@@ -57,6 +58,7 @@ class PagestageCommandRunner extends CommandRunner<void> {
     addCommand(DirectCommand(context));
     addCommand(EvaluateCommand(context));
     addCommand(NarrateCommand(context));
+    addCommand(SynthesizeCommand(context));
   }
 
   final CliContext context;

@@ -20,6 +20,34 @@ TXT 先严格按 UTF-8 解码，再尝试 GB18030。GB18030 解码使用 WHATWG 
 
 测试素材是《阿Q正传》和《傲慢与偏见》的前五章，来源与整理方式见 [素材说明](test/fixtures/books/README.md)。
 
+## 从章节到多角色音频
+
+完成导入后，按 [LLM 配置](docs/cli-profiling.md) 和 [TTS 配置](docs/cli-tts.md) 准备环境变量，或创建被 Git 忽略的 `.pagestage/providers.json`。以下 `<book-id>` 使用导入结果中的 ID：
+
+```sh
+dart run packages/core/bin/pagestage.dart profile <book-id> --through 1 --config .pagestage/providers.json
+dart run packages/core/bin/pagestage.dart cast recommend <book-id> --provider minimax
+dart run packages/core/bin/pagestage.dart direct <book-id> 1 --config .pagestage/providers.json
+dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --config .pagestage/providers.json
+```
+
+`profile` 建立本书角色表；`cast recommend` 选择音色；`direct` 保存与原文对齐的剧本；`synthesize` 按角色和情绪生成 WAV。示例选角限定 MiniMax，同章也可以分别绑定两家服务商。使用 `cast catalog --language zh` 查看预设、`cast set <book-id> <speaker-id> <provider:voice-id>` 换声。再次合成复用未改变台词的音频缓存。
+
+广播剧模式使用 `synthesize ... --mode drama`，旁白合并试听使用 `--merge-narrator`。命令输出 JSON，包含已保存状态、用量和音频路径；本地 SQLite、剧本和音频均位于 `--data-dir` 选定的目录。
+
+| 文档 | 内容 |
+| --- | --- |
+| [建档与 LLM](docs/cli-profiling.md) | 兼容接口配置、增量建档、角色和人物关系 |
+| [选角](docs/cli-casting.md) | 预设目录、音色选择、试听和临时角色 |
+| [音色设计](docs/cli-voice-design.md) | 生成候选、选择并激活设计音色 |
+| [导演](docs/cli-directing.md) | 原文对齐、演出指令和非正文标记 |
+| [语音合成](docs/cli-tts.md) | 服务商配置、多角色、演播模式、缓存和停顿 |
+| [归属评估](docs/cli-evaluation.md) | 人工参考标注、命中率和错例导出 |
+| [产品规格](docs/spec.md) | 原型目标与产品设计 |
+| [领域词汇](GLOSSARY.md) | Script、Speaker、VoiceBinding 等术语 |
+
+当前验证使用假 LLM/TTS 和依据官方文档构造的离线 HTTP 契约。真实 key 的整章合成、音色区分与人工试听验收待补验。
+
 ## 开发验证
 
 ```sh

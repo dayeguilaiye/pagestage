@@ -46,6 +46,8 @@ void main() {
             'model': 'qwen-audio-3.1-tts-flash',
             'input': {
               'text': 'The garden is quiet.',
+              'instruction':
+                  'Read with a sad emotion and strong intensity. Speak softly.',
               'voice': 'Emily_v3.1',
               'format': 'wav',
               'sample_rate': 24000,
@@ -74,7 +76,20 @@ void main() {
           );
         }),
       );
-      final result = await adapter.synthesize(_request);
+      final result = await adapter.synthesize(
+        TtsRequest.forCapabilities(
+          text: _request.text,
+          language: _request.language,
+          binding: _request.binding,
+          direction: const Direction(
+            speakerId: 'narrator',
+            emotion: Emotion.sad,
+            intensity: Intensity.strong,
+            note: 'Speak softly.',
+          ),
+          capabilities: adapter.capabilitiesFor(_request.binding),
+        ),
+      );
       expect(result.audio.duration, const Duration(milliseconds: 10));
       expect(result.audio.samples.take(4), [1200, -1200, 1200, -1200]);
       expect(result.characters, 20);

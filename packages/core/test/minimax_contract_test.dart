@@ -36,7 +36,7 @@ void main() {
               'speed': 1,
               'vol': 1,
               'pitch': 0,
-              'emotion': 'calm',
+              'emotion': 'sad',
             },
             'audio_setting': {
               'sample_rate': 24000,
@@ -52,7 +52,20 @@ void main() {
         }),
       );
       addTearDown(adapter.close);
-      final result = await adapter.synthesize(_request);
+      final result = await adapter.synthesize(
+        TtsRequest.forCapabilities(
+          text: _request.text,
+          language: _request.language,
+          binding: _request.binding,
+          direction: const Direction(
+            speakerId: 'narrator',
+            emotion: Emotion.sad,
+            intensity: Intensity.strong,
+            note: 'Speak softly.',
+          ),
+          capabilities: adapter.capabilitiesFor(_request.binding),
+        ),
+      );
       expect(result.audio.duration, const Duration(milliseconds: 10));
       expect(result.audio.samples.take(4), [1200, -1200, 1200, -1200]);
       expect(result.characters, 6);
