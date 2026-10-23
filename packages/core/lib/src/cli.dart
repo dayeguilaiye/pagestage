@@ -6,6 +6,7 @@ import 'package:path/path.dart' as p;
 
 import 'commands/profile_command.dart';
 import 'commands/evaluate_command.dart';
+import 'commands/cast_command.dart';
 import 'commands/direct_command.dart';
 import 'providers/llm_adapter.dart';
 import 'providers/provider_exception.dart';
@@ -50,6 +51,7 @@ class PagestageCommandRunner extends CommandRunner<void> {
     addCommand(_ChaptersCommand(context));
     addCommand(_BooksCommand(context));
     addCommand(ProfileCommand(context));
+    addCommand(CastCommand(context));
     addCommand(DirectCommand(context));
     addCommand(EvaluateCommand(context));
     addCommand(NarrateCommand(context));
