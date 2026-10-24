@@ -9,6 +9,30 @@ flutter run -t lib/gallery/main.dart # 设计样张
 flutter test
 ```
 
+## Android 测试安装包
+
+[Android test APK](https://github.com/dayeguilaiye/pagestage/actions/workflows/android.yml)
+在推送 `main` 时自动构建，也支持在 Actions 页面点击 **Run workflow** 选择分支构建。
+手动入口在工作流合入默认分支后可用，所选分支也需要包含工作流。
+构建使用 Flutter 3.47.5、Java 17，生成包含各架构的 Release APK。
+
+打开成功的构建记录，通过摘要链接或 **Artifacts** 下载压缩包，解压后将 APK
+传到安卓手机安装。下载需要登录具有仓库读取权限的 GitHub 账号，产物保留 14 天。
+文件名包含构建编号和提交短 SHA，Android 版本号使用工作流运行编号。
+
+CI 使用固定测试签名，后续安装包可覆盖升级并保留应用数据。已安装的版本如果使用
+其他签名，需要先备份数据并卸载，再安装 CI 版本。
+仓库的 Actions Secrets 需要配置以下两项：
+
+- `ANDROID_TEST_KEYSTORE_BASE64`：JKS 文件的单行 Base64，别名为 `pagestage-test`。
+- `ANDROID_TEST_KEYSTORE_PASSWORD`：十六进制密码，keystore 和私钥使用相同密码。
+
+首次配置的签名备份保存在配置机器的 `.pagestage/android-signing/`，其中 `test.jks`
+为密钥库，`password` 为密码；目录被 Git 忽略，应妥善备份并长期复用。
+工作流临时还原签名文件，构建结束后清理。构建过程无需服务商 API key。
+本地 Release 构建可以通过被 Git 忽略的 `android/key.properties` 指定相同签名；
+未配置时使用本地 debug 签名。
+
 ## 书架
 
 `lib/shelf/` 是书架、目录和正文三屏。页面只通过两个接口取数据：

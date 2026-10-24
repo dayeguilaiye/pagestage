@@ -1,0 +1,94 @@
+name: Android test APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      REQUIRE_ANDROID_SIGNING: 'true'
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: '3.47.5'
+          channel: stable
+          cache: true
+      - name: Install dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Restore test signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_TEST_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_TEST_KEYSTORE_PASSWORD }}
+        shell: python
+        run: |
+          import base64
+          import os
+          from pathlib import Path
+
+          encoded = os.environ['KEYSTORE_BASE64']
+          password = os.environ['KEYSTORE_PASSWORD']
+          if not encoded or not password:
+              raise SystemExit('Configure ANDROID_TEST_KEYSTORE_BASE64 and ANDROID_TEST_KEYSTORE_PASSWORD repository secrets')
+          # Passwords are generated as hexadecimal to be safe in Java properties.
+          if any(c not in '0123456789abcdef' for c in password):
+              raise SystemExit('The test keystore password must be hexadecimal')
+          key = Path(os.environ['RUNNER_TEMP']) / 'android-test.jks'
+          key.write_bytes(base64.b64decode(encoded, validate=True))
+          key.chmod(0o600)
+          properties = Path('packages/app/android/key.properties')
+          properties.write_text(
+              f'storeFile={key}\nstorePassword={password}\n'
+              f'keyPassword={password}\nkeyAlias=pagestage-test\n'
+          )
+          properties.chmod(0o600)
+      - name: Build release APK
+        working-directory: packages/app
+        run: flutter build apk --release --no-pub --build-number "$GITHUB_RUN_NUMBER"
+      - name: Name APK
+        id: apk
+        shell: bash
+        run: |
+          name="pagestage-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
+          mkdir -p dist
+          cp packages/app/build/app/outputs/flutter-apk/app-release.apk "dist/$name.apk"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+      - name: Upload APK
+        id: upload
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: ${{ steps.apk.outputs.name }}
+          path: dist/*.apk
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Download instructions
+        env:
+          ARTIFACT_URL: ${{ steps.upload.outputs.artifact-url }}
+        run: |
+          {
+            echo "### Android 测试安装包"
+            echo "[下载 APK 压缩包]($ARTIFACT_URL)，解压后在安卓手机上安装 APK。"
+            echo "版本号：$GITHUB_RUN_NUMBER；提交：$GITHUB_SHA；保留 14 天。"
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Remove signing files
+        if: always()
+        run: rm -f packages/app/android/key.properties "$RUNNER_TEMP/android-test.jks"
