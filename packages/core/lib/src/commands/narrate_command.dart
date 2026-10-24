@@ -81,6 +81,8 @@ class NarrateCommand extends Command<void> {
       providers: [provider],
       overrides: context.ttsAdapters,
       usageLedger: context.usageLedger,
+      runtime: context.requestRuntime,
+      queues: context.requestQueues,
     );
     try {
       final cast = await CastRepository(context.store).get(book.id);

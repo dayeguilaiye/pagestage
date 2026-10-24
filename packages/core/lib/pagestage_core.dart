@@ -29,3 +29,5 @@ export 'src/voice_design.dart';
 export 'src/providers/voice_design_adapter.dart';
 
 export 'src/models/loudness.dart';
+
+export 'src/providers/request_recovery.dart';

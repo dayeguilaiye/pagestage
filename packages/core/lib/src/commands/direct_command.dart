@@ -49,13 +49,17 @@ class DirectCommand extends Command<void> {
               argResults!['config'] as String?,
               environment: context.environment,
             ),
-          ).createDirectorAdapter(usageLedger: context.usageLedger)
+          ).createDirectorAdapter(
+            usageLedger: context.usageLedger,
+            runtime: context.requestRuntime,
+          )
         : null;
     try {
       final result = await Director(
         context.store,
         injected ?? adapter!,
         chunkCharacters: limit,
+        runtime: context.requestRuntime,
       ).direct(book, chapter);
       final cast = await CastRepository(context.store).get(book.id);
       context.writeJson({

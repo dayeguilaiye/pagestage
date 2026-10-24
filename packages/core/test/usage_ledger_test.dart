@@ -153,6 +153,7 @@ void main() {
     'LLM records raw usage even when the billed content is rejected',
     () async {
       final adapter = OpenAiLlmAdapter(
+        stream: false,
         baseUrl: Uri.parse('https://api.example.test/v1'),
         apiKey: 'fixture-secret',
         model: 'director-model',

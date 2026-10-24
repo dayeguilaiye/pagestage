@@ -30,6 +30,7 @@ class ProviderException implements Exception {
         ProviderErrorKind.unavailable => switch (code) {
           'timeout' => 'The provider request timed out. Retry the command.',
           'connection_error' => 'The provider connection failed or was interrupted. Retry the command.',
+          'interrupted_stream' => 'The provider response stream was interrupted. Retry the command.',
           _ => 'The provider is unavailable. Try again later.',
         },
         ProviderErrorKind.invalidResponse => 'The provider returned an invalid response.${code == null ? '' : ' ($code)'}',

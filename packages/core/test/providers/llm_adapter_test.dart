@@ -6,6 +6,8 @@ import 'package:http/testing.dart';
 import 'package:pagestage_core/pagestage_core.dart';
 import 'package:test/test.dart';
 
+import '../support/fake_request_clock.dart';
+
 // Synthetic responses from official OpenAI documentation, not recorded traffic.
 // https://developers.openai.com/api/docs/guides/structured-outputs
 void main() {
@@ -64,6 +66,8 @@ void main() {
         );
       });
       final adapter = OpenAiLlmAdapter(
+        runtime: FakeRequestClock().runtime,
+        stream: false,
         baseUrl: Uri.parse('https://example.invalid/custom/v1/'),
         apiKey: 'test-key',
         model: 'profile-model',
@@ -85,6 +89,8 @@ void main() {
     'Responses parses output text after reasoning and uses its schema shape',
     () async {
       final adapter = OpenAiLlmAdapter(
+        runtime: FakeRequestClock().runtime,
+        stream: false,
         baseUrl: Uri.parse('https://example.invalid/v1'),
         apiKey: 'test-key',
         model: 'director-model',
@@ -132,6 +138,8 @@ void main() {
     'classifies invalid keys even for non-JSON error responses without leaking data',
     () async {
       final adapter = OpenAiLlmAdapter(
+        runtime: FakeRequestClock().runtime,
+        stream: false,
         baseUrl: Uri.parse('https://example.invalid/v1'),
         apiKey: 'secret-key',
         model: 'model',
@@ -179,6 +187,8 @@ void main() {
           adapter.close();
         }
         final adapter = OpenAiLlmAdapter(
+          runtime: FakeRequestClock().runtime,
+          stream: false,
           baseUrl: Uri.parse('https://example.invalid'),
           apiKey: 'test-key',
           model: 'model',
@@ -228,6 +238,8 @@ void main() {
         (429, 'rate_limit_exceeded', ProviderErrorKind.rateLimited),
       ]) {
         final adapter = OpenAiLlmAdapter(
+          runtime: FakeRequestClock().runtime,
+          stream: false,
           baseUrl: Uri.parse('https://example.invalid/v1'),
           apiKey: 'secret-key',
           model: 'model',
@@ -291,6 +303,8 @@ void main() {
             ];
       for (final response in responses) {
         final adapter = OpenAiLlmAdapter(
+          runtime: FakeRequestClock().runtime,
+          stream: false,
           baseUrl: Uri.parse('https://example.invalid/v1'),
           apiKey: 'secret-key',
           model: 'model',
@@ -331,6 +345,8 @@ void main() {
         ),
       ]) {
         final adapter = OpenAiLlmAdapter(
+          runtime: FakeRequestClock().runtime,
+          stream: false,
           baseUrl: Uri.parse('https://example.invalid'),
           apiKey: 'secret-key',
           model: 'model',

@@ -6,6 +6,8 @@ import 'package:pagestage_core/pagestage_core.dart';
 import 'package:pagestage_core/src/cli.dart';
 import 'package:test/test.dart';
 
+import 'support/fake_request_clock.dart';
+
 void main() {
   test('CLI narrates an imported chapter through a fake TTS adapter', () async {
     final directory = await Directory.systemTemp.createTemp(
@@ -33,6 +35,7 @@ void main() {
         ['--data-dir', directory.path, 'narrate', bookId, '1'],
         output: output,
         environment: {},
+        requestRuntime: FakeRequestClock().runtime,
         ttsAdapters: {'minimax': fake},
       ),
       0,
@@ -81,6 +84,7 @@ void main() {
           output: output,
           errorOutput: errors,
           environment: {},
+          requestRuntime: FakeRequestClock().runtime,
           ttsAdapters: {'minimax': _FakeTts()},
         ),
         65,
@@ -96,6 +100,7 @@ void main() {
           output: output,
           errorOutput: errors,
           environment: {},
+          requestRuntime: FakeRequestClock().runtime,
           ttsAdapters: {'minimax': _FailingTts()},
         ),
         69,
@@ -141,6 +146,7 @@ void main() {
           'BAILIAN_MODEL': 'qwen-audio-3.1-tts-plus',
           'BAILIAN_VOICE': 'Luna_v3.1',
         },
+        requestRuntime: FakeRequestClock().runtime,
         ttsAdapters: {'bailian': fake},
       ),
       0,
@@ -170,6 +176,7 @@ void main() {
           'BAILIAN_MODEL': 'qwen-audio-3.1-tts-plus',
           'BAILIAN_VOICE': 'Luna_v3.1',
         },
+        requestRuntime: FakeRequestClock().runtime,
         ttsAdapters: {'bailian': fake},
       ),
       0,

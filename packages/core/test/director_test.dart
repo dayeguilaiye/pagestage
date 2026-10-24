@@ -3,6 +3,10 @@ import 'dart:convert';
 
 import 'package:pagestage_core/pagestage_core.dart';
 import 'package:test/test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+
+import 'support/fake_request_clock.dart';
 
 class FakeDirectorLlm implements LlmAdapter {
   FakeDirectorLlm(this.responses);
@@ -89,6 +93,58 @@ void main() {
     await store.close();
     await temp.delete(recursive: true);
   });
+  for (final plan in [
+    ['disconnect', 'invalid', 'valid'],
+    ['disconnect', 'disconnect', 'invalid'],
+    ['invalid', 'disconnect', 'disconnect'],
+  ]) {
+    test('network and alignment retries share three attempts: $plan', () async {
+      var calls = 0;
+      final clock = FakeRequestClock();
+      final llm = OpenAiLlmAdapter(
+        baseUrl: Uri.parse('https://example.invalid'),
+        apiKey: 'fake',
+        model: 'fake',
+        stream: false,
+        runtime: clock.runtime,
+        client: MockClient((_) async {
+          final step = plan[calls++];
+          if (step == 'disconnect') throw http.ClientException('synthetic');
+          return http.Response(
+            jsonEncode({
+              'choices': [
+                {
+                  'finish_reason': 'stop',
+                  'message': {
+                    'content': jsonEncode(
+                      response([line(step == 'valid' ? '甲说。' : '错误正文', 'lin')]),
+                    ),
+                  },
+                },
+              ],
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'},
+          );
+        }),
+      );
+      final result = Director(
+        store,
+        llm,
+        runtime: clock.runtime,
+      ).direct(novel('甲说。'), 1);
+      if (plan.last == 'disconnect') {
+        await expectLater(result, throwsA(isA<ProviderException>()));
+      } else {
+        final directed = await result;
+        expect(directed.requests, 3);
+        expect(directed.script.lines.map((l) => l.direction.speakerId), [
+          plan.last == 'valid' ? 'lin' : 'narrator',
+        ]);
+      }
+      expect(calls, 3);
+    });
+  }
   test(
     'directs source ranges and persists model, prompt and performance flags',
     () async {

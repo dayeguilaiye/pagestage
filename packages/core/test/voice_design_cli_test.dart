@@ -5,6 +5,8 @@ import 'package:pagestage_core/pagestage_core.dart';
 import 'package:pagestage_core/src/cli.dart';
 import 'package:test/test.dart';
 
+import 'support/fake_request_clock.dart';
+
 import 'voice_design_test.dart' show FakeDesignTts;
 
 void main() {
@@ -41,6 +43,7 @@ void main() {
           output: out,
           errorOutput: error,
           environment: {},
+          requestRuntime: FakeRequestClock().runtime,
           ttsAdapters: {'minimax': fake},
         );
         expect(code, 0, reason: error.toString());

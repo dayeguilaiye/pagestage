@@ -39,7 +39,7 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --config .pages
 
 ### 用量账本
 
-每个被服务商接受的真实请求都会向 `--data-dir` 下的 `usage.jsonl` 追加一行，原样保存服务商自己的计费字段：LLM 的 `usage`（含 DeepSeek 的缓存命中 token 等厂商扩展字段）、MiniMax 的 `extra_info`（如 `usage_characters`）、百炼的 `usage`。每行还记录时间、`provider`、请求地址、模型、服务商请求 ID，以及本次 CLI 调用的 `run` 标识和命令参数。LLM 回复即使因格式不合格被拒绝也会记账，因为这次请求已经计费；服务商返回错误的请求不记。账本不含 key 和请求正文，假适配器和缓存命中不产生记录。
+每个被服务商接受的真实请求都会向 `--data-dir` 下的 `usage.jsonl` 追加一行，原样保存服务商自己的计费字段：LLM 的 `usage`（含 DeepSeek 的缓存命中 token 等厂商扩展字段）、MiniMax 的 `extra_info`（如 `usage_characters`）、百炼的 `usage`。每行还记录时间、`provider`、请求地址、模型、服务商请求 ID，以及本次 CLI 调用的 `run` 标识和命令参数。LLM 回复即使因格式不合格被拒绝也会记账，因为这次请求已经计费；服务商返回错误的请求不记。流式回复中途断开时，已经确认被接受的请求也会保留已收到的用量字段；服务商未返回用量时保存空对象，不能据此认定请求免费。账本不含 key 和请求正文，假适配器和缓存命中不产生记录。
 
 | 文档 | 内容 |
 | --- | --- |
