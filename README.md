@@ -58,9 +58,12 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --config .pages
 ## 开发验证
 
 ```sh
-dart format --output=none --set-exit-if-changed packages/core
+dart format --output=none --set-exit-if-changed packages/core packages/app
 dart analyze
 dart test packages/core/test
+(cd packages/app && flutter test)
 ```
 
 core 的公共入口是 `package:pagestage_core/pagestage_core.dart`。CLI 命令使用共享的 `CliContext`，业务功能通过书库等模块的公共接口调用。单元测试在 LLM、TTS 服务商接缝使用假适配器，书库测试通过公共接口验证导入结果。
+
+Flutter App 在 `packages/app`，目前包含设计系统和一页设计样张，见 [App 说明](packages/app/README.md)。
