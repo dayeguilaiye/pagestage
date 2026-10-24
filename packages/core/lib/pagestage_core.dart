@@ -1,5 +1,9 @@
 library;
 
+export 'src/bookshelf.dart';
+export 'src/audio_repository.dart';
+export 'src/scheduler.dart';
+
 export 'src/library.dart';
 export 'src/local_store.dart';
 export 'src/models/book.dart';

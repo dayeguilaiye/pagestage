@@ -1,6 +1,6 @@
 # pagestage App
 
-Android 和 iOS 的 Flutter App。目前有书架、书的目录和正文三屏，数据还是内存里的演示书（`MemoryBookshelf.demo()`），接入 core 的书库见 #42。
+Android 和 iOS 的 Flutter App。书架、章节目录和正文直接使用 core 的 `Library`，通过系统文件选择器导入 TXT，数据库保存在 App 私有目录。字号、行距和夜间模式在重启后恢复。
 
 ```sh
 cd packages/app
@@ -16,7 +16,9 @@ flutter test
 - `Bookshelf`：书的列表、导入（弹出文件选择器）、删除、章节列表和状态、按段落给出的正文。书和章节状态变化时通知监听者。
 - `ReadingSettings`：字号、行距、夜间模式，全局一份，改了立即生效。
 
-`MemoryBookshelf` 和 `MemoryReadingSettings` 是放在内存里的实现，用来开发界面和写 widget 测试；`main.dart` 在接入真实实现之前用它们。
+`lib/storage.dart` 提供文件选择器、私有目录和阅读设置。`Library` 实现 core 的 `Bookshelf` 接口，`SavedReadingSettings` 将设置保存在同一个数据库中。`MemoryBookshelf` 和 `MemoryReadingSettings` 用于界面预览和 widget 测试。
+
+播放引擎原型的入口是 `lib/playback/prototype_main.dart`。本地素材准备、模拟器运行和选型结果见 [播放原型](../../docs/playback-prototype.md)。
 
 ## 中英文
 

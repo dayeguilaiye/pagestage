@@ -69,5 +69,8 @@
   "nightMode": "夜间模式",
   "nightModeSystem": "跟随系统",
   "nightModeOff": "关",
-  "nightModeOn": "开"
+  "nightModeOn": "开",
+  "playFromHere": "从这里播放",
+  "previousLine": "上一条台词",
+  "playbackFixtureMissing": "请先准备本地播放素材，再运行播放原型。"
 }

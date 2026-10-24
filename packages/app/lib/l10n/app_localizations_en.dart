@@ -206,4 +206,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nightModeOn => 'On';
+
+  @override
+  String get playFromHere => 'Play from here';
+
+  @override
+  String get previousLine => 'Previous line';
+
+  @override
+  String get playbackFixtureMissing =>
+      'Prepare the local playback fixture before running this prototype.';
 }

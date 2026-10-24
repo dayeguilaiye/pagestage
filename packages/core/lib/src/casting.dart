@@ -426,6 +426,28 @@ class Casting {
       });
       current = prepared;
     }
+    return _chapterBindings(current, chapterNumber, requested);
+  }
+
+  /// Reads effective bindings without recommending or changing the cast.
+  Future<Map<String, VoiceBinding>> getChapterBindings(
+    Book book,
+    int chapterNumber, {
+    Iterable<String> speakerIds = const [],
+  }) async {
+    book.chapter(chapterNumber);
+    return _chapterBindings(
+      _inheritRevealedVoices(await getCasting(book.id), chapterNumber),
+      chapterNumber,
+      speakerIds,
+    );
+  }
+
+  Map<String, VoiceBinding> _chapterBindings(
+    CastingResult current,
+    int chapterNumber,
+    Iterable<String> requested,
+  ) {
     final bindings = {
       for (final entry in current.voices.entries)
         entry.key: entry.value.binding,

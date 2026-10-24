@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -9,7 +10,19 @@ import 'package:drift/native.dart';
 /// Callers choose the SQLite location. Domain modules own their collection and
 /// document schemas; no credentials should be persisted here.
 class LocalStore {
-  LocalStore(String path) : _database = _Database(_open(path));
+  LocalStore(this.path) : _database = _Database(_open(path));
+
+  final String path;
+  static final _transactionZone = Object();
+  final _listeners = <void Function()>{};
+  void addListener(void Function() listener) => _listeners.add(listener);
+  void removeListener(void Function() listener) => _listeners.remove(listener);
+  void _notify() {
+    if (Zone.current[_transactionZone] == this) return;
+    for (final listener in _listeners.toList()) {
+      listener();
+    }
+  }
 
   final _Database _database;
   bool _closed = false;
@@ -20,12 +33,18 @@ class LocalStore {
     return NativeDatabase(file);
   }
 
-  Future<void> put(String collection, String key, Map<String, Object?> value) =>
-      _database.customStatement(
-        'INSERT INTO documents (collection, key, value) VALUES (?, ?, ?) '
-        'ON CONFLICT(collection, key) DO UPDATE SET value = excluded.value',
-        [collection, key, jsonEncode(value)],
-      );
+  Future<void> put(
+    String collection,
+    String key,
+    Map<String, Object?> value,
+  ) async {
+    await _database.customStatement(
+      'INSERT INTO documents (collection, key, value) VALUES (?, ?, ?) '
+      'ON CONFLICT(collection, key) DO UPDATE SET value = excluded.value',
+      [collection, key, jsonEncode(value)],
+    );
+    _notify();
+  }
 
   Future<Map<String, Object?>?> get(String collection, String key) async {
     final row = await _database
@@ -47,14 +66,33 @@ class LocalStore {
     return rows.map((row) => _decode(row.read<String>('value'))).toList();
   }
 
-  Future<void> delete(String collection, String key) =>
-      _database.customStatement(
-        'DELETE FROM documents WHERE collection = ? AND key = ?',
-        [collection, key],
-      );
+  Future<void> delete(String collection, String key) async {
+    await _database.customStatement(
+      'DELETE FROM documents WHERE collection = ? AND key = ?',
+      [collection, key],
+    );
+    _notify();
+  }
 
-  Future<T> transaction<T>(Future<T> Function() action) =>
-      _database.transaction(action);
+  /// Removes documents owned by a book, including tasks and voice candidates.
+  Future<void> deleteBook(String bookId) async {
+    await _database.customStatement(
+      'DELETE FROM documents WHERE '
+      "json_extract(value, '\$.bookId') = ? OR "
+      "json_extract(value, '\$.voice.bookId') = ? OR "
+      "(collection IN ('books', 'casting') AND key = ?)",
+      [bookId, bookId, bookId],
+    );
+    _notify();
+  }
+
+  Future<T> transaction<T>(Future<T> Function() action) async {
+    final result = await _database.transaction(
+      () => runZoned(action, zoneValues: {_transactionZone: this}),
+    );
+    _notify();
+    return result;
+  }
 
   Future<void> close() async {
     if (!_closed) {

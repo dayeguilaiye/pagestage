@@ -60,5 +60,8 @@
   "nightMode": "Night mode",
   "nightModeSystem": "System",
   "nightModeOff": "Off",
-  "nightModeOn": "On"
+  "nightModeOn": "On",
+  "playFromHere": "Play from here",
+  "previousLine": "Previous line",
+  "playbackFixtureMissing": "Prepare the local playback fixture before running this prototype."
 }

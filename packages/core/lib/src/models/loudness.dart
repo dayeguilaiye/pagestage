@@ -35,6 +35,17 @@ class LoudnessReport {
   final double? estimatedOutputLufs;
   final double gainDb;
   final double targetLufs;
+  factory LoudnessReport.fromJson(Map<String, Object?> json) => LoudnessReport(
+    measurement: LoudnessMeasurement.values.byName(
+      json['measurement'] as String,
+    ),
+    inputLufs: (json['inputLufs'] as num?)?.toDouble(),
+    estimatedOutputLufs: (json['estimatedOutputLufs'] as num?)?.toDouble(),
+    gainDb: (json['gainDb'] as num).toDouble(),
+    targetLufs: (json['targetLufs'] as num).toDouble(),
+    peakLimited: json['peakLimited'] as bool,
+    boostLimited: json['boostLimited'] as bool,
+  );
   Map<String, Object?> toJson() => {
     'measurement': measurement.name,
     'peakLimited': peakLimited,

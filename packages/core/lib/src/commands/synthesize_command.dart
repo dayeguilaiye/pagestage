@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:args/command_runner.dart';
 import 'package:path/path.dart' as p;
 
@@ -11,6 +9,7 @@ import '../provider_configuration.dart';
 import '../providers/tts_settings.dart';
 import '../script_repository.dart';
 import '../synthesizer.dart';
+import '../audio_repository.dart';
 
 class SynthesizeCommand extends Command<void> {
   SynthesizeCommand(this.context) {
@@ -89,13 +88,14 @@ class SynthesizeCommand extends Command<void> {
       queues: context.requestQueues,
     );
     try {
+      final audio = AudioRepository(context.store);
       final cast = await CastRepository(context.store).get(book.id);
+      final inputsHash = await audio.hashInputs(script, mode);
       final result =
           await Synthesizer(
             adapters: session.adapters,
-            cacheDirectory: Directory(
-              p.join(context.dataDirectory.path, 'audio', 'cache'),
-            ),
+            cacheDirectory: audio.cacheDirectory(book.id),
+            fallbackCacheDirectory: audio.legacyCacheDirectory,
           ).synthesize(
             chapter: chapter,
             script: script,
@@ -113,6 +113,12 @@ class SynthesizeCommand extends Command<void> {
                   'chapter-$number-${mode.name}.wav',
                 ),
           );
+      await audio.saveResult(
+        script,
+        result,
+        mode: mode,
+        inputsHash: inputsHash,
+      );
       final byLine = {
         for (final utterance in result.utterances)
           for (final index in utterance.lineIndices) index: utterance,
