@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app.dart';
-import 'shelf/memory_bookshelf.dart';
-import 'shelf/reading_settings.dart';
+import 'storage.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   LicenseRegistry.addLicense(_fontLicenses);
+  final storage = await AppStorage.open();
   runApp(
     PagestageApp(
-      // In memory until the library and saved settings are wired in (#28).
-      bookshelf: MemoryBookshelf.demo(),
-      readingSettings: MemoryReadingSettings(),
+      bookshelf: storage.library,
+      readingSettings: storage.readingSettings,
     ),
   );
 }

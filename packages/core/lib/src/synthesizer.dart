@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
@@ -45,6 +46,41 @@ class SynthesizedUtterance {
   final Duration pauseBefore;
   final bool pronunciationApplied;
   final String? pronunciationWarning;
+
+  Map<String, Object?> toJson() => {
+    'start': start,
+    'end': end,
+    'lineIndices': lineIndices,
+    'speakerId': speakerId,
+    'audioPath': audioPath,
+    'rawAudioPath': rawAudioPath,
+    'loudness': loudness.toJson(),
+    'cacheKey': cacheKey,
+    'cacheHit': cacheHit,
+    'durationUs': duration.inMicroseconds,
+    'pauseBeforeUs': pauseBefore.inMicroseconds,
+    'pronunciationApplied': pronunciationApplied,
+    'pronunciationWarning': pronunciationWarning,
+  };
+
+  factory SynthesizedUtterance.fromJson(Map<String, Object?> json) =>
+      SynthesizedUtterance(
+        start: json['start'] as int,
+        end: json['end'] as int,
+        lineIndices: (json['lineIndices'] as List).cast<int>(),
+        speakerId: json['speakerId'] as String,
+        audioPath: json['audioPath'] as String,
+        rawAudioPath: json['rawAudioPath'] as String,
+        loudness: LoudnessReport.fromJson(
+          Map<String, Object?>.from(json['loudness'] as Map),
+        ),
+        cacheKey: json['cacheKey'] as String,
+        cacheHit: json['cacheHit'] as bool,
+        duration: Duration(microseconds: json['durationUs'] as int),
+        pauseBefore: Duration(microseconds: json['pauseBeforeUs'] as int),
+        pronunciationApplied: json['pronunciationApplied'] as bool? ?? false,
+        pronunciationWarning: json['pronunciationWarning'] as String?,
+      );
 }
 
 class SynthesisResult {
@@ -72,10 +108,16 @@ class SynthesisResult {
 }
 
 class Synthesizer {
-  Synthesizer({required Map<String, TtsAdapter> adapters, this.cacheDirectory})
-    : adapters = Map.unmodifiable(adapters);
+  Synthesizer({
+    required Map<String, TtsAdapter> adapters,
+    this.cacheDirectory,
+    this.fallbackCacheDirectory,
+  }) : adapters = Map.unmodifiable(adapters);
   final Map<String, TtsAdapter> adapters;
   final Directory? cacheDirectory;
+
+  /// Read-only migration source for previously shared CLI caches.
+  final Directory? fallbackCacheDirectory;
 
   // Advance when request semantics or the adapters' direction mapping changes.
   static const _cacheVersion = 'tts-raw-v3-adapter-direction-v1';
@@ -93,6 +135,7 @@ class Synthesizer {
     Duration paragraphPause = const Duration(milliseconds: 300),
     Duration sameSpeakerPause = const Duration(milliseconds: 100),
     Duration speakerSwitchPause = const Duration(milliseconds: 180),
+    FutureOr<void> Function(SynthesizedUtterance utterance)? onUtterance,
   }) async {
     if (script.chapterNumber != chapter.number ||
         script.sourceTextHash != chapter.textHash) {
@@ -207,6 +250,12 @@ class Synthesizer {
         '${cacheDirectory?.path ?? '${File(outputPath).parent.path}/.utterances'}/$cacheKey.wav',
       );
       var raw = await _readCache(cacheFile);
+      if (raw == null && fallbackCacheDirectory != null) {
+        raw = await _readCache(
+          File('${fallbackCacheDirectory!.path}/$cacheKey.wav'),
+        );
+        if (raw != null) await _writeCache(cacheFile, raw);
+      }
       final cacheHit = raw != null;
       if (raw == null) {
         final utteranceSamples = <int>[];
@@ -277,6 +326,7 @@ class Synthesizer {
           pronunciationWarning: item.warning,
         ),
       );
+      await onUtterance?.call(utterances.last);
       previous = line;
     }
     final audio = PcmAudio(

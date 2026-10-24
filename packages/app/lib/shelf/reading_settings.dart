@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:pagestage_core/pagestage_core.dart';
 
 import '../design/design.dart';
 
@@ -48,11 +49,57 @@ abstract interface class ReadingSettings
   void update(ReadingPreferences preferences);
 }
 
-/// Keeps the settings for this run only, until they are saved (#42).
+/// In-memory preferences for previews and widget tests.
 class MemoryReadingSettings extends ValueNotifier<ReadingPreferences>
     implements ReadingSettings {
   MemoryReadingSettings([super.value = const ReadingPreferences()]);
 
   @override
   void update(ReadingPreferences preferences) => value = preferences;
+}
+
+/// Applies edits immediately and serializes writes so rapid slider changes
+/// survive restart in the same order they appeared on screen.
+class SavedReadingSettings extends ValueNotifier<ReadingPreferences>
+    implements ReadingSettings {
+  SavedReadingSettings._(this._store, super.value);
+  final LocalStore _store;
+  Future<void> _saved = Future.value();
+  Future<void> get saved => _saved;
+
+  static Future<SavedReadingSettings> open(LocalStore store) async {
+    final json = await store.get('settings', 'reading');
+    final preferences = json == null
+        ? const ReadingPreferences()
+        : ReadingPreferences(
+            fontSize: (json['fontSize'] as num).toDouble(),
+            lineSpacing: PsLineSpacing.values.byName(
+              json['lineSpacing'] as String,
+            ),
+            themeMode: ThemeMode.values.byName(json['themeMode'] as String),
+          );
+    return SavedReadingSettings._(store, preferences);
+  }
+
+  @override
+  void update(ReadingPreferences preferences) {
+    if (!preferences.fontSize.isFinite ||
+        preferences.fontSize < ReadingPreferences.minFontSize ||
+        preferences.fontSize > ReadingPreferences.maxFontSize) {
+      throw ArgumentError.value(preferences.fontSize, 'fontSize');
+    }
+    value = preferences;
+    _saved = _saved.then(
+      (_) => _store.put('settings', 'reading', {
+        'fontSize': preferences.fontSize,
+        'lineSpacing': preferences.lineSpacing.name,
+        'themeMode': preferences.themeMode.name,
+      }),
+    );
+    _saved.catchError((Object error, StackTrace stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(exception: error, stack: stack),
+      );
+    });
+  }
 }

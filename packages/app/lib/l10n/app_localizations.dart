@@ -433,6 +433,24 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'开'**
   String get nightModeOn;
+
+  /// No description provided for @playFromHere.
+  ///
+  /// In zh, this message translates to:
+  /// **'从这里播放'**
+  String get playFromHere;
+
+  /// No description provided for @previousLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'上一条台词'**
+  String get previousLine;
+
+  /// No description provided for @playbackFixtureMissing.
+  ///
+  /// In zh, this message translates to:
+  /// **'请先准备本地播放素材，再运行播放原型。'**
+  String get playbackFixtureMissing;
 }
 
 class _AppLocalizationsDelegate

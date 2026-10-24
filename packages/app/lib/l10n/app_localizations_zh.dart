@@ -189,4 +189,13 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nightModeOn => '开';
+
+  @override
+  String get playFromHere => '从这里播放';
+
+  @override
+  String get previousLine => '上一条台词';
+
+  @override
+  String get playbackFixtureMissing => '请先准备本地播放素材，再运行播放原型。';
 }

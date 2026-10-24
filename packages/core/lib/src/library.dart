@@ -7,11 +7,149 @@ import 'package:path/path.dart' as p;
 
 import 'local_store.dart';
 import 'models/book.dart';
+import 'models/cast.dart';
+import 'bookshelf.dart';
+import 'audio_repository.dart';
+import 'script_repository.dart';
 
 /// Imports TXT novels and provides the saved books and chapter bodies.
-class Library {
-  Library(this.store);
+class Library implements Bookshelf {
+  Library(this.store, {this.pickFile});
   final LocalStore store;
+
+  /// App supplies the system picker; CLI supplies a path to [importTxt].
+  final Future<String?> Function()? pickFile;
+
+  @override
+  void addListener(void Function() listener) => store.addListener(listener);
+  @override
+  void removeListener(void Function() listener) =>
+      store.removeListener(listener);
+
+  @override
+  Future<List<ShelfBook>> books() async {
+    final rows = await store.list('books');
+    rows.sort(
+      (a, b) => ((b['importedAt'] as int?) ?? 0).compareTo(
+        (a['importedAt'] as int?) ?? 0,
+      ),
+    );
+    return rows.map((row) => _shelfBook(Book.fromJson(row))).toList();
+  }
+
+  ShelfBook _shelfBook(Book book) => ShelfBook(
+    id: book.id,
+    title: book.title,
+    language: book.language == 'zh'
+        ? BookLanguage.chinese
+        : BookLanguage.english,
+    chapterCount: book.chapters.length,
+  );
+
+  @override
+  Future<ImportOutcome> importBook() async {
+    String? path;
+    try {
+      path = await pickFile?.call();
+      if (path == null) return const ImportCancelled();
+      if (p.extension(path).toLowerCase() != '.txt') {
+        return ImportFailed(p.basename(path), ImportFailure.unsupportedFormat);
+      }
+      return BookImported(_shelfBook(await importTxt(path)));
+    } on FormatException catch (error) {
+      return ImportFailed(
+        path == null ? '' : p.basename(path),
+        error.message == 'The book is empty.'
+            ? ImportFailure.empty
+            : ImportFailure.unreadable,
+      );
+    } catch (_) {
+      return ImportFailed(
+        path == null ? '' : p.basename(path),
+        ImportFailure.unreadable,
+      );
+    }
+  }
+
+  @override
+  Future<List<ChapterEntry>> chapters(String bookId) async {
+    final book = await getBook(bookId);
+    final cast = await CastRepository(store).get(bookId);
+    final audio = AudioRepository(store);
+    return [
+      for (final chapter in book.chapters)
+        ChapterEntry(
+          number: chapter.number,
+          title: chapter.title,
+          volume: chapter.volume,
+          state: await _state(bookId, chapter, cast.profiledThrough, audio),
+        ),
+    ];
+  }
+
+  Future<ChapterState> _state(
+    String bookId,
+    Chapter chapter,
+    int profiledThrough,
+    AudioRepository audio,
+  ) async {
+    final script = await ScriptRepository(store).get(bookId, chapter.number);
+    if (script != null && script.sourceTextHash == chapter.textHash) {
+      return await audio.isComplete(script)
+          ? ChapterState.synthesized
+          : ChapterState.directed;
+    }
+    return chapter.number <= profiledThrough
+        ? ChapterState.profiled
+        : ChapterState.unprofiled;
+  }
+
+  @override
+  Future<List<String>> paragraphs(String bookId, int chapter) async =>
+      (await getBook(bookId))
+          .chapter(chapter)
+          .text
+          .split(RegExp(r'\r?\n'))
+          .where((paragraph) => paragraph.trim().isNotEmpty)
+          .toList();
+
+  @override
+  Future<void> deleteBook(String bookId) async {
+    // Collect referenced files before removing their ownership records. Shared
+    // legacy caches remain if another book's playlist references them.
+    final owned = <String>{};
+    final shared = <String>{};
+    for (final row in await store.list('audio')) {
+      final target = row['bookId'] == bookId ? owned : shared;
+      final audio = ChapterAudio.fromJson(row);
+      if (audio.path != null) target.add(audio.path!);
+      for (final item in audio.utterances) {
+        target.addAll([item.audioPath, item.rawAudioPath]);
+      }
+    }
+    for (final collection in ['voices', 'voiceCandidates']) {
+      for (final row in await store.list(collection)) {
+        final voice = collection == 'voices' ? row : (row['voice'] as Map);
+        final path = voice['samplePath'] as String?;
+        if (path != null) {
+          (voice['bookId'] == bookId ? owned : shared).add(path);
+        }
+      }
+    }
+    // Only generated files in the data directory are owned by the library.
+    // User-selected source files and external CLI exports remain user-owned.
+    final root = p.normalize(p.absolute(p.dirname(store.path)));
+    for (final path in owned.difference(shared)) {
+      final absolute = p.normalize(p.absolute(path));
+      if (p.isWithin(root, absolute) && p.extension(absolute) == '.wav') {
+        final file = File(absolute);
+        if (await file.exists()) await file.delete();
+      }
+    }
+    final directory = AudioRepository(store).bookDirectory(bookId);
+    if (await directory.exists()) await directory.delete(recursive: true);
+    await store.deleteBook(bookId);
+  }
 
   Future<Book> importTxt(String path, {String? title}) async {
     final file = File(path);
@@ -31,7 +169,10 @@ class Library {
       sourcePath: file.absolute.path,
       chapters: _chapters(text),
     );
-    await store.put('books', book.id, book.toJson());
+    await store.put('books', book.id, {
+      ...book.toJson(),
+      'importedAt': DateTime.now().microsecondsSinceEpoch,
+    });
     return book;
   }
 

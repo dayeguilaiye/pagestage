@@ -39,8 +39,7 @@ class MemoryChapter {
 /// [MemoryBookshelf.add], or reports what went wrong.
 typedef MemoryImport = FutureOr<ImportOutcome> Function(MemoryBookshelf shelf);
 
-/// A [Bookshelf] in memory, for building the screens and for widget tests
-/// until the real one lands (#42).
+/// A [Bookshelf] in memory for previews and widget tests.
 class MemoryBookshelf extends ChangeNotifier implements Bookshelf {
   /// [books] are in shelf order, most recently imported first.
   MemoryBookshelf({
