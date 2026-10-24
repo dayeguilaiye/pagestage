@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pagestage_app/main.dart';
+import 'package:pagestage_app/gallery/main.dart';
 
 void main() {
   for (final brightness in Brightness.values) {
@@ -13,7 +13,7 @@ void main() {
       addTearDown(tester.view.reset);
       addTearDown(tester.platformDispatcher.clearPlatformBrightnessTestValue);
 
-      await tester.pumpWidget(const PagestageApp());
+      await tester.pumpWidget(const GalleryApp());
       await tester.pump(const Duration(milliseconds: 500));
       for (var i = 0; i < 8; i++) {
         await tester.drag(find.byType(ListView), const Offset(0, -500));

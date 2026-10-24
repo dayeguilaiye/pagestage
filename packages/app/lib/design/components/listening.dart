@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../icons.dart';
 import '../theme.dart';
 import '../tokens.dart';
@@ -40,7 +41,15 @@ class PsPassageHeading {
   final String? number;
 }
 
-enum PsReadingSize { sm, md, lg }
+/// Leading relative to the reading tokens, as the reading settings offer it.
+enum PsLineSpacing {
+  compact(0.9),
+  comfortable(1),
+  loose(1.125);
+
+  const PsLineSpacing(this.factor);
+  final double factor;
+}
 
 typedef PsLineTap =
     void Function(int paragraph, int line, Offset globalPosition);
@@ -52,7 +61,8 @@ class PsPassage extends StatefulWidget {
     super.key,
     required this.paragraphs,
     this.heading,
-    this.size = PsReadingSize.md,
+    this.fontSize = 18,
+    this.lineSpacing = PsLineSpacing.comfortable,
     this.english = false,
     this.cue = true,
     this.onLineTap,
@@ -60,7 +70,10 @@ class PsPassage extends StatefulWidget {
 
   final List<List<PsLine>> paragraphs;
   final PsPassageHeading? heading;
-  final PsReadingSize size;
+
+  /// 14–26 in the reading settings; 18 is the `reading` token.
+  final double fontSize;
+  final PsLineSpacing lineSpacing;
   final bool english;
 
   /// Hangs the speaker's name before the current line.
@@ -88,19 +101,15 @@ class _PsPassageState extends State<PsPassage> {
   }
 
   TextStyle _base() {
-    if (widget.english) {
-      final (size, lineHeight) = switch (widget.size) {
-        PsReadingSize.sm => (16.0, 26.0),
-        PsReadingSize.md => (18.0, 29.0),
-        PsReadingSize.lg => (21.0, 34.0),
-      };
-      return PsType.style(PsFonts.serifEn, size, lineHeight, FontWeight.w400);
-    }
-    return switch (widget.size) {
-      PsReadingSize.sm => PsType.readingSm,
-      PsReadingSize.md => PsType.reading,
-      PsReadingSize.lg => PsType.readingLg,
-    };
+    // Scales the leading of `reading` (18/32) and `reading-en` (18/29).
+    final ratio =
+        (widget.english ? 29 / 18 : 32 / 18) * widget.lineSpacing.factor;
+    return PsType.style(
+      widget.english ? PsFonts.serifEn : PsFonts.serif,
+      widget.fontSize,
+      (widget.fontSize * ratio).roundToDouble(),
+      FontWeight.w400,
+    );
   }
 
   @override
@@ -235,6 +244,8 @@ class _PsPassageState extends State<PsPassage> {
       spot: spot,
       spotKey: spotLine == null ? null : '$pi:$spotLine',
       color: p.spotlight,
+      // The book's language, not the interface's, picks the glyph forms.
+      locale: widget.english ? const Locale('en') : const Locale('zh', 'CN'),
       // Flutter justifies CJK by stretching the gaps of short lines, so keep
       // Chinese text start-aligned; full-width characters leave little rag.
       align: TextAlign.start,
@@ -302,6 +313,7 @@ class _SpotlitText extends StatelessWidget {
     required this.spot,
     required this.spotKey,
     required this.color,
+    required this.locale,
     required this.align,
     required this.inflate,
   });
@@ -311,13 +323,13 @@ class _SpotlitText extends StatelessWidget {
   final TextRange? spot;
   final String? spotKey;
   final Color color;
+  final Locale locale;
   final TextAlign align;
   final Size inflate;
 
   @override
   Widget build(BuildContext context) {
     final scaler = MediaQuery.textScalerOf(context);
-    final locale = Localizations.maybeLocaleOf(context);
     final text = RichText(
       text: span,
       textAlign: align,
@@ -451,9 +463,10 @@ class PsMiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.ps;
+    final l = AppLocalizations.of(context);
     return Semantics(
       container: true,
-      label: '播放器',
+      label: l.player,
       child: Container(
         height: PsSize.miniPlayer,
         clipBehavior: Clip.antiAlias,
@@ -517,8 +530,8 @@ class PsMiniPlayer extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                const PsTag(
-                                  'AI 合成',
+                                PsTag(
+                                  l.aiVoice,
                                   tone: PsTagTone.outline,
                                   dense: true,
                                 ),
@@ -534,7 +547,7 @@ class PsMiniPlayer extends StatelessWidget {
                       ),
                       PsIconButton(
                         icon: PsIcons.lineForward,
-                        label: '下一句',
+                        label: l.nextLine,
                         onPressed: onNext,
                       ),
                     ],

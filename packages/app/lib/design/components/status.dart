@@ -2,10 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../icons.dart';
 import '../theme.dart';
 import '../tokens.dart';
 import '../type.dart';
+import 'controls.dart';
 
 enum PsTagTone { neutral, outline, accent, jade, amber, danger }
 
@@ -65,14 +67,23 @@ class PsTag extends StatelessWidget {
 }
 
 enum PsChapterStatus {
-  none('未导演'),
-  directed('已导演'),
-  synthesized('已合成'),
-  working('生成中'),
-  failed('出错');
+  /// Outside the profiled range, so it cannot be directed yet. Drawn like
+  /// [none]: to a reader both simply have no voice yet.
+  unprofiled,
+  none,
+  directed,
+  synthesized,
+  working,
+  failed;
 
-  const PsChapterStatus(this.label);
-  final String label;
+  String label(AppLocalizations l) => switch (this) {
+    unprofiled => l.chapterUnprofiled,
+    none => l.chapterUndirected,
+    directed => l.chapterDirected,
+    synthesized => l.chapterSynthesized,
+    working => l.chapterWorking,
+    failed => l.chapterFailed,
+  };
 }
 
 /// A chapter's generation state, told apart by shape: ○ ◐ ● spinner ▲.
@@ -128,8 +139,9 @@ class _PsStatusMarkState extends State<PsStatusMark>
       PsChapterStatus.working => p.amber,
       _ => p.ink2,
     };
+    final label = status.label(AppLocalizations.of(context));
     return Semantics(
-      label: status.label,
+      label: label,
       excludeSemantics: true,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -140,10 +152,7 @@ class _PsStatusMarkState extends State<PsStatusMark>
             painter: _StatusPainter(status, p, _spin),
           ),
           if (widget.showLabel)
-            Text(
-              status.label,
-              style: PsType.caption.copyWith(color: labelColor),
-            ),
+            Text(label, style: PsType.caption.copyWith(color: labelColor)),
         ],
       ),
     );
@@ -164,7 +173,7 @@ class _StatusPainter extends CustomPainter {
       ..strokeWidth = 1.5;
     final fill = Paint();
     switch (status) {
-      case PsChapterStatus.none:
+      case PsChapterStatus.unprofiled || PsChapterStatus.none:
         canvas.drawCircle(c, 5.25, stroke..color = p.ruleStrong);
       case PsChapterStatus.directed:
         canvas.drawCircle(c, 5.25, stroke..color = p.ink2);
@@ -273,6 +282,159 @@ class _PsEqState extends State<PsEq> with SingleTickerProviderStateMixin {
                   ),
                 ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum PsBannerTone { neutral, jade, amber, danger }
+
+/// Something the reader should know that stays until it is dealt with: what
+/// happened, what stopped and what to do next. Errors use a banner, never a
+/// toast.
+class PsBanner extends StatelessWidget {
+  const PsBanner({
+    super.key,
+    this.tone = PsBannerTone.neutral,
+    this.title,
+    this.body,
+    this.icon,
+    this.actionLabel,
+    this.onAction,
+    this.onClose,
+  });
+
+  final PsBannerTone tone;
+  final String? title;
+  final String? body;
+
+  /// Defaults to alert for danger and amber, check for jade, book otherwise.
+  final PsIcons? icon;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  /// Shows a close button.
+  final VoidCallback? onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.ps;
+    final (bg, fg) = switch (tone) {
+      PsBannerTone.neutral => (p.paperSunken, p.ink2),
+      PsBannerTone.jade => (p.jadeSoft, p.jade),
+      PsBannerTone.amber => (p.amberSoft, p.amber),
+      PsBannerTone.danger => (p.dangerSoft, p.danger),
+    };
+    final glyph =
+        icon ??
+        switch (tone) {
+          PsBannerTone.danger || PsBannerTone.amber => PsIcons.alert,
+          PsBannerTone.jade => PsIcons.check,
+          PsBannerTone.neutral => PsIcons.book,
+        };
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          PsSpace.s4,
+          14,
+          onClose == null ? PsSpace.s4 : PsSpace.s1,
+          14,
+        ),
+        decoration: BoxDecoration(
+          color: bg,
+          borderRadius: BorderRadius.circular(PsRadius.md),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: PsSpace.s3,
+          children: [
+            PsIcon(
+              glyph,
+              size: 20,
+              color: tone == PsBannerTone.neutral ? p.ink2 : fg,
+            ),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 2,
+                children: [
+                  if (title != null)
+                    Text(
+                      title!,
+                      style: PsType.style(
+                        PsFonts.sans,
+                        15,
+                        20,
+                        FontWeight.w600,
+                      ).copyWith(color: p.ink),
+                    ),
+                  if (body != null)
+                    Text(
+                      body!,
+                      style: PsType.style(
+                        PsFonts.sans,
+                        13,
+                        19,
+                        FontWeight.w400,
+                      ).copyWith(color: p.ink2),
+                    ),
+                  if (actionLabel != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: PsSpace.s2 - 2),
+                      child: _LinkButton(
+                        actionLabel!,
+                        onAction,
+                        tone == PsBannerTone.neutral ? p.ink : fg,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (onClose != null)
+              Transform.translate(
+                offset: const Offset(0, -6),
+                child: PsIconButton(
+                  icon: PsIcons.close,
+                  label: AppLocalizations.of(context).close,
+                  onPressed: onClose,
+                  size: PsControlSize.sm,
+                  muted: true,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LinkButton extends StatelessWidget {
+  const _LinkButton(this.label, this.onPressed, this.color);
+  final String label;
+  final VoidCallback? onPressed;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onPressed,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: PsSpace.s1),
+          child: Text(
+            label,
+            style: PsType.style(PsFonts.sans, 14, 20, FontWeight.w600).copyWith(
+              color: color,
+              decoration: TextDecoration.underline,
+              decorationColor: color,
+              decorationThickness: 1,
+            ),
           ),
         ),
       ),

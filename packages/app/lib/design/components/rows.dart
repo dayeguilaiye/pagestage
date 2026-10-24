@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../icons.dart';
 import '../theme.dart';
 import '../tokens.dart';
@@ -220,7 +221,7 @@ class PsChapterRow extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: PsType.style(
-                        PsFonts.serif,
+                        psHasCjk(title) ? PsFonts.serif : PsFonts.serifEn,
                         16,
                         22,
                         current ? FontWeight.w600 : FontWeight.w400,
@@ -287,6 +288,7 @@ class PsCastRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.ps;
+    final l = AppLocalizations.of(context);
     final sub = PsType.subhead.copyWith(color: p.ink2);
     return Stack(
       children: [
@@ -323,7 +325,7 @@ class PsCastRow extends StatelessWidget {
                             ).copyWith(color: p.ink),
                           ),
                         ),
-                        if (extra) const PsTag('群演'),
+                        if (extra) PsTag(l.extra),
                       ],
                     ),
                     if (auditioning)
@@ -331,7 +333,10 @@ class PsCastRow extends StatelessWidget {
                         spacing: 6,
                         children: [
                           const PsEq(),
-                          Text('试听中', style: sub.copyWith(color: p.vermilion)),
+                          Text(
+                            l.auditioning,
+                            style: sub.copyWith(color: p.vermilion),
+                          ),
                         ],
                       )
                     else if (subtitle != null)
@@ -350,7 +355,7 @@ class PsCastRow extends StatelessWidget {
                 children: [
                   PsIconButton(
                     icon: auditioning ? PsIcons.pause : PsIcons.play,
-                    label: auditioning ? '停止试听' : '试听',
+                    label: auditioning ? l.stopAudition : l.audition,
                     onPressed: onAudition,
                     variant: PsIconButtonVariant.outline,
                     size: PsControlSize.sm,
@@ -359,7 +364,7 @@ class PsCastRow extends StatelessWidget {
                   if (onMore != null)
                     PsIconButton(
                       icon: PsIcons.more,
-                      label: '更多',
+                      label: l.more,
                       onPressed: onMore,
                       size: PsControlSize.sm,
                       muted: true,
@@ -376,6 +381,119 @@ class PsCastRow extends StatelessWidget {
           child: const Divider(),
         ),
       ],
+    );
+  }
+}
+
+/// A book on the shelf: cover, title, listening progress and one line of
+/// state, such as 听到第 2 章 or 建档中 12 / 40.
+class PsShelfItem extends StatelessWidget {
+  const PsShelfItem({
+    super.key,
+    required this.title,
+    this.author,
+    this.tone,
+    this.width = 104,
+    this.progress,
+    this.meta,
+    this.onTap,
+    this.onLongPress,
+  });
+
+  final String title;
+  final String? author;
+  final int? tone;
+
+  /// 104 fits three columns on a phone.
+  final double width;
+
+  /// 0–1; null until the book has been listened to.
+  final double? progress;
+  final String? meta;
+  final VoidCallback? onTap;
+
+  /// Opens the book's menu.
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.ps;
+    final latin = !psHasCjk(title);
+    return Semantics(
+      button: onTap != null,
+      child: PsPressScale(
+        enabled: onTap != null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: SizedBox(
+            width: width,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ExcludeSemantics(
+                  child: PsBookCover(
+                    title: title,
+                    author: author,
+                    tone: tone,
+                    width: width,
+                  ),
+                ),
+                const SizedBox(height: PsSpace.s3),
+                Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      (latin
+                              ? PsType.style(
+                                  PsFonts.serifEn,
+                                  16,
+                                  20,
+                                  FontWeight.w500,
+                                )
+                              : PsType.style(
+                                  PsFonts.serif,
+                                  15,
+                                  20,
+                                  FontWeight.w600,
+                                ))
+                          .copyWith(color: p.ink),
+                ),
+                if (progress != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: PsSpace.s2),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(PsRadius.full),
+                      child: SizedBox(
+                        height: 2,
+                        child: ColoredBox(
+                          color: p.rule,
+                          child: FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: progress!.clamp(0, 1),
+                            child: ColoredBox(color: p.ink),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                if (meta != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      meta!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: PsType.caption.copyWith(color: p.ink2),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

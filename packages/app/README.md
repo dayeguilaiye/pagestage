@@ -1,12 +1,26 @@
 # pagestage App
 
-Android 和 iOS 的 Flutter App。目前只有设计系统和一页设计样张（`lib/gallery/`），正式页面还没开始写。
+Android 和 iOS 的 Flutter App。目前有书架、书的目录和正文三屏，数据还是内存里的演示书（`MemoryBookshelf.demo()`），接入 core 的书库见 #42。
 
 ```sh
 cd packages/app
-flutter run
+flutter run                          # App
+flutter run -t lib/gallery/main.dart # 设计样张
 flutter test
 ```
+
+## 书架
+
+`lib/shelf/` 是书架、目录和正文三屏。页面只通过两个接口取数据：
+
+- `Bookshelf`：书的列表、导入（弹出文件选择器）、删除、章节列表和状态、按段落给出的正文。书和章节状态变化时通知监听者。
+- `ReadingSettings`：字号、行距、夜间模式，全局一份，改了立即生效。
+
+`MemoryBookshelf` 和 `MemoryReadingSettings` 是放在内存里的实现，用来开发界面和写 widget 测试；`main.dart` 在接入真实实现之前用它们。
+
+## 中英文
+
+所有界面文案放在 `lib/l10n/app_zh.arb` 和 `app_en.arb`，跟随系统语言：系统语言是中文时用简体中文，其他语言一律英文。改了 ARB 之后运行 `flutter gen-l10n`（`flutter run`、`flutter test` 也会自动生成），生成的 `app_localizations*.dart` 一起提交。新文案两种语言同时加，测试会检查两边的键一致。
 
 ## 设计系统
 
@@ -16,7 +30,8 @@ flutter test
 - 颜色：`context.ps` 取当前主题的 `PsPalette`。说话人印章和生成封面的颜料色用 `voice(tone)`，`tone` 按演员表顺序分配并存进演员表。
 - 文字：`PsType` 里是不带颜色的文字样式，颜色从主题或调用方给。正文用 `reading*`，界面用 `headline` / `body` / `label` / `subhead` / `caption` / `tag`，数字用 `numeral*`。
 - 间距、圆角、尺寸、动效：`PsSpace`、`PsRadius`、`PsSize`、`PsMotion`。
-- 组件：`PsButton`、`PsIconButton`、`PsPlayButton`、`PsSegmentedControl`、`PsTag`、`PsStatusMark`、`PsSeal`、`PsBookCover`、`PsMark`、`PsListGroup` / `PsListRow`、`PsChapterRow`、`PsCastRow`、`PsPassage`、`PsMiniPlayer`、`PsIcon`。
+- 组件：`PsButton`、`PsIconButton`、`PsPlayButton`、`PsSegmentedControl`、`PsTag`、`PsStatusMark`、`PsBanner`、`PsSeal`、`PsBookCover`、`PsMark`、`PsListGroup` / `PsListRow`、`PsShelfItem`、`PsChapterRow`、`PsCastRow`、`PsPassage`、`PsMiniPlayer`、`PsNavBar` / `PsLargeTitle`、`PsEmptyState`、`PsSheet`、`PsDialog`、`PsIcon`；`showPsSheet`、`showPsMenu`、`showPsToast` 打开对应的浮层。
+- 组件自带的文案（播放、旁白、章节状态等）也走本地化，所以组件要放在带 `AppLocalizations.delegate` 的 `MaterialApp` 里。
 - `PsPassage` 点台词只回调 `onLineTap`，由调用方弹出「从这里播放」菜单，不直接改变播放位置。
 
 ## 字体
