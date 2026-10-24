@@ -15,6 +15,7 @@ import 'providers/provider_exception.dart';
 import 'commands/narrate_command.dart';
 import 'providers/tts_adapter.dart';
 import 'providers/usage_ledger.dart';
+import 'providers/request_recovery.dart';
 import 'library.dart';
 import 'local_store.dart';
 
@@ -28,7 +29,9 @@ class CliContext {
     this.directorLlm,
     Map<String, TtsAdapter>? ttsAdapters,
     UsageLedger? usageLedger,
-  }) : environment = Map.unmodifiable(environment ?? Platform.environment),
+    RequestRuntime? requestRuntime,
+  }) : requestRuntime = requestRuntime ?? RequestRuntime(),
+       environment = Map.unmodifiable(environment ?? Platform.environment),
        ttsAdapters = Map.unmodifiable(ttsAdapters ?? {}),
        usageLedger =
            usageLedger ??
@@ -37,6 +40,8 @@ class CliContext {
     library = Library(store);
   }
 
+  final RequestRuntime requestRuntime;
+  final requestQueues = <String, ProviderRequestQueue>{};
   final Directory dataDirectory;
   final StringSink output;
   final Map<String, String> environment;
@@ -81,6 +86,7 @@ Future<int> runCli(
   LlmAdapter? profileLlm,
   LlmAdapter? directorLlm,
   Map<String, TtsAdapter>? ttsAdapters,
+  RequestRuntime? requestRuntime,
 }) async {
   final out = output ?? stdout;
   final err = errorOutput ?? stderr;
@@ -96,6 +102,7 @@ Future<int> runCli(
   final context = CliContext(
     dataDirectory: Directory(dataPath),
     output: out,
+    requestRuntime: requestRuntime ?? RequestRuntime(onEvent: err.writeln),
     environment: environment,
     profileLlm: profileLlm,
     directorLlm: directorLlm,

@@ -2,6 +2,7 @@ import '../provider_configuration.dart';
 import 'llm_adapter.dart';
 import 'provider_exception.dart';
 import 'usage_ledger.dart';
+import 'request_recovery.dart';
 
 /// Two model slots sharing one explicit endpoint and API protocol.
 class LlmSettings {
@@ -56,7 +57,7 @@ class LlmSettings {
         'schema';
     final stream =
         config.value('llm', 'stream', environmentVariable: 'LLM_STREAM') ??
-        'false';
+        'true';
     final url = Uri.tryParse(endpoint);
     if (profile == null ||
         director == null ||
@@ -91,26 +92,32 @@ class LlmSettings {
     );
   }
 
-  OpenAiLlmAdapter createProfileAdapter({UsageLedger? usageLedger}) =>
-      OpenAiLlmAdapter(
-        baseUrl: baseUrl,
-        apiKey: _key,
-        model: profileModel,
-        api: api,
-        jsonSchema: jsonSchema,
-        reasoningEffort: reasoningEffort,
-        stream: stream,
-        usageLedger: usageLedger,
-      );
-  OpenAiLlmAdapter createDirectorAdapter({UsageLedger? usageLedger}) =>
-      OpenAiLlmAdapter(
-        baseUrl: baseUrl,
-        apiKey: _key,
-        model: directorModel,
-        api: api,
-        jsonSchema: jsonSchema,
-        reasoningEffort: reasoningEffort,
-        stream: stream,
-        usageLedger: usageLedger,
-      );
+  OpenAiLlmAdapter createProfileAdapter({
+    UsageLedger? usageLedger,
+    RequestRuntime? runtime,
+  }) => OpenAiLlmAdapter(
+    baseUrl: baseUrl,
+    apiKey: _key,
+    model: profileModel,
+    api: api,
+    jsonSchema: jsonSchema,
+    reasoningEffort: reasoningEffort,
+    stream: stream,
+    usageLedger: usageLedger,
+    runtime: runtime,
+  );
+  OpenAiLlmAdapter createDirectorAdapter({
+    UsageLedger? usageLedger,
+    RequestRuntime? runtime,
+  }) => OpenAiLlmAdapter(
+    baseUrl: baseUrl,
+    apiKey: _key,
+    model: directorModel,
+    api: api,
+    jsonSchema: jsonSchema,
+    reasoningEffort: reasoningEffort,
+    stream: stream,
+    usageLedger: usageLedger,
+    runtime: runtime,
+  );
 }

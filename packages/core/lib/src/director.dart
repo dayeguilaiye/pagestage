@@ -6,6 +6,7 @@ import 'models/book.dart';
 import 'models/cast.dart';
 import 'models/script.dart';
 import 'providers/llm_adapter.dart';
+import 'providers/request_recovery.dart';
 import 'script_repository.dart';
 
 class DirectingResult {
@@ -36,11 +37,13 @@ class Director {
     this.llm, {
     this.chunkCharacters = 6000,
     this.contextLines = 3,
-  }) {
+    RequestRuntime? runtime,
+  }) : runtime = runtime ?? RequestRuntime() {
     if (chunkCharacters < 1 || contextLines < 0) {
       throw ArgumentError('Invalid directing limits.');
     }
   }
+  final RequestRuntime runtime;
   final LocalStore store;
   final LlmAdapter llm;
   final int chunkCharacters;
@@ -86,7 +89,12 @@ class Director {
         );
         continue;
       }
-      for (var attempt = 0; attempt < 3; attempt++) {
+      for (var attempt = 0; attempt < 3;) {
+        if (attempt > 0) {
+          runtime.onEvent(
+            'llm: alignment retry; ${3 - attempt} HTTP attempts remaining for this chunk.',
+          );
+        }
         final response = await llm.complete(
           LlmRequest(
             system: _instructions(book.language),
@@ -97,11 +105,13 @@ class Director {
               'previousLines': previous,
               'alignmentRetry': attempt,
             }),
+            maxAttempts: 3 - attempt,
             schemaName: 'script',
             schema: _scriptSchema,
           ),
         );
-        requests++;
+        attempt += response.attempts;
+        requests += response.attempts;
         usage += response.usage;
         try {
           aligned = _align(source, response.data);

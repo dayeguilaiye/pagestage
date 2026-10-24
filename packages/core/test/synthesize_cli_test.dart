@@ -6,6 +6,8 @@ import 'package:pagestage_core/pagestage_core.dart';
 import 'package:pagestage_core/src/cli.dart';
 import 'package:test/test.dart';
 
+import 'support/fake_request_clock.dart';
+
 void main() {
   test(
     'CLI imports, profiles, casts, directs and synthesizes with provider fakes',
@@ -27,6 +29,7 @@ void main() {
           environment: {},
           profileLlm: _Profile(),
           directorLlm: _Director(),
+          requestRuntime: FakeRequestClock().runtime,
           ttsAdapters: {'minimax': minimax, 'bailian': bailian},
         );
         expect(status, 0, reason: errors.toString());
@@ -129,6 +132,7 @@ void main() {
         output: out,
         errorOutput: StringBuffer(),
         environment: {},
+        requestRuntime: FakeRequestClock().runtime,
         ttsAdapters: {'minimax': tts},
       ),
       0,
@@ -146,6 +150,7 @@ void main() {
         output: StringBuffer(),
         errorOutput: StringBuffer(),
         environment: {},
+        requestRuntime: FakeRequestClock().runtime,
         ttsAdapters: {'minimax': tts},
       ),
       0,
@@ -195,6 +200,7 @@ void main() {
         output: StringBuffer(),
         errorOutput: errors,
         environment: {},
+        requestRuntime: FakeRequestClock().runtime,
         ttsAdapters: {'minimax': tts},
       );
       expect(status, isNot(0));

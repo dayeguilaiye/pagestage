@@ -45,7 +45,10 @@ class ProfileCommand extends Command<void> {
               argResults!['config'] as String?,
               environment: context.environment,
             ),
-          ).createProfileAdapter(usageLedger: context.usageLedger)
+          ).createProfileAdapter(
+            usageLedger: context.usageLedger,
+            runtime: context.requestRuntime,
+          )
         : null;
     try {
       final result = await Profiler(

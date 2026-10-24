@@ -6,6 +6,8 @@ import 'package:http/testing.dart';
 import 'package:pagestage_core/pagestage_core.dart';
 import 'package:test/test.dart';
 
+import '../support/fake_request_clock.dart';
+
 // Synthetic server-sent events shaped after the OpenAI streaming references:
 // https://platform.openai.com/docs/api-reference/responses-streaming
 // https://platform.openai.com/docs/api-reference/chat-streaming
@@ -24,6 +26,7 @@ void main() {
   test('Responses streaming uses the completed response object', () async {
     late Map body;
     final adapter = OpenAiLlmAdapter(
+      runtime: FakeRequestClock().runtime,
       baseUrl: Uri.parse('https://example.invalid/v1'),
       apiKey: 'test-key',
       model: 'director-model',
@@ -77,6 +80,7 @@ void main() {
     addTearDown(() => temp.delete(recursive: true));
     final ledger = File('${temp.path}/usage.jsonl');
     final adapter = OpenAiLlmAdapter(
+      runtime: FakeRequestClock().runtime,
       baseUrl: Uri.parse('https://example.invalid/v1'),
       apiKey: 'test-key',
       model: 'director-model',
@@ -135,43 +139,47 @@ void main() {
   });
 
   for (final api in LlmApi.values) {
-    test('${api.name} streams that end early are invalid responses', () async {
-      final adapter = OpenAiLlmAdapter(
-        baseUrl: Uri.parse('https://example.invalid/v1'),
-        apiKey: 'test-key',
-        model: 'director-model',
-        api: api,
-        stream: true,
-        client: MockClient(
-          (_) async => http.Response(
-            sse([
-              api == LlmApi.responses
-                  ? {'type': 'response.output_text.delta', 'delta': '{'}
-                  : {
-                      'id': 'chatcmpl-1',
-                      'choices': [
-                        {
-                          'delta': {'content': '{'},
-                          'finish_reason': null,
-                        },
-                      ],
-                    },
-            ]),
-            200,
+    test(
+      '${api.name} streams that end early exhaust transport retries',
+      () async {
+        final adapter = OpenAiLlmAdapter(
+          runtime: FakeRequestClock().runtime,
+          baseUrl: Uri.parse('https://example.invalid/v1'),
+          apiKey: 'test-key',
+          model: 'director-model',
+          api: api,
+          stream: true,
+          client: MockClient(
+            (_) async => http.Response(
+              sse([
+                api == LlmApi.responses
+                    ? {'type': 'response.output_text.delta', 'delta': '{'}
+                    : {
+                        'id': 'chatcmpl-1',
+                        'choices': [
+                          {
+                            'delta': {'content': '{'},
+                            'finish_reason': null,
+                          },
+                        ],
+                      },
+              ]),
+              200,
+            ),
           ),
-        ),
-      );
-      await expectLater(
-        adapter.complete(request),
-        throwsA(
-          isA<ProviderException>().having(
-            (e) => e.kind,
-            'kind',
-            ProviderErrorKind.invalidResponse,
+        );
+        await expectLater(
+          adapter.complete(request),
+          throwsA(
+            isA<ProviderException>().having(
+              (e) => e.kind,
+              'kind',
+              ProviderErrorKind.unavailable,
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   test('stream setting comes from configuration or LLM_STREAM', () async {

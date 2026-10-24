@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 
 import 'provider_exception.dart';
 import 'usage_ledger.dart';
+import 'request_recovery.dart';
 
 enum LlmApi { chatCompletions, responses }
 
@@ -20,11 +21,15 @@ class LlmRequest {
     required this.user,
     required this.schemaName,
     required this.schema,
+    this.maxAttempts = 3,
   });
   final String system;
   final String user;
   final String schemaName;
   final Map<String, Object?> schema;
+
+  /// Total HTTP attempts, including transport and caller-level retries (1–3).
+  final int maxAttempts;
 }
 
 class TokenUsage {
@@ -49,12 +54,17 @@ class TokenUsage {
 }
 
 class LlmResponse {
-  const LlmResponse({required this.data, this.usage = const TokenUsage()});
+  const LlmResponse({
+    required this.data,
+    this.usage = const TokenUsage(),
+    this.attempts = 1,
+  });
   final Map<String, Object?> data;
   final TokenUsage usage;
+  final int attempts;
 }
 
-/// One explicitly selected OpenAI-compatible protocol. No paid retry/fallback.
+/// One explicitly selected protocol with at most three transport attempts.
 class OpenAiLlmAdapter implements LlmAdapter {
   OpenAiLlmAdapter({
     required Uri baseUrl,
@@ -63,11 +73,13 @@ class OpenAiLlmAdapter implements LlmAdapter {
     this.api = LlmApi.chatCompletions,
     this.jsonSchema = true,
     this.reasoningEffort,
-    this.stream = false,
+    this.stream = true,
+    RequestRuntime? runtime,
     http.Client? client,
     UsageLedger? usageLedger,
     this.timeout = const Duration(minutes: 3),
-  }) : _baseUrl = baseUrl,
+  }) : runtime = runtime ?? RequestRuntime(),
+       _baseUrl = baseUrl,
        _apiKey = apiKey,
        _usageLedger = usageLedger,
        _client = client ?? http.Client(),
@@ -85,6 +97,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
       );
     }
   }
+  final RequestRuntime runtime;
   final Uri _baseUrl;
   final String _apiKey;
   final UsageLedger? _usageLedger;
@@ -107,6 +120,35 @@ class OpenAiLlmAdapter implements LlmAdapter {
 
   @override
   Future<LlmResponse> complete(LlmRequest request) async {
+    if (request.maxAttempts < 1 || request.maxAttempts > 3) {
+      throw ArgumentError.value(request.maxAttempts, 'maxAttempts');
+    }
+    for (var attempt = 1; ; attempt++) {
+      try {
+        return await _completeOnce(request, attempt);
+      } on ProviderException catch (error) {
+        final retryable =
+            error.kind == ProviderErrorKind.unavailable &&
+            const {
+              'connection_error',
+              'timeout',
+              'interrupted_stream',
+            }.contains(error.code);
+        if (!retryable) rethrow;
+        if (attempt == request.maxAttempts) {
+          runtime.onEvent('llm: retry budget exhausted ($attempt attempts).');
+          rethrow;
+        }
+        await runtime.wait(
+          'llm',
+          '${error.code}; retry ${attempt + 1}/${request.maxAttempts}',
+          Duration(seconds: attempt),
+        );
+      }
+    }
+  }
+
+  Future<LlmResponse> _completeOnce(LlmRequest request, int attempt) async {
     final path = _baseUrl.path.replaceFirst(RegExp(r'/$'), '');
     final isChat = api == LlmApi.chatCompletions;
     final endpoint = _baseUrl.replace(
@@ -149,18 +191,17 @@ class OpenAiLlmAdapter implements LlmAdapter {
       if (stream) 'stream': true,
       if (stream && isChat) 'stream_options': {'include_usage': true},
     };
+    final progress = _ResponseProgress();
+    final abort = Completer<void>();
     try {
-      final data = await _send(endpoint, body, isChat).timeout(timeout);
-      // Record before validating content: a rejected answer is still billed.
-      _usageLedger?.record(
-        UsageRecord(
-          provider: 'llm',
-          endpoint: endpoint.toString(),
-          model: model,
-          requestId: data['id']?.toString(),
-          usage: usageFields(data['usage']),
-        ),
-      );
+      final data = await _send(endpoint, body, isChat, progress, abort.future)
+          .timeout(
+            timeout,
+            onTimeout: () {
+              abort.complete();
+              throw TimeoutException('Provider request timeout.');
+            },
+          );
       String content;
       if (isChat) {
         final choice = (data['choices'] as List).first as Map;
@@ -204,6 +245,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
           usage[isChat ? 'completion_tokens' : 'output_tokens'] as int? ?? 0;
       return LlmResponse(
         data: result,
+        attempts: attempt,
         usage: TokenUsage(
           inputTokens: input,
           outputTokens: output,
@@ -213,12 +255,24 @@ class OpenAiLlmAdapter implements LlmAdapter {
     } on ProviderException {
       rethrow;
     } on TimeoutException {
+      if (progress.terminal) {
+        throw const ProviderException(
+          provider: 'llm',
+          kind: ProviderErrorKind.invalidResponse,
+        );
+      }
       throw const ProviderException(
         provider: 'llm',
         kind: ProviderErrorKind.unavailable,
         code: 'timeout',
       );
     } on http.ClientException {
+      if (progress.terminal) {
+        throw const ProviderException(
+          provider: 'llm',
+          kind: ProviderErrorKind.invalidResponse,
+        );
+      }
       throw const ProviderException(
         provider: 'llm',
         kind: ProviderErrorKind.unavailable,
@@ -229,6 +283,21 @@ class OpenAiLlmAdapter implements LlmAdapter {
         provider: 'llm',
         kind: ProviderErrorKind.invalidResponse,
       );
+    } finally {
+      if (!abort.isCompleted) abort.complete();
+      // A partial stream can have incurred cost. Record known fields once,
+      // even when transport recovery needs another request.
+      if (progress.accepted) {
+        _usageLedger?.record(
+          UsageRecord(
+            provider: 'llm',
+            endpoint: endpoint.toString(),
+            model: model,
+            requestId: progress.id,
+            usage: progress.usage,
+          ),
+        );
+      }
     }
   }
 
@@ -236,9 +305,11 @@ class OpenAiLlmAdapter implements LlmAdapter {
     Uri endpoint,
     Map<String, Object?> body,
     bool isChat,
+    _ResponseProgress progress,
+    Future<void> abortTrigger,
   ) async {
     final response = await _client.send(
-      http.Request('POST', endpoint)
+      http.AbortableRequest('POST', endpoint, abortTrigger: abortTrigger)
         ..headers.addAll({
           'authorization': 'Bearer $_apiKey',
           'content-type': 'application/json',
@@ -246,7 +317,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
         ..body = jsonEncode(body),
     );
     final ok = response.statusCode >= 200 && response.statusCode < 300;
-    if (ok && stream) return _readEvents(response.stream, isChat);
+    if (ok && stream) return _readEvents(response.stream, isChat, progress);
     final bytes = await response.stream.toBytes();
     Object? decoded;
     try {
@@ -255,24 +326,42 @@ class OpenAiLlmAdapter implements LlmAdapter {
       if (ok) rethrow;
     }
     if (!ok) throw _error(response.statusCode, decoded);
-    return Map<String, Object?>.from(decoded as Map);
+    final data = Map<String, Object?>.from(decoded as Map);
+    progress.update(data);
+    return data;
   }
 
   /// Rebuilds the non-streaming response shape so one parser serves both.
   Future<Map<String, Object?>> _readEvents(
     Stream<List<int>> bytes,
     bool isChat,
+    _ResponseProgress progress,
   ) async {
     Map<String, Object?>? completed;
     final content = StringBuffer();
     Object? id, finishReason, refusal, usage;
     final lines = bytes.transform(utf8.decoder).transform(const LineSplitter());
     await for (final line in lines) {
+      // A JSON reply is a protocol mismatch, not an empty connection worth
+      // paying for again when a compatible endpoint ignores stream=true.
+      if (line.trimLeft().startsWith('{')) {
+        final data = jsonDecode(line);
+        if (data is Map && data['error'] == null) progress.update(data);
+        throw const FormatException('Expected an event stream.');
+      }
       if (!line.startsWith('data:')) continue;
       final payload = line.substring(5).trim();
-      if (payload.isEmpty || payload == '[DONE]') continue;
+      if (payload.isEmpty) continue;
+      if (payload == '[DONE]') break;
       final event = jsonDecode(payload) as Map;
+      if (event['error'] != null || event['type'] == 'error') {
+        throw const ProviderException(
+          provider: 'llm',
+          kind: ProviderErrorKind.invalidResponse,
+        );
+      }
       if (isChat) {
+        if (event['choices'] is List) progress.update(event);
         id ??= event['id'];
         usage = event['usage'] ?? usage;
         for (final choice in event['choices'] as List? ?? const []) {
@@ -281,16 +370,44 @@ class OpenAiLlmAdapter implements LlmAdapter {
           refusal = delta['refusal'] ?? refusal;
           finishReason = choice['finish_reason'] ?? finishReason;
         }
-      } else if (const [
-        'response.completed',
-        'response.incomplete',
-        'response.failed',
-      ].contains(event['type'])) {
-        completed = Map<String, Object?>.from(event['response'] as Map);
+        progress.terminal = finishReason != null || refusal != null;
+        if (finishReason != null && usage != null) break;
+      } else {
+        if (event['response'] case final Map response) {
+          progress.update(response);
+        }
+        if (event['type'] == 'response.output_text.delta') {
+          progress.accepted = true;
+        }
+        if (event['type'] == 'response.refusal.delta' ||
+            event['type'] == 'response.refusal.done') {
+          progress.accepted = true;
+          progress.terminal = true;
+        }
+        if (const [
+          'response.completed',
+          'response.incomplete',
+          'response.failed',
+        ].contains(event['type'])) {
+          completed = Map<String, Object?>.from(event['response'] as Map);
+          break;
+        }
       }
     }
     if (isChat) {
-      if (finishReason == null) throw const FormatException('Stream ended.');
+      if (refusal != null) {
+        throw const ProviderException(
+          provider: 'llm',
+          kind: ProviderErrorKind.invalidResponse,
+        );
+      }
+      if (finishReason == null) {
+        throw const ProviderException(
+          provider: 'llm',
+          kind: ProviderErrorKind.unavailable,
+          code: 'interrupted_stream',
+        );
+      }
       return {
         'id': id,
         'choices': [
@@ -302,7 +419,19 @@ class OpenAiLlmAdapter implements LlmAdapter {
         'usage': usage,
       };
     }
-    if (completed == null) throw const FormatException('Stream ended.');
+    if (completed == null && progress.terminal) {
+      throw const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.invalidResponse,
+      );
+    }
+    if (completed == null) {
+      throw const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.unavailable,
+        code: 'interrupted_stream',
+      );
+    }
     return completed;
   }
 
@@ -322,5 +451,18 @@ class OpenAiLlmAdapter implements LlmAdapter {
         ? ProviderErrorKind.unavailable
         : ProviderErrorKind.invalidResponse;
     return ProviderException(provider: 'llm', kind: kind);
+  }
+}
+
+class _ResponseProgress {
+  bool accepted = false;
+  bool terminal = false;
+  String? id;
+  Map<String, Object?> usage = {};
+
+  void update(Map data) {
+    accepted = true;
+    id = data['id']?.toString() ?? id;
+    if (data['usage'] is Map) usage = usageFields(data['usage']);
   }
 }

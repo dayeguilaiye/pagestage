@@ -60,11 +60,13 @@ MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中
 | --- | --- | --- |
 | `MINIMAX_API_KEY` | `minimax.key` | 必填 |
 | `MINIMAX_BASE_URL` | `minimax.baseUrl` | `https://api.minimax.io/v1` |
+| `MINIMAX_REQUESTS_PER_MINUTE` | `minimax.requestsPerMinute` | `12` |
 | `MINIMAX_MODEL` | `minimax.model` | `speech-2.8-hd` |
 | `MINIMAX_VOICE` | `minimax.voice` | 中文 `Chinese (Mandarin)_Male_Announcer`，英文 `English_expressive_narrator` |
 | `BAILIAN_API_KEY` | `bailian.key` | 必填 |
 | `BAILIAN_REGION` | `bailian.region` | `beijing`，也可选 `singapore` |
 | `BAILIAN_BASE_URL` | `bailian.baseUrl` | 北京 `https://dashscope.aliyuncs.com/api/v1`；新加坡 `https://dashscope-intl.aliyuncs.com/api/v1` |
+| `BAILIAN_REQUESTS_PER_MINUTE` | `bailian.requestsPerMinute` | `60` |
 | `BAILIAN_MODEL` | `bailian.model` | `qwen-audio-3.1-tts-flash` |
 | `BAILIAN_VOICE` | `bailian.voice` | 中文 `longsanshu_v3.1`，英文 `Emily_v3.1` |
 
@@ -86,7 +88,15 @@ MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中
 }
 ```
 
-服务商错误以固定的安全消息输出，无效 key、余额不足和限流各有独立类别；失败退出码为 69。配置解析错误不会输出配置原文，退出码为 65。适配器不自动重试付费请求，百炼的签名音频下载地址不会收到 API key。
+服务商错误以固定的安全消息输出，无效 key、余额不足和限流各有独立类别；失败退出码为 69。配置解析错误不会输出配置原文，退出码为 65。百炼的签名音频下载地址不会收到 API key。
+
+## 请求节奏与恢复
+
+合成、试音和音色设计通过 `TtsProviderSession` 按服务商排队，发起请求的间隔至少为 `60 / requestsPerMinute` 秒。配置取 1–60000 的整数字符串；默认值是客户端的保守节奏，可按账号实际额度调整。MiniMax 默认每 5 秒发起一次，百炼默认每秒一次；不同服务商各自排队。
+
+服务商返回限流时，同一请求等待至少 60 秒后继续，最多补试 2 次，共 3 次尝试；持续限流达到上限后结束命令。无效 key、余额不足、合成回复或音频无效，以及计费状态不明的 TTS 网络错误直接结束任务。已经完成的台词保留在缓存中。CLI 将排队、重试和耗尽额度的信息写入 stderr；用量账本只记录服务商接受的请求，限流失败不计入。
+
+程序调用方在同一账号的并发任务之间向 `TtsProviderSession.open` 传入共享的 `queues` 映射，并在这些会话存续期间保持服务商额度配置一致。`RequestRuntime` 提供时钟、等待和进度回调，App 可据此显示等待状态；默认回调写入 `pagestage.requests` 开发日志。HTTP 适配器负责一次服务商交互，队列负责有限恢复。离线测试通过假时钟立即推进等待时间。
 
 ## 适配器能力
 
