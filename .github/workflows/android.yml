@@ -62,7 +62,7 @@ jobs:
           properties.chmod(0o600)
       - name: Build release APK
         working-directory: packages/app
-        run: flutter build apk --release --no-pub --build-number "$GITHUB_RUN_NUMBER"
+        run: flutter build apk --release --build-number "$GITHUB_RUN_NUMBER"
       - name: Name APK
         id: apk
         shell: bash
