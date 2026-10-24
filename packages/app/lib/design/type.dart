@@ -46,6 +46,16 @@ abstract final class PsType {
   static final rowTitle = _sans(16, 22, FontWeight.w400);
   static final chapterTitle = _serif(16, 22, FontWeight.w400);
 
+  /// [serif] set for an English interface: Newsreader at 500, with Noto
+  /// Serif SC only for Han characters, so quotes and question marks around a
+  /// Chinese book title keep their Latin forms.
+  static TextStyle latinHeading(TextStyle serif) => style(
+    PsFonts.serifEn,
+    serif.fontSize!,
+    serif.fontSize! * serif.height!,
+    FontWeight.w500,
+  ).copyWith(color: serif.color);
+
   static TextStyle style(
     String family,
     double size,

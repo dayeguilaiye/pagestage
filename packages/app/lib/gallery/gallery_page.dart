@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../design/design.dart';
 
-/// A sample sheet of the design system, shown until the real screens exist.
+/// A sample sheet of the design system, run from `lib/gallery/main.dart`.
 class GalleryPage extends StatefulWidget {
   const GalleryPage({
     super.key,
@@ -283,11 +283,7 @@ class _GalleryPageState extends State<GalleryPage> {
       children: [
         PsPassage(
           heading: const PsPassageHeading(number: '第一章', title: '序'),
-          size: _fontSize <= 16
-              ? PsReadingSize.sm
-              : _fontSize >= 21
-              ? PsReadingSize.lg
-              : PsReadingSize.md,
+          fontSize: _fontSize,
           paragraphs: paragraphs,
           onLineTap: (pi, li, at) {
             if (pi < _scene.length) _openLineMenu(pi, li, at);

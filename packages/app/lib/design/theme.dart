@@ -5,6 +5,12 @@ import 'type.dart';
 
 extension PsThemeContext on BuildContext {
   PsPalette get ps => Theme.of(this).extension<PsPalette>()!;
+
+  /// A serif heading in the interface's language; see [PsType.latinHeading].
+  TextStyle psHeading(TextStyle serif) =>
+      Localizations.localeOf(this).languageCode == 'zh'
+      ? serif
+      : PsType.latinHeading(serif);
 }
 
 abstract final class PsTheme {
@@ -164,11 +170,9 @@ abstract final class PsTheme {
         thumbColor: p.paperRaised,
         overlayColor: Colors.transparent,
         trackHeight: 4,
-        thumbShape: const RoundSliderThumbShape(
-          enabledThumbRadius: 12,
-          elevation: 1,
-          pressedElevation: 2,
-        ),
+        thumbShape: _ThumbShape(p),
+        // The thumb's radius on each side, so the track meets its labels.
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         trackShape: const RoundedRectSliderTrackShape(),
         showValueIndicator: ShowValueIndicator.never,
         tickMarkShape: SliderTickMarkShape.noTickMark,
@@ -303,4 +307,52 @@ abstract final class PsTheme {
         borderRadius: BorderRadius.circular(PsRadius.sm),
         borderSide: BorderSide(color: color, width: width),
       );
+}
+
+/// A raised paper disc ringed in rule-strong, so it shows on the dark sheet
+/// too.
+class _ThumbShape extends SliderComponentShape {
+  const _ThumbShape(this.p);
+  final PsPalette p;
+
+  static const _radius = 12.0;
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size.fromRadius(_radius);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final canvas = context.canvas;
+    for (final shadow in p.shadowRaise) {
+      canvas.drawCircle(
+        center + shadow.offset,
+        _radius + shadow.spreadRadius,
+        shadow.toPaint(),
+      );
+    }
+    canvas
+      ..drawCircle(center, _radius, Paint()..color = p.paperRaised)
+      ..drawCircle(
+        center,
+        _radius - 0.5,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = p.ruleStrong,
+      );
+  }
 }

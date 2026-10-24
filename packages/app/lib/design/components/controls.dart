@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../icons.dart';
 import '../theme.dart';
 import '../tokens.dart';
@@ -259,7 +260,8 @@ class PsPlayButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.ps;
-    final text = label ?? (playing ? '暂停' : '播放');
+    final l = AppLocalizations.of(context);
+    final text = label ?? (playing ? l.pause : l.play);
     return Semantics(
       button: true,
       label: text,

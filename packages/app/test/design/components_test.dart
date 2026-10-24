@@ -1,10 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:pagestage_app/design/design.dart';
+import 'package:pagestage_app/l10n/app_localizations.dart';
 
 Widget _host(Widget child) => MaterialApp(
   theme: PsTheme.light,
+  locale: const Locale('zh', 'CN'),
+  supportedLocales: const [Locale('zh', 'CN')],
+  localizationsDelegates: const [
+    AppLocalizations.delegate,
+    ...GlobalMaterialLocalizations.delegates,
+  ],
   home: Scaffold(
     body: Padding(padding: const EdgeInsets.all(20), child: child),
   ),

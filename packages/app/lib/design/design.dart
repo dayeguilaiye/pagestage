@@ -5,6 +5,8 @@ library;
 export 'components/controls.dart';
 export 'components/identity.dart';
 export 'components/listening.dart';
+export 'components/navigation.dart';
+export 'components/overlays.dart';
 export 'components/rows.dart';
 export 'components/status.dart';
 export 'icons.dart';

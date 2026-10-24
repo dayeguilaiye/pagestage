@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../theme.dart';
 import '../tokens.dart';
 import '../type.dart';
@@ -17,7 +18,9 @@ int psVoiceTone(String name) {
   return n % 8 + 1;
 }
 
-bool _hasCjk(String s) => RegExp(r'[㐀-鿿]').hasMatch(s);
+/// Whether [s] has Han characters, which decides between the Chinese and
+/// the Latin faces.
+bool psHasCjk(String s) => RegExp(r'[㐀-鿿]').hasMatch(s);
 
 /// The 「」 mark, optionally followed by the lowercase wordmark.
 class PsMark extends StatelessWidget {
@@ -134,9 +137,10 @@ class PsSeal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.ps;
-    final text = glyph ?? (narrator ? '旁' : _first(name ?? ''));
+    final l = AppLocalizations.of(context);
+    final text = glyph ?? (narrator ? l.narratorSeal : _first(name ?? ''));
     return Semantics(
-      label: name ?? (narrator ? '旁白' : text),
+      label: name ?? (narrator ? l.narrator : text),
       excludeSemantics: true,
       child: Container(
         width: size.side,
@@ -199,7 +203,7 @@ class PsBookCover extends StatelessWidget {
     final p = context.ps;
     final w = width;
     final h = (w * 1.5).roundToDouble();
-    final zh = chinese ?? _hasCjk(title);
+    final zh = chinese ?? psHasCjk(title);
     final showText = w >= 56;
     final stamp = math.max(4.0, (w * 0.08).roundToDouble());
     return Semantics(
