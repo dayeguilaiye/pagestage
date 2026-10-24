@@ -1,0 +1,854 @@
+{
+  "sourceUrl": "https://help.aliyun.com/zh/model-studio/qwen-audio-tts-voice-list",
+  "checkedAt": "2026-10-24",
+  "model": "qwen-audio-3.1-tts-flash",
+  "voices": [
+    {
+      "id": "yuxiaoyun_v3.1",
+      "providerLabel": "于小云",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "元气、亲切、自然",
+      "useCases": "广告营销、广播、客服助手、旁白",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "qiaoxiaojiao_v3.1",
+      "providerLabel": "乔小娇",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "俏丽、可爱",
+      "useCases": "广告营销、客服助手、有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "xiaxiaochen_v3.1",
+      "providerLabel": "夏小晨",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "元气、明亮",
+      "useCases": "广告营销、有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "anmingyuan_v3.1",
+      "providerLabel": "安明远",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "清亮、自然",
+      "useCases": "广告营销、有声书、旁白",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "wenhuaiqing_v3.1",
+      "providerLabel": "温怀清",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "清亮、柔和",
+      "useCases": "儿童故事、客服助手、广告营销、新闻播报",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "anxiaolan_v3.1",
+      "providerLabel": "安小岚",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "清甜、纯净",
+      "useCases": "有声书、客服助手、旁白、新闻播报、广告营销",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "xieshurou_v3.1",
+      "providerLabel": "谢舒柔",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "柔和、自然、知性",
+      "useCases": "有声书、客服助手、旁白",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "baiqinglan_v3.1",
+      "providerLabel": "白清岚",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "明亮、清纯",
+      "useCases": "语音助手、客服助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "xuyuyuan_v3.1",
+      "providerLabel": "许玉远",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "知性、成熟、质感",
+      "useCases": "广告营销、新闻播报、旁白、客服助手、有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "anruorou_v3.1",
+      "providerLabel": "安若柔",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "气声、知性",
+      "useCases": "旁白、语音助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "wenhuaizhi_v3.1",
+      "providerLabel": "闻怀之",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "稳重、成熟",
+      "useCases": "有声书、新闻播报、广告营销、客服助手、旁白",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "xiaoxingzhi_v3.1",
+      "providerLabel": "萧行之",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "端庄、贵气",
+      "useCases": "新闻播报、有声书、旁白、客服助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "guyunshu_v3.1",
+      "providerLabel": "顾云舒",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "成熟、稳重",
+      "useCases": "音乐电台、客服助手、有声书、旁白",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "huozhuoshi_v3.1",
+      "providerLabel": "霍拙石",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "清亮",
+      "useCases": "有声书、广告营销、旁白",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "yeqinghe_v3.1",
+      "providerLabel": "叶清禾",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "亲切、温柔",
+      "useCases": "有声书、广告营销、旁白、客服助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "yunhuanhuan_v3.1",
+      "providerLabel": "云欢欢",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "高亢、热情",
+      "useCases": "有声书、旁白、客服助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "xuxiaoqiao_v3.1",
+      "providerLabel": "徐小俏",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "自然、俏皮",
+      "useCases": "有声书、旁白、客服助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "baianran_v3.1",
+      "providerLabel": "白安然",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "低沉、浑厚、气声",
+      "useCases": "配音讲解、有声书、旁白",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "xuyanchu_v3.1",
+      "providerLabel": "许言初",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "沉稳、磁性",
+      "useCases": "新闻播报、有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "yezhiqing_v3.1",
+      "providerLabel": "叶知晴",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "轻快、自然",
+      "useCases": "儿童故事、客服助手、语音助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "andi_v3.1",
+      "providerLabel": "安迪",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "ABC口音",
+      "useCases": "语音助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "anyuqing_v3.1",
+      "providerLabel": "安语晴",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "甜妹",
+      "useCases": "语音助手、旁白、新闻播报",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "Emily_v3.1",
+      "providerLabel": "Emily",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "英式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Luna_v3.1",
+      "providerLabel": "Luna",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "英式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Eric_v3.1",
+      "providerLabel": "Eric",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "英式男声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Luca_v3.1",
+      "providerLabel": "Luca",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "英式男声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Abby_v3.1",
+      "providerLabel": "Abby",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Annie_v3.1",
+      "providerLabel": "Annie",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Ava_v3.1",
+      "providerLabel": "Ava",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Beth_v3.1",
+      "providerLabel": "Beth",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Betty_v3.1",
+      "providerLabel": "Betty",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Cally_v3.1",
+      "providerLabel": "Cally",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Cindy_v3.1",
+      "providerLabel": "Cindy",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Donna_v3.1",
+      "providerLabel": "Donna",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "美式女声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Andy_v3.1",
+      "providerLabel": "Andy",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "美式男声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "Brian_v3.1",
+      "providerLabel": "Brian",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "美式男声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "David_v3.1",
+      "providerLabel": "David",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "美式男声",
+      "useCases": "",
+      "regions": [
+        "beijing",
+        "singapore"
+      ]
+    },
+    {
+      "id": "longanyuanfei_v3.1",
+      "providerLabel": "龙安元妃_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "高傲妃子音",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longjielidou_v3.1",
+      "providerLabel": "龙杰力豆_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "天真男童音",
+      "useCases": "儿童陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanlingxi_v3.1",
+      "providerLabel": "龙安灵希_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "可爱甜美音",
+      "useCases": "社交陪伴（精品中文）",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longhuohuo_v3.1",
+      "providerLabel": "龙火火_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "顽皮少年音",
+      "useCases": "角色音",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longyingtao_v3.1",
+      "providerLabel": "龙应桃_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "温柔淡定女",
+      "useCases": "客服",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanya_v3.1",
+      "providerLabel": "龙安雅_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "高雅气质女",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longwan_v3.1",
+      "providerLabel": "龙婉_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "细腻柔声女",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longxing_v3.1",
+      "providerLabel": "龙星_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "温婉邻家女",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longhua_v3.1",
+      "providerLabel": "龙华_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "元气甜美女",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longhan_v3.1",
+      "providerLabel": "龙寒_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "温暖痴情男",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanzhi_v3.1",
+      "providerLabel": "龙安智_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "睿智轻熟男",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longzhe_v3.1",
+      "providerLabel": "龙哲_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "呆板大暖男",
+      "useCases": "社交陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanyang_v3.1",
+      "providerLabel": "龙安洋_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "阳光大男孩",
+      "useCases": "社交陪伴（标杆音色）",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "libai_v3.1",
+      "providerLabel": "李白_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "古代诗仙男",
+      "useCases": "诗词朗诵",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longling_v3.1",
+      "providerLabel": "龙铃_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "稚气呆板女",
+      "useCases": "童声",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longniuniu_v3.1",
+      "providerLabel": "龙牛牛_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "阳光男童声",
+      "useCases": "消费电子-儿童有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longshanshan_v3.1",
+      "providerLabel": "龙闪闪_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "戏剧化童声",
+      "useCases": "消费电子-儿童有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longpaopao_v3.1",
+      "providerLabel": "龙泡泡_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "飞天泡泡音",
+      "useCases": "消费电子-儿童陪伴",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "loongstella_v3.1",
+      "providerLabel": "loongstella_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "飒爽利落女",
+      "useCases": "新闻播报",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longyuan_v3.1",
+      "providerLabel": "龙媛_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "温暖治愈女",
+      "useCases": "有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longmiao_v3.1",
+      "providerLabel": "龙妙_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "抑扬顿挫女",
+      "useCases": "有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longsanshu_v3.1",
+      "providerLabel": "龙三叔_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "沉稳质感男",
+      "useCases": "有声书",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanli_v3.1",
+      "providerLabel": "龙安莉_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "利落从容女",
+      "useCases": "语音助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanwen_v3.1",
+      "providerLabel": "龙安温_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "优雅知性女",
+      "useCases": "语音助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanlang_v3.1",
+      "providerLabel": "龙安朗_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "清爽利落男",
+      "useCases": "语音助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longxiaoxia_v3.1",
+      "providerLabel": "龙小夏_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "沉稳权威女",
+      "useCases": "语音助手",
+      "regions": [
+        "beijing"
+      ]
+    },
+    {
+      "id": "longanchong_v3.1",
+      "providerLabel": "龙安冲_v3.1",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "激情推销男",
+      "useCases": "直播带货",
+      "regions": [
+        "beijing"
+      ]
+    }
+  ]
+}

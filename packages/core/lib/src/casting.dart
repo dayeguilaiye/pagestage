@@ -108,9 +108,10 @@ class Casting {
     final eligibleBindings = candidates
         .map((preset) => _bindingKey(preset.binding))
         .toSet();
-    bool eligibleAutomatic(Voice voice) =>
+    bool preserveAutomatic(Speaker speaker, Voice voice) =>
         fixedExclusiveIds != null ||
-        eligibleBindings.contains(_bindingKey(voice.binding));
+        (eligibleBindings.contains(_bindingKey(voice.binding)) &&
+            _inheritsPersona(previous.cast, speaker, voice));
     final ranked =
         previous.cast.speakers
             .where((s) => s.kind == SpeakerKind.character)
@@ -123,6 +124,16 @@ class Casting {
         fixedExclusiveIds ??
         ranked.take(exclusiveCount).map((s) => s.id).toSet();
     final voices = <String, Voice>{...previous.voices};
+    Voice automaticVoice(Speaker speaker, VoicePreset preset) {
+      final old = previous.voices[speaker.id];
+      // Recommending the same binding preserves its existing audition sample.
+      if (old != null &&
+          _bindingKey(old.binding) == _bindingKey(preset.binding)) {
+        return old;
+      }
+      return _voice(book, speaker, preset);
+    }
+
     final reserved = <String>{};
     final warnings = <String>[];
     final speakers = previous.cast.speakers;
@@ -140,41 +151,35 @@ class Casting {
       if (voice != null &&
           (voice.manuallySelected ||
               voice.binding.designed ||
-              (eligibleAutomatic(voice) &&
-                  (!reserved.contains(_bindingKey(voice.binding)) ||
-                      _inheritsPersona(previous.cast, speaker, voice))))) {
+              preserveAutomatic(speaker, voice))) {
         if (!reserved.add(_bindingKey(voice.binding)) &&
             !_inheritsPersona(previous.cast, speaker, voice)) {
           warnings.add(
-            'Manual voice for ${speaker.id} is shared with another exclusive speaker.',
+            'Voice for ${speaker.id} is shared with another priority speaker.',
           );
         }
         continue;
       }
-      final available = candidates
-          .where(
-            (v) =>
-                !reserved.contains(_bindingKey(v.binding)) &&
-                !manualKeys.contains(_bindingKey(v.binding)),
-          )
-          .toList();
-      if (available.isEmpty) {
-        throw StateError(
-          'Not enough distinct presets for the requested exclusive count.',
+      final available = [...candidates];
+      available.sort((a, b) {
+        final match = _compareMatch(speaker, a, b);
+        if (match != 0) return match;
+        final usedA =
+            reserved.contains(_bindingKey(a.binding)) ||
+            manualKeys.contains(_bindingKey(a.binding));
+        final usedB =
+            reserved.contains(_bindingKey(b.binding)) ||
+            manualKeys.contains(_bindingKey(b.binding));
+        if (usedA != usedB) return usedA ? 1 : -1;
+        return a.id.compareTo(b.id);
+      });
+      if (reserved.contains(_bindingKey(available.first.binding)) ||
+          manualKeys.contains(_bindingKey(available.first.binding))) {
+        warnings.add(
+          'Best matching preset is shared for ${speaker.id}; you can change it with cast set.',
         );
       }
-      available.sort((a, b) {
-        if (speaker.kind == SpeakerKind.narrator &&
-            a.narratorCandidate != b.narratorCandidate) {
-          return a.narratorCandidate ? -1 : 1;
-        }
-        final score = _matchScore(
-          speaker,
-          a,
-        ).compareTo(_matchScore(speaker, b));
-        return score == 0 ? a.id.compareTo(b.id) : score;
-      });
-      voice = _voice(book, speaker, available.first);
+      voice = automaticVoice(speaker, available.first);
       voices[speaker.id] = voice;
       reserved.add(_bindingKey(voice.binding));
     }
@@ -187,19 +192,11 @@ class Casting {
       if (old != null &&
           (old.manuallySelected ||
               old.binding.designed ||
-              (eligibleAutomatic(old) &&
-                  !reserved.contains(_bindingKey(old.binding))))) {
+              preserveAutomatic(speaker, old))) {
         allocatedExtras.add(speaker);
         continue;
       }
-      final pool = candidates
-          .where((v) => !reserved.contains(_bindingKey(v.binding)))
-          .toList();
-      if (pool.isEmpty) {
-        throw StateError(
-          'No presets remain for the extras pool. Lower the exclusive count.',
-        );
-      }
+      final pool = [...candidates];
       int overlaps(VoicePreset voice) => allocatedExtras
           .where(
             (other) =>
@@ -209,21 +206,39 @@ class Casting {
           )
           .length;
       pool.sort((a, b) {
-        final score = _matchScore(
-          speaker,
-          a,
-        ).compareTo(_matchScore(speaker, b));
-        if (score != 0) return score;
+        final match = _compareMatch(speaker, a, b);
+        if (match != 0) return match;
+        final reservedA = reserved.contains(_bindingKey(a.binding));
+        final reservedB = reserved.contains(_bindingKey(b.binding));
+        if (reservedA != reservedB) return reservedA ? 1 : -1;
         final overlap = overlaps(a).compareTo(overlaps(b));
         return overlap == 0 ? a.id.compareTo(b.id) : overlap;
       });
-      if (overlaps(pool.first) > 0) {
+      if (overlaps(pool.first) > 0 ||
+          reserved.contains(_bindingKey(pool.first.binding))) {
         warnings.add(
           'Extras pool capacity requires a shared voice for ${speaker.id}.',
         );
       }
-      voices[speaker.id] = _voice(book, speaker, pool.first);
+      voices[speaker.id] = automaticVoice(speaker, pool.first);
       allocatedExtras.add(speaker);
+    }
+    for (final speaker in speakers) {
+      final voice = voices[speaker.id]!;
+      if (voice.manuallySelected || voice.binding.designed) continue;
+      final matches = candidates.where(
+        (preset) => _bindingKey(preset.binding) == _bindingKey(voice.binding),
+      );
+      if (matches.isEmpty) continue;
+      final preset = matches.first;
+      if ((speaker.gender != 'unknown' && preset.gender != speaker.gender) ||
+          (speaker.ageGroup != 'unknown' &&
+              preset.ageGroup != speaker.ageGroup) ||
+          (speaker.kind == SpeakerKind.narrator && !preset.narratorCandidate)) {
+        warnings.add(
+          'Approximate voice match for ${speaker.id}; you can change it with cast set.',
+        );
+      }
     }
     final cast = previous.cast.copyWith(
       speakers: speakers
@@ -456,7 +471,21 @@ class Casting {
       );
 
   static String _bindingKey(VoiceBinding binding) =>
-      '${binding.provider}:${binding.voiceId}';
+      '${binding.provider}:${binding.model}:${binding.voiceId}';
+
+  static int _compareMatch(Speaker speaker, VoicePreset a, VoicePreset b) {
+    if (speaker.kind == SpeakerKind.narrator) {
+      int narratorRank(VoicePreset preset) =>
+          preset.narratorReview == 'approved'
+          ? 0
+          : preset.narratorCandidate
+          ? 1
+          : 2;
+      final narrator = narratorRank(a).compareTo(narratorRank(b));
+      if (narrator != 0) return narrator;
+    }
+    return _matchScore(speaker, a).compareTo(_matchScore(speaker, b));
+  }
 
   static int _matchScore(Speaker speaker, VoicePreset preset) {
     const ages = ['child', 'teen', 'youngAdult', 'middleAged', 'senior'];
@@ -464,16 +493,29 @@ class Casting {
         speaker.gender == 'unknown' || preset.gender == speaker.gender
         ? 0
         : preset.gender == 'unknown'
-        ? 30
-        : 100;
+        ? 300
+        : 1000;
     final speakerAge = ages.indexOf(speaker.ageGroup);
     final presetAge = ages.indexOf(preset.ageGroup);
     final age = speakerAge < 0
         ? 0
         : presetAge < 0
-        ? 10
-        : (speakerAge - presetAge).abs();
-    return gender + age;
+        ? 100
+        : (speakerAge - presetAge).abs() * 20;
+    final profileStyles = voiceStyleTags(
+      '${speaker.speakingStyle} ${speaker.voiceDescription}',
+    );
+    final styles = speaker.kind == SpeakerKind.narrator && profileStyles.isEmpty
+        ? ['calm', 'clear']
+        : profileStyles;
+    final styleMisses = styles.where((style) => !preset.styles.contains(style));
+    final incomplete =
+        (preset.gender == 'unknown' ? 1 : 0) +
+        (presetAge < 0 ? 1 : 0) +
+        (preset.description.isEmpty ? 1 : 0) +
+        (preset.styles.isEmpty ? 1 : 0);
+    // Demographics dominate; style and completeness break close matches.
+    return gender + age + styleMisses.length.clamp(0, 5) * 3 + incomplete;
   }
 }
 

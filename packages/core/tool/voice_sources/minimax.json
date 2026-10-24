@@ -1,0 +1,1309 @@
+{
+  "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+  "checkedAt": "2026-10-24",
+  "model": "speech-2.8-hd",
+  "voices": [
+    {
+      "id": "English_expressive_narrator",
+      "providerLabel": "Expressive Narrator",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_radiant_girl",
+      "providerLabel": "Radiant Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_magnetic_voiced_man",
+      "providerLabel": "Magnetic-voiced Male",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_compelling_lady1",
+      "providerLabel": "Compelling Lady",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Aussie_Bloke",
+      "providerLabel": "Aussie Bloke",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Aussie Bloke",
+      "apiDescription": [
+        "一位阳光开朗的青年男性，带有独特的澳大利亚口音。"
+      ]
+    },
+    {
+      "id": "English_captivating_female1",
+      "providerLabel": "Captivating Female",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Upbeat_Woman",
+      "providerLabel": "Upbeat Woman",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Trustworth_Man",
+      "providerLabel": "Trustworthy Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_CalmWoman",
+      "providerLabel": "Calm Woman",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_UpsetGirl",
+      "providerLabel": "Upset Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Gentle-voiced_man",
+      "providerLabel": "Gentle-voiced man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Gentle-voiced man",
+      "apiDescription": [
+        "一位声音温柔、富有磁性的青年男性，带通用美式口音。"
+      ]
+    },
+    {
+      "id": "English_Whispering_girl",
+      "providerLabel": "Whispering girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Whispering girl",
+      "apiDescription": [
+        "一位青年女性的轻柔耳语声，带通用美式口音，非常适合ASMR内容。"
+      ]
+    },
+    {
+      "id": "English_Diligent_Man",
+      "providerLabel": "Diligent Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Diligent Man",
+      "apiDescription": [
+        "一位真诚勤奋的青年男性，带有印度口音。"
+      ]
+    },
+    {
+      "id": "English_Graceful_Lady",
+      "providerLabel": "Graceful Lady",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Graceful Lady",
+      "apiDescription": [
+        "一位优雅的中年女士，带有经典的英式口音，散发着成熟的魅力。"
+      ]
+    },
+    {
+      "id": "English_ReservedYoungMan",
+      "providerLabel": "Reserved Young Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_PlayfulGirl",
+      "providerLabel": "Playful Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_ManWithDeepVoice",
+      "providerLabel": "Man With Deep Voice",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_MaturePartner",
+      "providerLabel": "Mature Partner",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_FriendlyPerson",
+      "providerLabel": "Friendly Guy",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_MatureBoss",
+      "providerLabel": "Bossy Lady",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Debator",
+      "providerLabel": "Male Debater",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_LovelyGirl",
+      "providerLabel": "Lovely Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Steadymentor",
+      "providerLabel": "Reliable Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Deep-VoicedGentleman",
+      "providerLabel": "Deep-voiced Gentleman",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Wiselady",
+      "providerLabel": "Wise Lady",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_CaptivatingStoryteller",
+      "providerLabel": "Captivating Storyteller",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_DecentYoungMan",
+      "providerLabel": "Decent Young Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_SentimentalLady",
+      "providerLabel": "Sentimental Lady",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_ImposingManner",
+      "providerLabel": "Imposing Queen",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_SadTeen",
+      "providerLabel": "Teen Boy",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_PassionateWarrior",
+      "providerLabel": "Passionate Warrior",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_WiseScholar",
+      "providerLabel": "Wise Scholar",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Soft-spokenGirl",
+      "providerLabel": "Soft-Spoken Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_SereneWoman",
+      "providerLabel": "Serene Woman",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_ConfidentWoman",
+      "providerLabel": "Confident Woman",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_PatientMan",
+      "providerLabel": "Patient Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Comedian",
+      "providerLabel": "Comedian",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_BossyLeader",
+      "providerLabel": "Bossy Leader",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Strong-WilledBoy",
+      "providerLabel": "Strong-Willed Boy",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_StressedLady",
+      "providerLabel": "Stressed Lady",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_AssertiveQueen",
+      "providerLabel": "Assertive Queen",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_AnimeCharacter",
+      "providerLabel": "Female Narrator",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Jovialman",
+      "providerLabel": "Jovial Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_WhimsicalGirl",
+      "providerLabel": "Whimsical Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "English_Kind-heartedGirl",
+      "providerLabel": "Kind-Hearted Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "Chinese (Mandarin)_Reliable_Executive",
+      "providerLabel": "沉稳高管",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "沉稳高管",
+      "apiDescription": [
+        "一位沉稳可靠的中年男性高管声音，标准普通话，传递出值得信赖的感觉。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_News_Anchor",
+      "providerLabel": "新闻女声",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "新闻女声",
+      "apiDescription": [
+        "一位专业、播音腔的中年女性新闻主播，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Unrestrained_Young_Man",
+      "providerLabel": "不羁青年",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "不羁青年",
+      "apiDescription": [
+        "一位潇洒不羁的青年男性声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Mature_Woman",
+      "providerLabel": "傲娇御姐",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "傲娇御姐",
+      "apiDescription": [
+        "一位妩媚成熟的青年御姐声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Arrogant_Miss",
+      "providerLabel": "嚣张小姐",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "嚣张小姐",
+      "apiDescription": [
+        "一位嚣张自信的青年女性声音，标准普通话，展现出优越感。"
+      ]
+    },
+    {
+      "id": "Robot_Armor",
+      "providerLabel": "机械战甲",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "机械战甲",
+      "apiDescription": [
+        "一位电子化、机器人般的青年男性声音，适合科幻或未来主义内容的标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Kind-hearted_Antie",
+      "providerLabel": "热心大婶",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "热心大婶",
+      "apiDescription": [
+        "一位温和善良的中年大婶声音，标准普通话，温暖而体贴。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_HK_Flight_Attendant",
+      "providerLabel": "港普空姐",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "港普空姐",
+      "apiDescription": [
+        "一位礼貌的中年女性空乘员声音，带有港式普通话口音，清晰而有礼。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Humorous_Elder",
+      "providerLabel": "搞笑大爷",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "搞笑大爷",
+      "apiDescription": [
+        "一位爽朗幽默的老年男性大爷声音，带有北方口音的中文，充满个性。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Gentleman",
+      "providerLabel": "温润男声",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "温润男声",
+      "apiDescription": [
+        "一位温润磁性的青年男性声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Warm_Bestie",
+      "providerLabel": "温暖闺蜜",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "温暖闺蜜",
+      "apiDescription": [
+        "一位温暖清脆的青年女性闺蜜声音，标准普通话，友好而清晰。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Stubborn_Friend",
+      "providerLabel": "嘴硬竹马",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "嘴硬竹马",
+      "apiDescription": [
+        "一位嘴硬心软、不羁的青年竹马声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Sweet_Lady",
+      "providerLabel": "甜美女声",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "甜美女声",
+      "apiDescription": [
+        "一位温柔甜美的青年女性声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Southern_Young_Man",
+      "providerLabel": "南方小哥",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "南方小哥",
+      "apiDescription": [
+        "一位质朴的青年男性声音，带有南方口音的中文。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Wise_Women",
+      "providerLabel": "阅历姐姐",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "阅历姐姐",
+      "apiDescription": [
+        "一位富有阅历、声音抒情的中年姐姐声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Gentle_Youth",
+      "providerLabel": "温润青年",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "温润青年",
+      "apiDescription": [
+        "一位温柔的青年男性声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Warm_Girl",
+      "providerLabel": "温暖少女",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "温暖少女",
+      "apiDescription": [
+        "一位温柔温暖的少年女声，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Male_Announcer",
+      "providerLabel": "播报男声",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "播报男声",
+      "apiDescription": [
+        "一位富有磁性的中年男性播报员声音，标准普通话，清晰而权威。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Kind-hearted_Elder",
+      "providerLabel": "花甲奶奶",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "花甲奶奶",
+      "apiDescription": [
+        "一位慈祥和蔼的老年女性奶奶声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Cute_Spirit",
+      "providerLabel": "憨憨萌兽",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "憨憨萌兽",
+      "apiDescription": [
+        "一位呆萌可爱的少年男声，适合憨厚的萌兽角色。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Radio_Host",
+      "providerLabel": "电台男主播",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "电台男主播",
+      "apiDescription": [
+        "一位富有诗意的青年男性电台主播声音，标准普通话，声音流畅引人入胜。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Lyrical_Voice",
+      "providerLabel": "抒情男声",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "抒情男声",
+      "apiDescription": [
+        "一位磁性抒情的青年男性声音，标准普通话，流畅而富有表现力。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Straightforward_Boy",
+      "providerLabel": "率真弟弟",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "率真弟弟",
+      "apiDescription": [
+        "一位认真率真的少年弟弟声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Sincere_Adult",
+      "providerLabel": "真诚青年",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "真诚青年",
+      "apiDescription": [
+        "一位真诚、富有鼓励性的青年男性声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Gentle_Senior",
+      "providerLabel": "温柔学姐",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "温柔学姐",
+      "apiDescription": [
+        "一位温暖温柔的青年学姐声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Crisp_Girl",
+      "providerLabel": "清脆少女",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "清脆少女",
+      "apiDescription": [
+        "一位温暖清脆的少女声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Pure-hearted_Boy",
+      "providerLabel": "清澈邻家弟弟",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "清澈邻家弟弟",
+      "apiDescription": [
+        "一位认真清澈的邻家少年弟弟声音，标准普通话。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_Soft_Girl",
+      "providerLabel": "柔和少女",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "软软女孩",
+      "apiDescription": [
+        "一位温暖柔软的青年女性声音，带有南方口音的中文。"
+      ]
+    },
+    {
+      "id": "Chinese (Mandarin)_IntellectualGirl",
+      "providerLabel": "Intellectual Girl",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "Chinese (Mandarin)_Warm_HeartedGirl",
+      "providerLabel": "Warm-hearted Girl",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "Chinese (Mandarin)_Laid_BackGirl",
+      "providerLabel": "Laid-back Girl",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "Chinese (Mandarin)_ExplorativeGirl",
+      "providerLabel": "Explorative Girl",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "Chinese (Mandarin)_Warm-HeartedAunt",
+      "providerLabel": "Warm-hearted Aunt",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "Chinese (Mandarin)_BashfulGirl",
+      "providerLabel": "Bashful Girl",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.io/docs/faq/system-voice-id",
+      "apiMetadataAvailable": false
+    },
+    {
+      "id": "male-qn-qingse",
+      "providerLabel": "青涩青年音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "青涩青年音色",
+      "apiDescription": []
+    },
+    {
+      "id": "male-qn-jingying",
+      "providerLabel": "精英青年音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "精英青年音色",
+      "apiDescription": []
+    },
+    {
+      "id": "male-qn-badao",
+      "providerLabel": "霸道青年音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "霸道青年音色",
+      "apiDescription": []
+    },
+    {
+      "id": "male-qn-daxuesheng",
+      "providerLabel": "青年大学生音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "青年大学生音色",
+      "apiDescription": []
+    },
+    {
+      "id": "female-shaonv",
+      "providerLabel": "少女音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "少女音色",
+      "apiDescription": []
+    },
+    {
+      "id": "female-yujie",
+      "providerLabel": "御姐音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "御姐音色",
+      "apiDescription": []
+    },
+    {
+      "id": "female-chengshu",
+      "providerLabel": "成熟女性音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "成熟女性音色",
+      "apiDescription": []
+    },
+    {
+      "id": "female-tianmei",
+      "providerLabel": "甜美女性音色",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "甜美女性音色",
+      "apiDescription": []
+    },
+    {
+      "id": "male-qn-qingse-jingpin",
+      "providerLabel": "青涩青年音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "青涩青年音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "male-qn-jingying-jingpin",
+      "providerLabel": "精英青年音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "精英青年音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "male-qn-badao-jingpin",
+      "providerLabel": "霸道青年音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "霸道青年音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "male-qn-daxuesheng-jingpin",
+      "providerLabel": "青年大学生音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "青年大学生音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "female-shaonv-jingpin",
+      "providerLabel": "少女音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "少女音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "female-yujie-jingpin",
+      "providerLabel": "御姐音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "御姐音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "female-chengshu-jingpin",
+      "providerLabel": "成熟女性音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "成熟女性音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "female-tianmei-jingpin",
+      "providerLabel": "甜美女性音色-beta",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "甜美女性音色-beta",
+      "apiDescription": []
+    },
+    {
+      "id": "clever_boy",
+      "providerLabel": "聪明男童",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "聪明男童",
+      "apiDescription": []
+    },
+    {
+      "id": "cute_boy",
+      "providerLabel": "可爱男童",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "可爱男童",
+      "apiDescription": []
+    },
+    {
+      "id": "lovely_girl",
+      "providerLabel": "萌萌女童",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "萌萌女童",
+      "apiDescription": []
+    },
+    {
+      "id": "cartoon_pig",
+      "providerLabel": "卡通猪小琪",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "卡通猪小琪",
+      "apiDescription": []
+    },
+    {
+      "id": "bingjiao_didi",
+      "providerLabel": "病娇弟弟",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "病娇弟弟",
+      "apiDescription": []
+    },
+    {
+      "id": "junlang_nanyou",
+      "providerLabel": "俊朗男友",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "俊朗男友",
+      "apiDescription": []
+    },
+    {
+      "id": "chunzhen_xuedi",
+      "providerLabel": "纯真学弟",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "纯真学弟",
+      "apiDescription": []
+    },
+    {
+      "id": "lengdan_xiongzhang",
+      "providerLabel": "冷淡学长",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "冷淡学长",
+      "apiDescription": []
+    },
+    {
+      "id": "badao_shaoye",
+      "providerLabel": "霸道少爷",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "霸道少爷",
+      "apiDescription": []
+    },
+    {
+      "id": "tianxin_xiaoling",
+      "providerLabel": "甜心小玲",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "甜心小玲",
+      "apiDescription": []
+    },
+    {
+      "id": "qiaopi_mengmei",
+      "providerLabel": "俏皮萌妹",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "俏皮萌妹",
+      "apiDescription": []
+    },
+    {
+      "id": "wumei_yujie",
+      "providerLabel": "妩媚御姐",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "妩媚御姐",
+      "apiDescription": []
+    },
+    {
+      "id": "diadia_xuemei",
+      "providerLabel": "嗲嗲学妹",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "嗲嗲学妹",
+      "apiDescription": []
+    },
+    {
+      "id": "danya_xuejie",
+      "providerLabel": "淡雅学姐",
+      "languages": [
+        "zh"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "淡雅学姐",
+      "apiDescription": []
+    },
+    {
+      "id": "Santa_Claus ",
+      "providerLabel": "Santa Claus",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Santa Claus",
+      "apiDescription": []
+    },
+    {
+      "id": "Grinch",
+      "providerLabel": "Grinch",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Grinch",
+      "apiDescription": []
+    },
+    {
+      "id": "Rudolph",
+      "providerLabel": "Rudolph",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Rudolph",
+      "apiDescription": []
+    },
+    {
+      "id": "Arnold",
+      "providerLabel": "Arnold",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Arnold",
+      "apiDescription": []
+    },
+    {
+      "id": "Charming_Santa",
+      "providerLabel": "Charming Santa",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Charming Santa",
+      "apiDescription": []
+    },
+    {
+      "id": "Charming_Lady",
+      "providerLabel": "Charming Lady",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Charming Lady",
+      "apiDescription": []
+    },
+    {
+      "id": "Sweet_Girl",
+      "providerLabel": "Sweet Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Sweet Girl",
+      "apiDescription": []
+    },
+    {
+      "id": "Cute_Elf",
+      "providerLabel": "Cute Elf",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Cute Elf",
+      "apiDescription": []
+    },
+    {
+      "id": "Attractive_Girl",
+      "providerLabel": "Attractive Girl",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Attractive Girl",
+      "apiDescription": []
+    },
+    {
+      "id": "Serene_Woman",
+      "providerLabel": "Serene Woman",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Serene Woman",
+      "apiDescription": []
+    },
+    {
+      "id": "English_Trustworthy_Man",
+      "providerLabel": "Trustworthy Man",
+      "languages": [
+        "en"
+      ],
+      "sourceUrl": "https://platform.minimax.cn/docs/faq/system-voice-id",
+      "apiMetadataAvailable": true,
+      "apiName": "Trustworthy Man",
+      "apiDescription": [
+        "一位值得信赖、富有磁性的青年男性声音，带通用美式口音。"
+      ]
+    }
+  ],
+  "sourceUrls": [
+    "https://platform.minimax.cn/docs/faq/system-voice-id",
+    "https://platform.minimax.io/docs/faq/system-voice-id"
+  ],
+  "metadataSourceUrl": "https://platform.minimax.cn/docs/api-reference/voice-management-get",
+  "metadataRetrievedAt": "2026-10-24T10:41:31.577610Z"
+}
