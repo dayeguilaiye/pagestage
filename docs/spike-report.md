@@ -8,7 +8,7 @@
 
 1. **通过导演提示词明确对白与旁白的边界**（[#16](https://github.com/dayeguilaiye/pagestage/issues/16)）。说话提示与动作叙述被并进角色台词，是准确率损失的最大来源。按 ADR 0004，由 LLM 带原文分段，将对白前、后及中间的叙述分别归给旁白。可完全通过声音表达的说话提示可在广播剧模式省略；动作、视觉信息和情节保留。中英文提示词已更新为 `director-v4`，后续真实评测范围见下文。
 2. **整本书使用同一个旁白声音**（[#17](https://github.com/dayeguilaiye/pagestage/issues/17)）。阿Q第一章的叙述归给了角色“我”，第二到五章归给了系统旁白，听众会听到旁白在章节之间换人。
-3. **持续维护预设音色信息单**（[#18](https://github.com/dayeguilaiye/pagestage/issues/18)）。许多 MiniMax 预设没有性别或年龄标签，推荐结果近似随机，例如中年的 Mrs. Bennet 配了 `Kind-heartedGirl`，男性桩家配了 `HK_Flight_Attendant`。这只影响推荐结果，不改变 App 调用侧的接口，不阻塞 App。
+3. **持续维护预设音色信息单**（[#18](https://github.com/dayeguilaiye/pagestage/issues/18)）。原型的本地目录中许多 MiniMax 预设没有性别或年龄标签，推荐结果近似随机，例如中年的 Mrs. Bennet 配了 `Kind-heartedGirl`，男性桩家配了 `HK_Flight_Attendant`。这只影响推荐结果，不改变 App 调用侧的接口，不阻塞 App。
 4. **LLM 默认使用流式请求；TTS 按服务商限流排队**（[#19](https://github.com/dayeguilaiye/pagestage/issues/19)）。非流式请求经透明代理时约 25 秒无数据就被断开；MiniMax 账号每分钟只放行 12 到 15 个请求。
 
 ## 运行条件
@@ -157,7 +157,12 @@
 
 ## 选角
 
-推荐结果近乎随机。目录里中文 MiniMax 预设有 34 个，同时带性别和年龄标签的只有 15 个，完全没有标签的有 10 个。英文 MiniMax 预设有 45 个，同时带两项标签的只有 12 个。推荐器在标签缺失时没有约束，于是出现了：P&P 旁白配 `English_AnimeCharacter`（目录把它标为旁白候选），中年的 Mr. Bennet 配 `DecentYoungMan`、Mrs. Bennet 配 `Kind-heartedGirl`，Darcy 配 `SadTeen`；赵太爷配 `Southern_Young_Man`，男性桩家配 `HK_Flight_Attendant`。选角只影响推荐结果，不改变 App 调用侧的接口，因此不阻塞 App 开发。两家预设的性别、年龄和风格标签作为一份持续维护的信息单逐步补全，缺标签的音色不参与角色推荐，见 [#18](https://github.com/dayeguilaiye/pagestage/issues/18)。
+推荐结果近乎随机。目录里中文 MiniMax 预设有 34 个，同时带性别和年龄标签的只有 15 个，完全没有标签的有 10 个。英文 MiniMax 预设有 45 个，同时带两项标签的只有 12 个。推荐器在标签缺失时没有约束，于是出现了：中年的 Mr. Bennet 配 `DecentYoungMan`、Mrs. Bennet 配 `Kind-heartedGirl`，Darcy 配 `SadTeen`；赵太爷配 `Southern_Young_Man`，男性桩家配 `HK_Flight_Attendant`。选角只影响推荐结果，不改变 App 调用侧的接口，因此不阻塞 App 开发。两家预设优先从官方资料补充性别、年龄、风格和旁白适用信息；推荐以匹配程度为优先，资料或候选不足时自动兜底并允许复用，确保全部角色获得音色，用户可按需调整，见 [#18](https://github.com/dayeguilaiye/pagestage/issues/18)。
+
+2026-10-24 完成选角目录与推荐规则验证：目录收录 184 个官方中英文预设（MiniMax 120、百炼 64），合并 MiniMax 中英文官方表并导入 `get_voice` 描述。以性别、年龄、风格和资料完整度排序，候选不足时自动放宽偏好并复用音色。两本书的已保存演员表用于离线测试，验证全部说话人获得兼容绑定，手动选角及续跑保持稳定。
+
+本次真实验证调用 `get_voice` 1 次，返回 303 项；另用 `speech-2.8-hd` 对英文 `English_expressive_narrator`、中文 `Chinese (Mandarin)_Gentle_Senior`、`male-qn-qingse` 各合成一句样音，3 次请求均返回可解码 WAV，服务商分别报告 47、24、24 个用量字符，合计 95。样音保存在本地 `.pagestage/issue18-samples/`。该验证确认绑定可调用，人工试听状态保留为未核对。
+
 
 ## 运行中修复的问题
 

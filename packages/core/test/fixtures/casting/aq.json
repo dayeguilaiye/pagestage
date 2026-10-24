@@ -1,0 +1,497 @@
+{
+  "source": "Local spike profiling and chapter preparation, chapters 1–5; generated profiles, not manually verified",
+  "language": "zh",
+  "title": "阿Q正传",
+  "cast": {
+    "bookId": "15bad7444de48233ea12c39c",
+    "profiledThrough": 5,
+    "redirects": {},
+    "speakers": [
+      {
+        "id": "narrator",
+        "name": "Narrator",
+        "kind": "narrator",
+        "aliases": [],
+        "gender": "unknown",
+        "ageGroup": "unknown",
+        "personality": "",
+        "speakingStyle": "",
+        "voiceDescription": "",
+        "dialogueCount": 0,
+        "chapters": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-1",
+        "name": "我",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "自省、幽默、考据癖、谦逊",
+        "speakingStyle": "第一人称叙述，文白夹杂，爱引经据典与自嘲",
+        "voiceDescription": "中年文人声线，平稳略带诙谐，叙述从容",
+        "dialogueCount": 0,
+        "chapters": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-2",
+        "name": "阿Q",
+        "kind": "character",
+        "aliases": [
+          "阿Quei",
+          "阿桂",
+          "阿贵"
+        ],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "麻木、懵懂、爱面子、逆来顺受",
+        "speakingStyle": "寡言少语，多以沉默应对，偶有手舞足蹈的得意之语",
+        "voiceDescription": "含糊乡音，声音粗哑，语气迟钝",
+        "dialogueCount": 27,
+        "chapters": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-3",
+        "name": "赵太爷",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "middleAged",
+        "personality": "专横、势利、易怒",
+        "speakingStyle": "喝斥训骂，语气凌厉，多用反问与感叹",
+        "voiceDescription": "中年男声，粗壮洪亮，怒时声如炸雷",
+        "dialogueCount": 3,
+        "chapters": [
+          1
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-4",
+        "name": "地保",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "仗势、刻板",
+        "speakingStyle": "训斥官腔，简短带威吓",
+        "voiceDescription": "粗声粗气，公事公办的腔调",
+        "dialogueCount": 1,
+        "chapters": [
+          1,
+          3,
+          4
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-5",
+        "name": "闲人",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "爱开玩笑、欺软怕硬、刻薄",
+        "speakingStyle": "挑衅嘲弄，简短刻薄，多用反问与戏谑",
+        "voiceDescription": "乡间闲汉的粗亮嗓音，带着起哄的腔调",
+        "dialogueCount": 3,
+        "chapters": [
+          2
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-6",
+        "name": "老头子",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "senior",
+        "personality": "随和、世故",
+        "speakingStyle": "简短称赞，语气不明",
+        "voiceDescription": "老年男声，含糊而平缓",
+        "dialogueCount": 1,
+        "chapters": [
+          2
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-7",
+        "name": "桩家",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "生意人的油滑与热切",
+        "speakingStyle": "赌场行话，拉长声调唱报，节奏感强",
+        "voiceDescription": "高亢洪亮的男声，带着汗流满面的兴奋腔调",
+        "dialogueCount": 1,
+        "chapters": [
+          2
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-8",
+        "name": "王胡",
+        "kind": "character",
+        "aliases": [
+          "王癞胡"
+        ],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "轻蔑、好斗、粗野",
+        "speakingStyle": "简短反问，语气轻蔑带挑衅",
+        "voiceDescription": "粗哑男声，带着轻蔑的腔调",
+        "dialogueCount": 2,
+        "chapters": [
+          3
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-9",
+        "name": "假洋鬼子",
+        "kind": "character",
+        "aliases": [
+          "钱太爷的大儿子",
+          "里通外国的人"
+        ],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "霸道、傲慢",
+        "speakingStyle": "沉默动手，不说话",
+        "voiceDescription": "无台词，以动作表现其蛮横",
+        "dialogueCount": 0,
+        "chapters": [
+          3
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-10",
+        "name": "小尼姑",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "unknown",
+        "personality": "羞怯、委屈、顺从",
+        "speakingStyle": "简短分辩，带哭腔",
+        "voiceDescription": "年轻女声，柔弱带哭音",
+        "dialogueCount": 2,
+        "chapters": [
+          3,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-11",
+        "name": "吴妈",
+        "kind": "character",
+        "aliases": [
+          "小孤孀"
+        ],
+        "gender": "female",
+        "ageGroup": "unknown",
+        "personality": "唠叨、本分、大惊小怪",
+        "speakingStyle": "絮絮叨叨说家常，受惊后大叫大哭",
+        "voiceDescription": "中年女声，音调较高，平时唠叨，受惊时尖锐刺耳",
+        "dialogueCount": 3,
+        "chapters": [
+          4
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-12",
+        "name": "秀才",
+        "kind": "character",
+        "aliases": [
+          "赵秀才"
+        ],
+        "gender": "male",
+        "ageGroup": "youngAdult",
+        "personality": "凶狠、维护礼教、粗暴",
+        "speakingStyle": "喝骂，用官话骂人，简短带威吓",
+        "voiceDescription": "年轻男声，尖利严厉，怒时带官腔",
+        "dialogueCount": 2,
+        "chapters": [
+          4
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-13",
+        "name": "少奶奶",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "youngAdult",
+        "personality": "稳重、世故、善于劝解",
+        "speakingStyle": "劝慰口气，简短平和",
+        "voiceDescription": "年轻女声，柔和但带着主母的威仪",
+        "dialogueCount": 1,
+        "chapters": [
+          4
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-14",
+        "name": "邹七嫂",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "middleAged",
+        "personality": "热心的邻居、善于帮腔",
+        "speakingStyle": "附和劝解，语气夸张",
+        "voiceDescription": "中年女声，嗓门亮而带劝慰腔调",
+        "dialogueCount": 1,
+        "chapters": [
+          4,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-15",
+        "name": "小D",
+        "kind": "character",
+        "aliases": [
+          "小Don"
+        ],
+        "gender": "male",
+        "ageGroup": "youngAdult",
+        "personality": "谦卑、倔强、好胜",
+        "speakingStyle": "简短顶撞，爱用‘妈妈的’等粗话，模仿阿Q口吻",
+        "voiceDescription": "年轻男声，沙哑带乡土气，语调直愣",
+        "dialogueCount": 2,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-16",
+        "name": "老尼姑",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "senior",
+        "personality": "虔诚、惊慌、絮叨",
+        "speakingStyle": "念佛号，语气急促带责备，句子短而重复",
+        "voiceDescription": "老年女声，沙哑颤抖，带念佛的节奏",
+        "dialogueCount": 2,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-17",
+        "name": "管土谷祠的老头子",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "senior",
+        "personality": "世故、势利、爱唠叨",
+        "speakingStyle": "絮叨催促，语气冷淡",
+        "voiceDescription": "老年男声，含糊低沉，略带不耐烦",
+        "dialogueCount": 0,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-18",
+        "name": "某男人",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "unknown",
+        "personality": "厌烦、势利",
+        "speakingStyle": "简短粗暴，像打发乞丐",
+        "voiceDescription": "粗鲁男声，不耐地挥手驱赶",
+        "dialogueCount": 1,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "15bad7444de48233ea12c39c-speaker-19",
+        "name": "看的人们",
+        "kind": "character",
+        "aliases": [],
+        "gender": "unknown",
+        "ageGroup": "unknown",
+        "personality": "好奇、爱起哄、不明所以",
+        "speakingStyle": "简短叫好或劝解，语气含糊",
+        "voiceDescription": "嘈杂的众人声，分辨不清态度",
+        "dialogueCount": 2,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      }
+    ],
+    "lexicon": [
+      {
+        "term": "阿Q",
+        "pinyin": "a1 Q"
+      },
+      {
+        "term": "未庄",
+        "pinyin": "wei4 zhuang1"
+      },
+      {
+        "term": "赵太爷",
+        "pinyin": "zhao4 tai4 ye2"
+      },
+      {
+        "term": "茂才",
+        "pinyin": "mao4 cai2"
+      },
+      {
+        "term": "土谷祠",
+        "pinyin": "tu3 gu3 ci2"
+      },
+      {
+        "term": "文童",
+        "pinyin": "wen2 tong2"
+      },
+      {
+        "term": "钱太爷",
+        "pinyin": "qian2 tai4 ye2"
+      },
+      {
+        "term": "虫豸",
+        "pinyin": "chong2 zhi4"
+      },
+      {
+        "term": "押牌宝",
+        "pinyin": "ya1 pai2 bao3"
+      },
+      {
+        "term": "桩家",
+        "pinyin": "zhuang1 jia1"
+      },
+      {
+        "term": "癞疮疤",
+        "pinyin": "la4 chuang1 ba1"
+      },
+      {
+        "term": "舂米",
+        "pinyin": "chong1 mi3"
+      },
+      {
+        "term": "王胡",
+        "pinyin": "wang2 hu2"
+      },
+      {
+        "term": "王癞胡",
+        "pinyin": "wang2 la4 hu2"
+      },
+      {
+        "term": "假洋鬼子",
+        "pinyin": "jia3 yang2 gui3 zi5"
+      },
+      {
+        "term": "静修庵",
+        "pinyin": "jing4 xiu1 an4"
+      },
+      {
+        "term": "小尼姑",
+        "pinyin": "xiao3 ni2 gu1"
+      },
+      {
+        "term": "哭丧棒",
+        "pinyin": "ku1 sang1 bang4"
+      },
+      {
+        "term": "若敖之鬼馁而",
+        "pinyin": "ruo4 ao2 zhi1 gui3 nei3 er2"
+      },
+      {
+        "term": "祓除缢鬼",
+        "pinyin": "fu2 chu2 yi4 gui3"
+      },
+      {
+        "term": "小D",
+        "pinyin": "xiao3 D"
+      },
+      {
+        "term": "小Don",
+        "pinyin": "xiao3 Don"
+      },
+      {
+        "term": "妈妈的",
+        "pinyin": "ma1 ma5 de5"
+      }
+    ]
+  }
+}

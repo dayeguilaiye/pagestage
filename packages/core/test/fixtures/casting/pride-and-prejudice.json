@@ -1,0 +1,251 @@
+{
+  "source": "Local spike profiling and chapter preparation, chapters 1–5; generated profiles, not manually verified",
+  "language": "en",
+  "title": "Pride and Prejudice",
+  "cast": {
+    "bookId": "e29cb883376b4e31947bb861",
+    "profiledThrough": 5,
+    "redirects": {},
+    "speakers": [
+      {
+        "id": "narrator",
+        "name": "Narrator",
+        "kind": "narrator",
+        "aliases": [],
+        "gender": "unknown",
+        "ageGroup": "unknown",
+        "personality": "",
+        "speakingStyle": "",
+        "voiceDescription": "",
+        "dialogueCount": 0,
+        "chapters": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-1",
+        "name": "Mr. Bennet",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "middleAged",
+        "personality": "Sarcastic, reserved, capricious, with a dry teasing wit; amused by vexing his wife and quietly fond of his daughter Lizzy.",
+        "speakingStyle": "Dry, ironic, understated; answers indirectly and turns his wife's remarks into deadpan jokes.",
+        "voiceDescription": "Measured, dry, unhurried male voice with a wry, teasing edge and frequent deadpan delivery.",
+        "dialogueCount": 22,
+        "chapters": [
+          1,
+          2,
+          3
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-2",
+        "name": "Mrs. Bennet",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "middleAged",
+        "personality": "Nervous, excitable, of mean understanding and uncertain temper; obsessed with marrying off her daughters and fond of visiting and news.",
+        "speakingStyle": "Anxious, exclamatory and repetitive; calls her husband 'my dear' and dwells on her poor nerves and her daughters' prospects.",
+        "voiceDescription": "High, quick, fussy female voice, often flustered and exclamatory; prone to rising, indignant emphasis.",
+        "dialogueCount": 32,
+        "chapters": [
+          1,
+          2,
+          3,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-3",
+        "name": "Elizabeth Bennet",
+        "kind": "character",
+        "aliases": [
+          "Lizzy",
+          "Eliza"
+        ],
+        "gender": "female",
+        "ageGroup": "youngAdult",
+        "personality": "Quick-witted, lively and sensible, with a playful readiness to answer her father in kind.",
+        "speakingStyle": "Bright, direct and good-humoured; practical and gently teasing.",
+        "voiceDescription": "Clear, intelligent young female voice with a light, amused tone.",
+        "dialogueCount": 9,
+        "chapters": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-4",
+        "name": "Kitty Bennet",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "teen",
+        "personality": "Fretful and easily scolded; defensive about her coughing.",
+        "speakingStyle": "Petulant and mildly complaining; deflects by changing the subject.",
+        "voiceDescription": "Light, slightly whiny young female voice with a fretful edge.",
+        "dialogueCount": 2,
+        "chapters": [
+          2,
+          3
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-5",
+        "name": "Lydia Bennet",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "teen",
+        "personality": "Bold, confident and forward; unafraid of social situations.",
+        "speakingStyle": "Stout, self-assured and eager; speaks up readily.",
+        "voiceDescription": "Bright, bold young female voice with confident, upbeat energy.",
+        "dialogueCount": 1,
+        "chapters": [
+          2,
+          3
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-6",
+        "name": "Mr. Bingley",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "youngAdult",
+        "personality": "Lively, unreserved, amiable and good-natured; eager to dance and pleased with everyone.",
+        "speakingStyle": "Warm, enthusiastic and exclamatory; presses his friend cheerfully and praises the company openly.",
+        "voiceDescription": "Pleasant, energetic young male voice, friendly and warmly enthusiastic.",
+        "dialogueCount": 3,
+        "chapters": [
+          3
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-7",
+        "name": "Mr. Darcy",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "youngAdult",
+        "personality": "Proud, fastidious and reserved; above his company and above being pleased, cold in his judgments.",
+        "speakingStyle": "Formal, clipped and disdainful; speaks in blunt, superior declarations.",
+        "voiceDescription": "Deep, cool, refined male voice with a crisp, haughty edge.",
+        "dialogueCount": 3,
+        "chapters": [
+          3
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-8",
+        "name": "Jane Bennet",
+        "kind": "character",
+        "aliases": [
+          "Miss Bennet"
+        ],
+        "gender": "female",
+        "ageGroup": "youngAdult",
+        "personality": "Sweet, candid and good-natured, honestly blind to the follies of others; speaks what she thinks and wishes not to censure anyone harshly.",
+        "speakingStyle": "Gentle, earnest and warm; praises others generously and gently protests her sister's teasing.",
+        "voiceDescription": "Soft, warm, sincere young female voice with a gentle, admiring tone.",
+        "dialogueCount": 6,
+        "chapters": [
+          4,
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-9",
+        "name": "Charlotte Lucas",
+        "kind": "character",
+        "aliases": [
+          "Miss Lucas"
+        ],
+        "gender": "female",
+        "ageGroup": "youngAdult",
+        "personality": "Sensible, intelligent and composed; practical about pride and social realities, and Elizabeth's intimate friend.",
+        "speakingStyle": "Calm, reasonable and quietly wry; offers balanced observations and mild, good-humoured teasing.",
+        "voiceDescription": "Steady, clear young female voice with a composed, thoughtful and faintly amused tone.",
+        "dialogueCount": 4,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-10",
+        "name": "Mary Bennet",
+        "kind": "character",
+        "aliases": [],
+        "gender": "female",
+        "ageGroup": "youngAdult",
+        "personality": "Bookish and self-satisfied; piques herself on the solidity of her moral reflections.",
+        "speakingStyle": "Formal, sententious and lecture-like; delivers aphorisms on human nature drawn from reading.",
+        "voiceDescription": "Precise, slightly prim young female voice with a didactic, self-assured cadence.",
+        "dialogueCount": 1,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      },
+      {
+        "id": "e29cb883376b4e31947bb861-speaker-11",
+        "name": "Young Lucas",
+        "kind": "character",
+        "aliases": [],
+        "gender": "male",
+        "ageGroup": "child",
+        "personality": "Boisterous and teasing; imagines the freedoms of wealth with boyish bravado.",
+        "speakingStyle": "Blunt, boastful and childish; protests loudly when contradicted.",
+        "voiceDescription": "High, lively boy's voice with cheeky, boastful energy.",
+        "dialogueCount": 1,
+        "chapters": [
+          5
+        ],
+        "characterId": null,
+        "revealChapter": null,
+        "voiceId": null
+      }
+    ],
+    "lexicon": []
+  }
+}

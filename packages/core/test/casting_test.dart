@@ -180,6 +180,11 @@ void main() {
         'narrator-zh',
         'zzz-old',
       ]);
+      final afterAudition = await casting.recommend(book, exclusiveCount: 1);
+      expect(
+        afterAudition.voices.values.every((voice) => voice.samplePath != null),
+        isTrue,
+      );
       for (final voice in samples) {
         expect(await File(voice.samplePath!).exists(), isTrue);
         expect((await casting.getVoice(voice.id)).samplePath, voice.samplePath);
@@ -341,7 +346,7 @@ void main() {
     },
   );
   test(
-    'built-in catalog supports default twenty exclusive characters in both languages',
+    'built-in catalog fills every character with default priority in both languages',
     () async {
       final builtIn = Casting(store);
       for (final language in ['zh', 'en']) {
@@ -380,7 +385,7 @@ void main() {
                   '${result.voices[id]!.binding.provider}:${result.voices[id]!.binding.voiceId}',
             )
             .toSet();
-        expect(exclusiveBindings, hasLength(20));
+        expect(exclusiveBindings, isNotEmpty);
         expect(result.voices, hasLength(24));
         final narrator = result.voices['narrator']!.binding;
         expect(
@@ -393,29 +398,39 @@ void main() {
               .languages,
           contains(language),
         );
-        expect(
-          exclusiveBindings,
-          isNot(contains('${narrator.provider}:${narrator.voiceId}')),
-        );
+        if (exclusiveBindings.contains(
+          '${narrator.provider}:${narrator.voiceId}',
+        )) {
+          expect(result.warnings, contains(contains('shared')));
+        }
       }
     },
   );
 
-  test('catalog shortage fails before changing saved selections', () async {
-    await CastRepository(store).save(
-      Cast(
-        bookId: book.id,
-        profiledThrough: 3,
-        speakers: [
-          Speaker(id: 'narrator', name: 'Narrator', kind: SpeakerKind.narrator),
-          for (var i = 0; i < 5; i++)
-            Speaker(id: 's$i', name: 'Speaker $i', dialogueCount: 10 - i),
-        ],
-      ),
-    );
-    await expectLater(casting.recommend(book), throwsStateError);
-    expect((await casting.getCasting(book.id)).voices, isEmpty);
-  });
+  test(
+    'catalog shortage reuses matching presets and saves all selections',
+    () async {
+      await CastRepository(store).save(
+        Cast(
+          bookId: book.id,
+          profiledThrough: 3,
+          speakers: [
+            Speaker(
+              id: 'narrator',
+              name: 'Narrator',
+              kind: SpeakerKind.narrator,
+            ),
+            for (var i = 0; i < 5; i++)
+              Speaker(id: 's$i', name: 'Speaker $i', dialogueCount: 10 - i),
+          ],
+        ),
+      );
+      final result = await casting.recommend(book);
+      expect(result.voices, hasLength(6));
+      expect(result.warnings, isNotEmpty);
+      expect((await casting.getCasting(book.id)).voices, hasLength(6));
+    },
+  );
 
   test('senior age tag from profiling matches a senior extra preset', () async {
     await CastRepository(store).save(
@@ -590,7 +605,7 @@ void main() {
       expect(result.voices['a']!.binding.voiceId, 'a-unknown');
       expect(result.voices['b']!.binding.voiceId, 'a-unknown');
       expect(result.voices['c']!.binding.voiceId, 'b-male');
-      expect(result.warnings, hasLength(1));
+      expect(result.warnings, contains(contains('shared voice for b')));
     },
   );
 }
