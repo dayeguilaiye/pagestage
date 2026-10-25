@@ -17,6 +17,7 @@ import 'providers/tts_adapter.dart';
 import 'providers/usage_ledger.dart';
 import 'providers/request_recovery.dart';
 import 'library.dart';
+import 'epub.dart';
 import 'local_store.dart';
 
 /// Resources shared by commands during a single CLI invocation.
@@ -118,6 +119,9 @@ Future<int> runCli(
   try {
     await PagestageCommandRunner(context).run(arguments);
     return 0;
+  } on ProtectedEpub {
+    err.writeln('DRM-protected EPUB files are not supported.');
+    return 65;
   } on ProviderException catch (error) {
     err.writeln(error);
     return 69;
@@ -146,18 +150,24 @@ class _ImportCommand extends Command<void> {
   @override
   String get name => 'import';
   @override
-  String get description => 'Import a TXT novel and list its chapters.';
+  String get description => 'Import a TXT or EPUB novel and list its chapters.';
   @override
   String get invocation => 'pagestage import <file> [--title <title>]';
 
   @override
   Future<void> run() async {
-    if (argResults!.rest.length != 1) usageException('Provide one TXT path.');
-    final book = await context.library.importTxt(
+    if (argResults!.rest.length != 1) {
+      usageException('Provide one TXT or EPUB path.');
+    }
+    final imported = await context.library.importFile(
       argResults!.rest.single,
       title: argResults!['title'] as String?,
     );
+    final book = imported.book;
     context.writeJson({
+      'updated': imported.updated,
+      'addedChapters': imported.addedChapters,
+      'changedChapters': imported.changedChapters,
       'bookId': book.id,
       'title': book.title,
       'language': book.language,
