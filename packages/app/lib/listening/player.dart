@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../shelf/bookshelf.dart';
 import 'app_scope.dart';
 import 'chapter_picker.dart';
+import 'generation_failures.dart';
 import 'labels.dart';
 import 'open_reader.dart';
 
@@ -276,6 +277,15 @@ class _PlayerPageState extends State<PlayerPage> {
                       ),
                     ),
                   ),
+                if (state.buffering)
+                  Padding(
+                    padding: const EdgeInsets.only(top: PsSpace.s2),
+                    child: Text(
+                      l.waitingForSynthesis,
+                      textAlign: TextAlign.center,
+                      style: PsType.caption.copyWith(color: p.vermilion),
+                    ),
+                  ),
                 const Spacer(),
                 const SizedBox(height: PsSpace.s6),
                 _NowLine(
@@ -294,6 +304,10 @@ class _PlayerPageState extends State<PlayerPage> {
                       title: Labels.listeningError(l, error),
                     ),
                   ),
+                GenerationFailures(
+                  bookId: state.bookId!,
+                  padding: const EdgeInsets.only(bottom: PsSpace.s4),
+                ),
                 _progress(listening, state, l, p),
                 const SizedBox(height: PsSpace.s4),
                 _transport(listening, state, l),

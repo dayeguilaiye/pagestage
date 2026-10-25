@@ -61,9 +61,14 @@ class FakeListening extends ValueNotifier<ListeningState> implements Listening {
     sleepAfterChapter.add(enabled);
   }
 
+  /// Replaces [chapterLines] when set, to control when each answer arrives.
+  Future<List<ListeningLine>> Function(String bookId, int chapter)? onLines;
+
   @override
   Future<List<ListeningLine>> lines(String bookId, int chapter) async =>
-      chapterLines[(bookId, chapter)] ?? const [];
+      await onLines?.call(bookId, chapter) ??
+      chapterLines[(bookId, chapter)] ??
+      const [];
 
   @override
   Future<ListeningBookmark?> bookmark(String bookId) async => bookmarks[bookId];
@@ -171,28 +176,229 @@ class FakeCasts extends ChangeNotifier implements Casts {
   }
 }
 
+class FakeGeneration extends ValueNotifier<GenerationState>
+    implements Generation {
+  FakeGeneration([super.value = const GenerationState()]);
+
+  final responses = <(int, GenerationChoice)>[];
+  final saved = <GenerationPreferences>[];
+  final resumes = <String>[];
+  final modes = <String, BookPerformanceMode>{};
+  final modeChanges = <(String, BookPerformanceMode)>[];
+
+  @override
+  Future<void> savePreferences(GenerationPreferences preferences) async {
+    saved.add(preferences);
+    value = GenerationState(
+      preferences: preferences,
+      request: value.request,
+      failures: value.failures,
+    );
+  }
+
+  @override
+  void respond(int requestId, GenerationChoice choice) {
+    responses.add((requestId, choice));
+    if (value.request?.id == requestId) {
+      value = GenerationState(
+        preferences: value.preferences,
+        failures: value.failures,
+      );
+    }
+  }
+
+  @override
+  Future<BookPerformanceMode> mode(String bookId) async =>
+      modes[bookId] ?? BookPerformanceMode.audiobook;
+
+  @override
+  Future<void> setMode(String bookId, BookPerformanceMode mode) async {
+    modeChanges.add((bookId, mode));
+    modes[bookId] = mode;
+  }
+
+  @override
+  Future<void> resume(String bookId) async => resumes.add(bookId);
+}
+
+class FakeVoices extends ChangeNotifier implements Voices {
+  FakeVoices({
+    this.presetOptions = const [],
+    this.providers = const [],
+    this.savedCandidates = const [],
+    this.notices = const [],
+  });
+
+  List<VoiceOption> presetOptions;
+  List<String> providers;
+  List<VoiceOption> savedCandidates;
+  @override
+  List<VoiceRebuildNotice> notices;
+
+  /// Thrown by [design] while set.
+  Object? designFailure;
+
+  @override
+  String? auditioning;
+
+  final presetAuditions = <String>[];
+  final candidateAuditions = <String>[];
+  final selectedPresets = <(String, String, String)>[];
+  final selectedCandidates = <(String, String, String)>[];
+  final designs = <(String, String)>[];
+  final dismissed = <String>[];
+  var stops = 0;
+
+  @override
+  Future<List<VoiceOption>> presets(String bookId, String speakerId) async =>
+      presetOptions;
+
+  @override
+  Future<void> auditionPreset(
+    String bookId,
+    String speakerId,
+    String presetId,
+  ) async {
+    presetAuditions.add(presetId);
+    auditioning = presetId;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> selectPreset(
+    String bookId,
+    String speakerId,
+    String presetId,
+  ) async => selectedPresets.add((bookId, speakerId, presetId));
+
+  @override
+  Future<List<String>> designProviders(String bookId) async => providers;
+
+  @override
+  Future<List<VoiceOption>> candidates(String bookId, String speakerId) async =>
+      savedCandidates;
+
+  @override
+  Future<List<VoiceOption>> design(
+    String bookId,
+    String speakerId, {
+    required String provider,
+    required String description,
+  }) async {
+    designs.add((provider, description));
+    if (designFailure case final error?) throw error;
+    return savedCandidates = [
+      for (var i = 1; i <= 3; i++)
+        VoiceOption(id: 'c$i', name: '候选 $i', provider: provider),
+    ];
+  }
+
+  @override
+  Future<void> auditionCandidate(
+    String bookId,
+    String speakerId,
+    String candidateId,
+  ) async {
+    candidateAuditions.add(candidateId);
+    auditioning = candidateId;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> selectCandidate(
+    String bookId,
+    String speakerId,
+    String candidateId,
+  ) async => selectedCandidates.add((bookId, speakerId, candidateId));
+
+  @override
+  Future<void> stopAudition() async {
+    stops++;
+    auditioning = null;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> dismissNotice(String id) async {
+    dismissed.add(id);
+    notices = [
+      for (final n in notices)
+        if (n.id != id) n,
+    ];
+    notifyListeners();
+  }
+}
+
+class FakeAudioStorage extends ChangeNotifier implements AudioStorage {
+  FakeAudioStorage([this.books = const []]);
+
+  List<BookStorageUsage> books;
+  final cleared = <String>[];
+
+  @override
+  Future<List<BookStorageUsage>> usage() async => books;
+
+  @override
+  Future<void> clearAudio(String bookId) async {
+    cleared.add(bookId);
+    books = [
+      for (final b in books)
+        b.bookId == bookId
+            ? BookStorageUsage(
+                bookId: b.bookId,
+                title: b.title,
+                totalBytes: b.totalBytes - b.audioBytes,
+                audioBytes: 0,
+              )
+            : b,
+    ];
+    notifyListeners();
+  }
+}
+
 class Fakes {
   Fakes({
     FakeListening? listening,
     FakeProviders? providers,
     FakeConsents? consents,
     FakeCasts? casts,
+    FakeGeneration? generation,
+    FakeVoices? voices,
+    FakeAudioStorage? audioStorage,
   }) : listening = listening ?? FakeListening(),
        providers = providers ?? FakeProviders(),
        consents = consents ?? FakeConsents(),
-       casts = casts ?? FakeCasts();
+       casts = casts ?? FakeCasts(),
+       generation = generation ?? FakeGeneration(),
+       voices = voices ?? FakeVoices(),
+       audioStorage = audioStorage ?? FakeAudioStorage();
 
   final FakeListening listening;
   final FakeProviders providers;
   final FakeConsents consents;
   final FakeCasts casts;
+  final FakeGeneration generation;
+  final FakeVoices voices;
+  final FakeAudioStorage audioStorage;
 
   late final services = AppServices(
     listening: listening,
     providers: providers,
     consents: consents,
     casts: casts,
+    generation: generation,
+    voices: voices,
+    audioStorage: audioStorage,
   );
+}
+
+/// Turns on the system's reduce-motion setting, which stops looping
+/// animations such as the playing bars and the buffering ring, so
+/// pumpAndSettle can settle while something plays.
+void reduceMotion(WidgetTester tester) {
+  tester.platformDispatcher.accessibilityFeaturesTestValue =
+      const FakeAccessibilityFeatures(disableAnimations: true);
+  addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
 }
 
 /// Pumps the whole app on a phone-sized screen.

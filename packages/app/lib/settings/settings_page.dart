@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../application/app_services.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import 'storage_page.dart';
 
 /// The reader's own service accounts and the cast-wide voice setting. Keys
 /// are never shown again once saved; a blank key field keeps the stored key.
@@ -335,6 +336,16 @@ class _SettingsPageState extends State<SettingsPage> {
                     ],
                   ),
                 ),
+                if (widget.services.generation case final generation?)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      PsSpace.s5,
+                      0,
+                      PsSpace.s5,
+                      PsSpace.s8,
+                    ),
+                    child: GenerationSettings(generation: generation),
+                  ),
                 ListenableBuilder(
                   listenable: _casts,
                   builder: (context, _) => Padding(
@@ -366,6 +377,30 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
+                if (widget.services.audioStorage case final storage?)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      PsSpace.s5,
+                      PsSpace.s8,
+                      PsSpace.s5,
+                      0,
+                    ),
+                    child: PsListGroup(
+                      header: l.storageSection,
+                      children: [
+                        PsListRow(
+                          title: l.storage,
+                          subtitle: l.storageRowNote,
+                          chevron: true,
+                          onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => StoragePage(storage: storage),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -552,12 +587,19 @@ class _SecretField extends StatelessWidget {
 }
 
 class _Stepper extends StatelessWidget {
-  const _Stepper({required this.value, required this.onChanged});
+  const _Stepper({
+    required this.value,
+    required this.onChanged,
+    this.max = 200,
+    this.fewerLabel,
+    this.moreLabel,
+  });
 
   final int value;
   final ValueChanged<int> onChanged;
-
-  static const max = 200;
+  final int max;
+  final String? fewerLabel;
+  final String? moreLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -569,7 +611,7 @@ class _Stepper extends StatelessWidget {
       children: [
         PsIconButton(
           icon: PsIcons.minus,
-          label: l.fewerVoices,
+          label: fewerLabel ?? l.fewerVoices,
           variant: PsIconButtonVariant.outline,
           size: PsControlSize.sm,
           iconSize: 16,
@@ -585,13 +627,117 @@ class _Stepper extends StatelessWidget {
         ),
         PsIconButton(
           icon: PsIcons.plus,
-          label: l.moreVoices,
+          label: moreLabel ?? l.moreVoices,
           variant: PsIconButtonVariant.outline,
           size: PsControlSize.sm,
           iconSize: 16,
           onPressed: value < max ? () => onChanged(value + 1) : null,
         ),
       ],
+    );
+  }
+}
+
+/// Generating while listening: whether to start without asking, and how
+/// many chapters ahead to direct and to synthesize. Applies at once.
+class GenerationSettings extends StatefulWidget {
+  const GenerationSettings({super.key, required this.generation});
+
+  final Generation generation;
+
+  static const maxAhead = 20;
+
+  @override
+  State<GenerationSettings> createState() => _GenerationSettingsState();
+}
+
+class _GenerationSettingsState extends State<GenerationSettings> {
+  var _failed = false;
+
+  Future<void> _save(GenerationPreferences next) async {
+    setState(() => _failed = false);
+    try {
+      await widget.generation.savePreferences(next);
+    } catch (_) {
+      if (mounted) setState(() => _failed = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return ValueListenableBuilder(
+      valueListenable: widget.generation,
+      builder: (context, state, _) {
+        final prefs = state.preferences;
+        GenerationPreferences patch({
+          bool? automatic,
+          int? directing,
+          int? synthesis,
+        }) {
+          final d = (directing ?? prefs.directing).clamp(
+            0,
+            GenerationSettings.maxAhead,
+          );
+          // Audio can only be made for chapters already directed.
+          final s = (synthesis ?? prefs.synthesis).clamp(0, d);
+          return GenerationPreferences(
+            automatic: automatic ?? prefs.automatic,
+            directing: d,
+            synthesis: s,
+          );
+        }
+
+        String ahead(int n) => n == 0 ? l.aheadOff : l.aheadChapters(n);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          spacing: PsSpace.s3,
+          children: [
+            PsListGroup(
+              header: l.generationSection,
+              footer: l.generationSectionNote,
+              children: [
+                PsListRow(
+                  title: l.autoGenerate,
+                  subtitle: l.autoGenerateNote,
+                  trailing: Switch(
+                    value: prefs.automatic,
+                    onChanged: (v) => _save(patch(automatic: v)),
+                  ),
+                ),
+                PsListRow(
+                  title: l.directingAhead,
+                  subtitle: ahead(prefs.directing),
+                  trailing: _Stepper(
+                    value: prefs.directing,
+                    max: GenerationSettings.maxAhead,
+                    fewerLabel: l.fewerDirectingAhead,
+                    moreLabel: l.moreDirectingAhead,
+                    onChanged: (v) => _save(patch(directing: v)),
+                  ),
+                ),
+                PsListRow(
+                  title: l.synthesisAhead,
+                  subtitle: ahead(prefs.synthesis),
+                  trailing: _Stepper(
+                    value: prefs.synthesis,
+                    max: prefs.directing,
+                    fewerLabel: l.fewerSynthesisAhead,
+                    moreLabel: l.moreSynthesisAhead,
+                    onChanged: (v) => _save(patch(synthesis: v)),
+                  ),
+                ),
+              ],
+            ),
+            if (_failed)
+              PsBanner(
+                tone: PsBannerTone.danger,
+                title: l.generationSettingsFailed,
+                onClose: () => setState(() => _failed = false),
+              ),
+          ],
+        );
+      },
     );
   }
 }

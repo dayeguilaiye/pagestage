@@ -10,6 +10,8 @@ abstract final class Labels {
         'chapterUnavailable' => l.errorChapterUnavailable,
         'audioFailed' => l.errorAudioFailed,
         'bookMissing' => l.errorBookMissing,
+        'audioChanged' => l.errorAudioChanged,
+        'generationCancelled' => l.errorGenerationCancelled,
         _ => l.errorPlaybackStopped,
       };
 
@@ -36,6 +38,7 @@ abstract final class Labels {
         'consentDeclined' => l.reasonConsentDeclined,
         'invalidResponse' => l.reasonInvalidResponse,
         'interrupted' => l.reasonInterrupted,
+        'voiceUnavailable' => l.reasonVoiceUnavailable,
         _ => l.reasonUnknown,
       };
 

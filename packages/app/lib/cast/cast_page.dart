@@ -9,6 +9,7 @@ import '../listening/app_scope.dart';
 import '../listening/chapter_picker.dart';
 import '../listening/labels.dart';
 import '../shelf/bookshelf.dart';
+import 'voice_page.dart';
 
 /// A book's cast and how far it has been profiled: start or extend
 /// profiling, resume it after a pause, audition each voice.
@@ -18,10 +19,15 @@ class CastPage extends StatefulWidget {
     required this.services,
     required this.book,
     this.chapters = const [],
+    this.initialThrough,
   });
 
   final AppServices services;
   final ShelfBook book;
+
+  /// A chapter number to preselect for profiling, such as the chapter that
+  /// could not be generated.
+  final int? initialThrough;
 
   /// The table of contents, for choosing how far to profile. Loaded here
   /// when empty.
@@ -42,20 +48,58 @@ class _CastPageState extends State<CastPage> {
 
   /// The chapter number to profile through, once the reader or a default
   /// has picked one.
-  int? _through;
+  late int? _through = widget.initialThrough;
   var _busy = false;
   var _actionFailed = false;
   var _auditionFailed = false;
   final _expanded = <String>{};
 
   Casts get _casts => widget.services.casts;
+  Voices? get _voices => widget.services.voices;
+
+  /// Providers that can design a voice; empty hides voice design.
+  var _designProviders = const <String>[];
 
   @override
   void initState() {
     super.initState();
     _casts.addListener(_onCasts);
+    _voices?.addListener(_onVoices);
     _scroll.addListener(_onScroll);
     _load();
+    _loadDesignProviders();
+  }
+
+  void _onVoices() => setState(() {});
+
+  Future<void> _loadDesignProviders() async {
+    final voices = _voices;
+    if (voices == null) return;
+    try {
+      final providers = await voices.designProviders(widget.book.id);
+      if (mounted) setState(() => _designProviders = providers);
+    } catch (_) {
+      // Without design providers only presets are offered.
+    }
+  }
+
+  Future<void> _openVoices(CastMember member, VoiceTab tab) async {
+    final l = AppLocalizations.of(context);
+    final chosen = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => VoicePage(
+          voices: _voices!,
+          bookId: widget.book.id,
+          member: member,
+          designProviders: _designProviders,
+          tab: tab,
+        ),
+      ),
+    );
+    if (chosen == true && mounted) {
+      showPsToast(context, l.voiceChanged(member.name));
+      await _load();
+    }
   }
 
   var _askedForChapters = false;
@@ -73,7 +117,10 @@ class _CastPageState extends State<CastPage> {
   @override
   void dispose() {
     _casts.removeListener(_onCasts);
-    if (_casts.auditioning != null) _casts.stopAudition();
+    _voices?.removeListener(_onVoices);
+    // Stopping notifies other pages, which cannot rebuild mid-unmount.
+    final casts = _casts;
+    if (casts.auditioning != null) Future.microtask(casts.stopAudition);
     _scroll.dispose();
     super.dispose();
   }
@@ -410,6 +457,22 @@ class _CastPageState extends State<CastPage> {
               fontWeight: FontWeight.w500,
             ),
           ),
+          for (final notice in _voices?.notices ?? const <VoiceRebuildNotice>[])
+            if (notice.bookId == widget.book.id)
+              Padding(
+                padding: const EdgeInsets.only(top: PsSpace.s3),
+                child: PsBanner(
+                  key: ValueKey('notice-${notice.id}'),
+                  tone: PsBannerTone.amber,
+                  icon: PsIcons.voice,
+                  title: l.voiceRebuiltTitle(notice.speakerName),
+                  body: l.voiceRebuiltBody(Labels.provider(l, notice.provider)),
+                  actionLabel: l.listenAgain,
+                  onAction: () =>
+                      _casts.audition(widget.book.id, notice.speakerId),
+                  onClose: () => _voices!.dismissNotice(notice.id),
+                ),
+              ),
           if (_auditionFailed)
             Padding(
               padding: const EdgeInsets.only(top: PsSpace.s3),
@@ -458,7 +521,37 @@ class _CastPageState extends State<CastPage> {
           () =>
               expanded ? _expanded.remove(member.id) : _expanded.add(member.id),
         ),
-        details: expanded ? _Profile(member) : null,
+        details: expanded
+            ? Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                spacing: PsSpace.s4,
+                children: [
+                  _Profile(member),
+                  if (_voices != null)
+                    Wrap(
+                      spacing: PsSpace.s2,
+                      runSpacing: PsSpace.s2,
+                      children: [
+                        PsButton(
+                          label: l.changeVoice,
+                          small: true,
+                          icon: PsIcons.voice,
+                          onPressed: () =>
+                              _openVoices(member, VoiceTab.presets),
+                        ),
+                        if (_designProviders.isNotEmpty)
+                          PsButton(
+                            label: l.designVoice,
+                            small: true,
+                            icon: PsIcons.pen,
+                            onPressed: () =>
+                                _openVoices(member, VoiceTab.design),
+                          ),
+                      ],
+                    ),
+                ],
+              )
+            : null,
       ),
     );
   }

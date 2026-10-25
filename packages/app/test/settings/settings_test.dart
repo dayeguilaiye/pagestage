@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pagestage_app/application/contracts.dart';
+import 'package:pagestage_app/design/design.dart';
 import 'package:pagestage_app/shelf/memory_bookshelf.dart';
 
 import '../support/fake_services.dart';
@@ -37,7 +38,10 @@ Finder _field(String label) => find.byKey(ValueKey(_keys[label]!));
 
 final _list = find.byType(Scrollable).first;
 
+/// Scrolls from the top of the page down to [finder].
 Future<void> _reveal(WidgetTester tester, Finder finder) async {
+  tester.state<ScrollableState>(_list).position.jumpTo(0);
+  await tester.pump();
   await tester.scrollUntilVisible(finder, 120, scrollable: _list);
   await tester.pumpAndSettle();
 }
@@ -160,6 +164,7 @@ void main() {
     expect(find.text('没能保存设置'), findsOneWidget);
     expect(find.textContaining('401'), findsNothing);
     // The key stays in its masked field so the reader can retry.
+    await _reveal(tester, _field('大模型密钥'));
     expect(
       tester
           .widget<EditableText>(
@@ -181,7 +186,13 @@ void main() {
     await fakes.casts.setExclusiveCount(1);
     final fewer = find.byTooltip('减少');
     await _reveal(tester, fewer);
-    expect(find.text('1'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.widgetWithText(PsListRow, '独占声音数'),
+        matching: find.text('1'),
+      ),
+      findsOneWidget,
+    );
 
     await tester.tap(find.byTooltip('增加'));
     await tester.pumpAndSettle();

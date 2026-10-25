@@ -674,4 +674,278 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get consentAccept => 'Agree and send';
+
+  @override
+  String generationTitle(String chapter) {
+    return '$chapter has no voices yet';
+  }
+
+  @override
+  String get generationBody =>
+      'Generate AI voices now and keep listening while they’re made, or have your phone’s own voice read it for now.';
+
+  @override
+  String generationOutOfRange(String chapter) {
+    return '$chapter hasn’t been profiled, so its voices can’t be generated yet. Extend profiling to this chapter first, or have your phone’s own voice read it for now.';
+  }
+
+  @override
+  String get generateNow => 'Generate voices';
+
+  @override
+  String get useSystemVoice => 'Use the system voice';
+
+  @override
+  String extendProfilingTo(String chapter) {
+    return 'Extend profiling to $chapter';
+  }
+
+  @override
+  String get waitingForSynthesis =>
+      'Generating the next voices — playback continues when they’re ready';
+
+  @override
+  String get generationPausedTitle => 'Voice generation paused';
+
+  @override
+  String get generationResumeFailed =>
+      'Couldn’t resume generating. Try again later';
+
+  @override
+  String generationPausedLine(String chapter, String provider, String reason) {
+    return '$chapter · $provider: $reason';
+  }
+
+  @override
+  String get resumeGeneration => 'Resume generating';
+
+  @override
+  String get reasonVoiceUnavailable =>
+      'The assigned voice is no longer available. Choose another in the cast';
+
+  @override
+  String get errorAudioChanged =>
+      'The audio has changed (cleared or a new voice). Tap play to prepare it again.';
+
+  @override
+  String get errorGenerationCancelled =>
+      'Generating was cancelled. Tap play to choose again.';
+
+  @override
+  String get performanceMode => 'Performance';
+
+  @override
+  String get modeAudiobook => 'Audiobook';
+
+  @override
+  String get modeDrama => 'Drama';
+
+  @override
+  String get modeAudiobookNote =>
+      'The narrator reads everything, including tags like “he said”.';
+
+  @override
+  String get modeDramaNote =>
+      'Characters speak for themselves; tags like “he said” are skipped.';
+
+  @override
+  String get modeSaveFailed => 'Couldn’t save the performance style. Try again';
+
+  @override
+  String get generationSection => 'Generate while listening';
+
+  @override
+  String get generationSectionNote =>
+      'How many chapters ahead of you are prepared. Synthesis can’t run further ahead than directing; 0 turns it off.';
+
+  @override
+  String get autoGenerate => 'Generate voices automatically';
+
+  @override
+  String get autoGenerateNote =>
+      'Chapters without voices are generated without asking';
+
+  @override
+  String get directingAhead => 'Direct ahead';
+
+  @override
+  String get synthesisAhead => 'Synthesize ahead';
+
+  @override
+  String get aheadOff => 'Off';
+
+  @override
+  String aheadChapters(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count chapters ahead',
+      one: '1 chapter ahead',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get fewerDirectingAhead => 'Direct fewer chapters ahead';
+
+  @override
+  String get moreDirectingAhead => 'Direct more chapters ahead';
+
+  @override
+  String get fewerSynthesisAhead => 'Synthesize fewer chapters ahead';
+
+  @override
+  String get moreSynthesisAhead => 'Synthesize more chapters ahead';
+
+  @override
+  String get generationSettingsFailed => 'Couldn’t save generation settings';
+
+  @override
+  String get storageSection => 'Storage';
+
+  @override
+  String get storage => 'Storage';
+
+  @override
+  String get storageRowNote => 'See the space each book uses and clear audio';
+
+  @override
+  String get storageNote =>
+      'Counted per book: its text, scripts, cast and other records plus its audio files. The database file is shared by all books; its index and log overhead isn’t included.';
+
+  @override
+  String get storageLoadFailed => 'Couldn’t read storage use';
+
+  @override
+  String get storageEmpty => 'No books are using space yet';
+
+  @override
+  String get storageTotal => 'Total';
+
+  @override
+  String get storageAudio => 'Clearable audio';
+
+  @override
+  String get storageBooks => 'Books';
+
+  @override
+  String storageBookLine(String total, String audio) {
+    return '$total in all · $audio audio';
+  }
+
+  @override
+  String get clearAudio => 'Clear audio';
+
+  @override
+  String get clearAudioNote =>
+      'Clearing removes only generated audio, samples and the synthesis cache. Text, scripts and cast stay; audio is made again when you next listen.';
+
+  @override
+  String clearAudioTitle(String title) {
+    return 'Clear the audio for “$title”?';
+  }
+
+  @override
+  String clearAudioBody(String size) {
+    return 'This frees $size. The text, scripts and cast stay; audio is synthesized again when you next listen.';
+  }
+
+  @override
+  String get clearAudioConfirm => 'Clear audio';
+
+  @override
+  String get clearAudioFailed => 'Couldn’t clear the audio. Try again';
+
+  @override
+  String audioCleared(String title) {
+    return 'Cleared the audio for “$title”';
+  }
+
+  @override
+  String get changeVoice => 'Change voice';
+
+  @override
+  String get designVoice => 'Design a voice';
+
+  @override
+  String changeVoiceTitle(String name) {
+    return 'A new voice for $name';
+  }
+
+  @override
+  String currentVoice(String voice) {
+    return 'Currently “$voice”';
+  }
+
+  @override
+  String get presetVoices => 'Presets';
+
+  @override
+  String get voiceDesign => 'Design';
+
+  @override
+  String get hearBeforeChoosing => 'Play a voice before choosing it.';
+
+  @override
+  String get chooseVoice => 'Use';
+
+  @override
+  String get voiceInUse => 'In use';
+
+  @override
+  String get chooseVoiceFailed => 'Couldn’t switch to this voice. Try again';
+
+  @override
+  String get presetsLoadFailed => 'Couldn’t load preset voices';
+
+  @override
+  String get presetsEmpty =>
+      'No preset voices suit this book’s language with your current setup.';
+
+  @override
+  String get designProvider => 'Design with';
+
+  @override
+  String get voiceDescriptionLabel => 'Voice description';
+
+  @override
+  String get voiceDescriptionHint =>
+      'For example: a man around fifty, low and husky, unhurried';
+
+  @override
+  String get designCandidates => 'Design 3 candidates';
+
+  @override
+  String get designCandidatesAgain => 'Design new candidates';
+
+  @override
+  String get designing => 'Designing voices — this takes a moment';
+
+  @override
+  String get designFailed => 'Couldn’t design a voice';
+
+  @override
+  String get designFailedBody =>
+      'Your description and provider are kept. Try again, or adjust the description.';
+
+  @override
+  String get candidates => 'Candidates';
+
+  @override
+  String voiceChanged(String name) {
+    return '$name has a new voice';
+  }
+
+  @override
+  String voiceRebuiltTitle(String name) {
+    return '$name’s voice was rebuilt';
+  }
+
+  @override
+  String voiceRebuiltBody(String provider) {
+    return 'The $provider voice binding was rebuilt and may sound different. Play it again to check.';
+  }
+
+  @override
+  String get listenAgain => 'Play again';
 }
