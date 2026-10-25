@@ -1,6 +1,6 @@
 # pagestage App
 
-Android 和 iOS 的 Flutter App。书架、章节目录和正文直接使用 core 的 `Library`，通过系统文件选择器导入 TXT，数据库保存在 App 私有目录。字号、行距和夜间模式在重启后恢复。App 支持边听边生成、已合成音频与系统朗读的统一播放、服务商安全配置、建档与演员表、换音色与音色设计、按书清理音频，详见[收听与演员表](../../docs/app-listening-casting.md)。
+Android 和 iOS 的 Flutter App。书架、章节目录和正文直接使用 core 的 `Library`，通过系统文件选择器导入 TXT 或无 DRM 的 EPUB，支持同书更新导入，数据库保存在 App 私有目录。字号、行距和夜间模式在重启后恢复。App 支持边听边生成、已合成音频与系统朗读的统一播放、服务商安全配置、建档与演员表、换音色与音色设计、按书清理音频、本地诊断导出与问题反馈，详见[收听与演员表](../../docs/app-listening-casting.md)。
 
 ```sh
 cd packages/app
@@ -72,3 +72,25 @@ CI 使用固定测试签名，后续安装包可覆盖升级并保留应用数�
 | DM Mono | 时间码、倍速、章节序号 |
 
 前三套是可变字体，`PsType.style` 会同时设置 `fontWeight` 和对应的 `wght` 轴。
+
+## 诊断
+
+设置中的诊断报告通过系统分享面板导出。日志保存在 App 私有目录，单份上限 128 KiB，轮转保留两份。报告包含应用版本、系统版本、固定错误类别、Dart 源码位置和系统崩溃数值摘要。异常消息、key、书籍正文、原生堆栈原文和任意平台字符串均不写入报告；应用不自动上传。
+
+Android 11 / API 30 起从 `ApplicationExitInfo` 读取历史崩溃与 ANR。iOS 14 起订阅 MetricKit 并读取系统保留的历史诊断；系统决定报告交付时间，报告可在后续启动或导出时补入日志。设置中的反馈入口打开本仓库的新建 Issue 页面，由用户填写和提交。
+
+## 示例书资源
+
+`ExampleLibrary` 在新书库首次安装完整资源包，校验音频 SHA-256、正文哈希和剧本/音色输入后原子写入。安装标记持久保存，用户删除书后再次启动仍保持删除状态。播放器直接读取整章 M4A，并沿用台词与停顿时间轴。
+
+本地打包命令：
+
+```sh
+dart run packages/app/tool/build_examples.dart --source-dir .pagestage/examples-v5
+```
+
+源目录需具备当前 `director-v5` 的两本公版书各五章、演员表及完整 CLI 合成结果。脚本按 64 kbps 单声道 AAC-LC 压缩，输出 M4A 和包含实际总字节数、时长的 `assets/examples/manifest.json`；macOS 使用 `afconvert`，其他系统使用 `ffmpeg`，打包本身不调用服务商。
+
+实际随包素材在 [#35](https://github.com/dayeguilaiye/pagestage/issues/35) 跟进；当前清单为空，待完成素材生产与分发条款核对后填入。2026-10-25 已获准为两本书各前五章生成当前版本剧本，第一章因三次连接失败停止，未收到可记账的服务商响应。音频合成需在剧本完成后另行确认具体请求范围。
+
+分发许可依据为 [MiniMax 开放平台用户协议](https://platform.minimaxi.com/zh/protocol/user-agreement)与[百炼服务协议](https://terms.alicdn.com/legal-agreement/terms/common_platform_service/20230728213935489/20230728213935489.html)。百炼第 7.5–7.6 条讨论生成内容权利及对外使用责任；随 App 分发所用具体音色与音频的许可结论继续记录在 #35，当前资源包不包含服务商生成音频。

@@ -54,6 +54,12 @@ key 保存在 iOS Keychain 和 Android Keystore 支持的安全存储中。普�
 
 清理前确认。清理时停止播放与试听，让该书正在执行的生成任务保存到检查点，再取消剩余生成任务并删除合成音频、缓存、系统朗读和试听样音。正文、剧本、演员表及音色描述保留；有剧本的章节回到已导演状态，之后收听按生成规则重新准备。其他书仍引用的共享缓存、用户原始导入文件和外部导出文件保留。
 
+## 导入与诊断
+
+TXT 和无 DRM EPUB 共用 `Library.importFile`。EPUB 导航目录或 NCX 中的锚点按正文阅读顺序划分章节，支持同文件多章与跨文件合章。前三章正文一致的新版文件合并到原书；App 先停止该书试听与播放，等待生成任务保存检查点，再合并数据并刷新阅读与播放状态。未变化的章节保留原文区间、剧本及音频；变化章节的书签回到章首。
+
+设置通过 `Diagnostics` 接口导出本地报告或打开 GitHub 新建 Issue 页面。Dart 框架与未处理的异步异常记录固定类别及源码位置；Android 使用 `ApplicationExitInfo`，iOS 使用 MetricKit，提取系统数值摘要并去重入库。日志最多两份、每份 128 KiB。导出再次按字段白名单过滤，经系统分享面板交给用户选择去向，无自动上传。
+
 ## 开发验证
 
 ```sh
@@ -63,6 +69,7 @@ flutter test
 flutter test integration_test/native_services_test.dart -d <device>
 flutter test integration_test/generation_services_test.dart -d <device>
 flutter test integration_test/library_test.dart -d <device>
+flutter test integration_test/library_diagnostics_test.dart -d <device>
 ```
 
 业务测试使用假 LLM、假 TTS、假播放引擎和临时数据库。原生服务测试在设备上验证安全存储、系统语音、句章控制、倍速和播完停止，使用系统本地语音。iOS 构建通过 CocoaPods 集成 `flutter_tts`。
@@ -71,4 +78,4 @@ flutter test integration_test/library_test.dart -d <device>
 
 2026-10-25，iOS 与 Android 模拟器通过新增生成服务集成测试，使用真实 just_audio 引擎验证第一条台词提前播放、等待后续合成、追加后续播、倍速、建档、发送同意、预设试听、音色设计与音频清理。原有原生语音与书库集成测试覆盖系统语音、安全存储、句章控制、GBK 导入、设置恢复和删除。书籍建档、导演及 TTS 服务商行为全部使用离线适配器验证。
 
-当前版本的 core 231 项、App 115 项离线测试通过，完整静态分析与格式检查通过。额外回归覆盖生成中清理、任务启动时清理、取消询问、过期音色的有界恢复、共享文件保护和分段变化后的正文与书签定位。
+2026-10-25，core 244 项、App 131 项离线测试通过，`dart analyze` 无问题。iOS 与 Android 的书库诊断集成测试通过，覆盖 EPUB 更新导入、真实 AAC 播放与定位、原生版本信息、脱敏报告和系统分享面板。Android 正式入口调试包经受控崩溃后，重启成功取回 `ApplicationExitInfo` 的崩溃数值摘要；iOS MetricKit 的真实报告交付仍由系统调度。

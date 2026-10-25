@@ -18,6 +18,10 @@ dart run packages/core/bin/pagestage.dart chapters <book-id>
 
 TXT 先严格按 UTF-8 解码，再尝试 GB18030。GB18030 解码使用 WHATWG Encoding Standard 的索引，支持 GBK 两字节字符与 GB18030 四字节字符。中文的「章」「回」与英文 Chapter 标题用于划分章节，「卷」用于分组；没有章节标题时每约 5000 个 Unicode 字符分成一章。章节正文保留解码后的换行和空白，后续剧本的原文区间使用 Dart UTF-16 偏移量。
 
+EPUB 使用同一个 `import` 命令，支持 EPUB 3 导航目录与 EPUB 2 NCX。目录锚点决定章节边界，可以在一个文件内拆章或跨多个文件合章；缺少目录时按阅读顺序中的文件分章。导入仅保留标题与正文，拒绝带 DRM 的文件；字体混淆不影响正文提取。
+
+新版文件的前三章正文与已有书一致时，合并到原书。未改变的章节保留剧本和音频；修改的章节清除剧本与音频记录，保留建档范围、演员表和音色；新增章节接到后面。短版本保留已有尾章。命令结果同时包含 `updated`、`addedChapters` 和 `changedChapters`，App 显示对应更新结果。
+
 测试素材是《阿Q正传》和《傲慢与偏见》的前五章，来源与整理方式见 [素材说明](test/fixtures/books/README.md)。
 
 ## 从章节到多角色音频
