@@ -66,6 +66,7 @@ class PsPassage extends StatefulWidget {
     this.english = false,
     this.cue = true,
     this.onLineTap,
+    this.paragraphKeys,
   });
 
   final List<List<PsLine>> paragraphs;
@@ -79,6 +80,9 @@ class PsPassage extends StatefulWidget {
   /// Hangs the speaker's name before the current line.
   final bool cue;
   final PsLineTap? onLineTap;
+
+  /// One key per paragraph, so a reader can scroll a line into view.
+  final List<Key>? paragraphKeys;
 
   @override
   State<PsPassage> createState() => _PsPassageState();
@@ -157,6 +161,7 @@ class _PsPassageState extends State<PsPassage> {
             ),
           for (var i = 0; i < widget.paragraphs.length; i++)
             Padding(
+              key: widget.paragraphKeys?[i],
               padding: EdgeInsets.only(
                 bottom: fs * (widget.english ? 0.75 : 0.5),
               ),
@@ -421,7 +426,8 @@ class _SpotPainter extends CustomPainter {
 }
 
 /// The player docked above the bottom safe area on the shelf and reader.
-/// The 「AI 合成」 tag is always shown.
+/// A tag always says where the voice comes from: 「AI 合成」 for generated
+/// audio, 「系统朗读」 for the phone's own voice.
 class PsMiniPlayer extends StatelessWidget {
   const PsMiniPlayer({
     super.key,
@@ -435,6 +441,7 @@ class PsMiniPlayer extends StatelessWidget {
     this.playing = false,
     this.buffering = false,
     this.progress = 0,
+    this.synthesized = true,
     this.onToggle,
     this.onNext,
     this.onTap,
@@ -454,6 +461,9 @@ class PsMiniPlayer extends StatelessWidget {
 
   /// Progress through the chapter, 0–1.
   final double progress;
+
+  /// Generated audio rather than the system voice.
+  final bool synthesized;
   final VoidCallback? onToggle;
   final VoidCallback? onNext;
 
@@ -531,7 +541,7 @@ class PsMiniPlayer extends StatelessWidget {
                                     ),
                                   ),
                                 PsTag(
-                                  l.aiVoice,
+                                  synthesized ? l.aiVoice : l.systemVoice,
                                   tone: PsTagTone.outline,
                                   dense: true,
                                 ),

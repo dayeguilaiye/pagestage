@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
+import 'application/app_services.dart';
+import 'consent/consent_gate.dart';
 import 'design/design.dart';
 import 'l10n/app_localizations.dart';
+import 'listening/app_scope.dart';
 import 'shelf/bookshelf.dart';
 import 'shelf/reading_settings.dart';
 import 'shelf/shelf_page.dart';
@@ -12,11 +15,16 @@ class PagestageApp extends StatefulWidget {
     super.key,
     required this.bookshelf,
     required this.readingSettings,
+    this.services,
     this.locale,
   });
 
   final Bookshelf bookshelf;
   final ReadingSettings readingSettings;
+
+  /// Listening, providers, consent and casts. Without them the app reads
+  /// silently, as the gallery and reading-only tests run it.
+  final AppServices? services;
 
   /// Overrides the system language.
   final Locale? locale;
@@ -41,6 +49,7 @@ class PagestageApp extends StatefulWidget {
 
 class _PagestageAppState extends State<PagestageApp> {
   late var _themeMode = widget.readingSettings.value.themeMode;
+  final _navigator = GlobalKey<NavigatorState>();
 
   @override
   void initState() {
@@ -63,22 +72,36 @@ class _PagestageAppState extends State<PagestageApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      onGenerateTitle: (_) => 'pagestage',
-      debugShowCheckedModeBanner: false,
-      theme: PsTheme.light,
-      darkTheme: PsTheme.dark,
-      themeMode: _themeMode,
-      locale: widget.locale,
-      supportedLocales: PagestageApp.locales,
-      localeListResolutionCallback: PagestageApp.resolveLocale,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        ...GlobalMaterialLocalizations.delegates,
-      ],
-      home: ShelfPage(
-        bookshelf: widget.bookshelf,
-        readingSettings: widget.readingSettings,
+    final services = widget.services;
+    return AppScope(
+      bookshelf: widget.bookshelf,
+      readingSettings: widget.readingSettings,
+      services: services,
+      child: MaterialApp(
+        navigatorKey: _navigator,
+        onGenerateTitle: (_) => 'pagestage',
+        debugShowCheckedModeBanner: false,
+        theme: PsTheme.light,
+        darkTheme: PsTheme.dark,
+        themeMode: _themeMode,
+        locale: widget.locale,
+        supportedLocales: PagestageApp.locales,
+        localeListResolutionCallback: PagestageApp.resolveLocale,
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          ...GlobalMaterialLocalizations.delegates,
+        ],
+        builder: services == null
+            ? null
+            : (context, child) => ConsentGate(
+                consents: services.consents,
+                navigatorKey: _navigator,
+                child: child!,
+              ),
+        home: ShelfPage(
+          bookshelf: widget.bookshelf,
+          readingSettings: widget.readingSettings,
+        ),
       ),
     );
   }

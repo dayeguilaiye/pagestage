@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'app.dart';
+import 'application/app_services.dart';
 import 'storage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   LicenseRegistry.addLicense(_fontLicenses);
   final storage = await AppStorage.open();
+  final services = await AppServices.open(storage);
   runApp(
     PagestageApp(
       bookshelf: storage.library,
       readingSettings: storage.readingSettings,
+      services: services,
     ),
   );
 }

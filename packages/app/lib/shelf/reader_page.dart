@@ -1,15 +1,22 @@
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
+import '../application/contracts.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import '../listening/app_scope.dart';
+import '../listening/chapter_lines.dart';
+import '../listening/player.dart';
 import 'bookshelf.dart';
 import 'contents.dart';
 import 'reading_settings.dart';
 import 'reading_sheet.dart';
 
-/// The book as one scroll from chapter to chapter, opened at [start].
+/// The book as one scroll from chapter to chapter, opened at [start]. While
+/// the book is being listened to, the spoken lines are lit and followed.
 class ReaderPage extends StatefulWidget {
   const ReaderPage({
     super.key,
@@ -32,6 +39,25 @@ class ReaderPage extends StatefulWidget {
   State<ReaderPage> createState() => _ReaderPageState();
 }
 
+/// The lines being spoken in this book.
+@immutable
+class _Spoken {
+  const _Spoken(this.chapter, this.lines);
+
+  /// A chapter number.
+  final int chapter;
+  final Set<int> lines;
+
+  @override
+  bool operator ==(Object other) =>
+      other is _Spoken &&
+      other.chapter == chapter &&
+      setEquals(other.lines, lines);
+
+  @override
+  int get hashCode => Object.hash(chapter, Object.hashAllUnordered(lines));
+}
+
 class _ReaderPageState extends State<ReaderPage> {
   static const _center = ValueKey('center');
 
@@ -39,8 +65,9 @@ class _ReaderPageState extends State<ReaderPage> {
   final _scroll = ScrollController(keepScrollOffset: false);
   final _viewport = GlobalKey();
   final _sections = <int, GlobalKey>{};
-  final _texts = <int, Future<List<String>>>{};
-  final _loaded = <int, List<String>>{};
+  final _paragraphKeys = <int, List<GlobalKey>>{};
+  final _texts = <int, Future<List<List<LineSegment>>>>{};
+  final _loaded = <int, List<List<LineSegment>>>{};
 
   /// The chapter the scroll view is built around; earlier chapters grow
   /// upwards from it, so loading them never shifts the page.
@@ -52,21 +79,137 @@ class _ReaderPageState extends State<ReaderPage> {
   var _headingGone = false;
   late var _scrolled = widget.start > 0;
 
+  Listening? _listening;
+  final _spoken = ValueNotifier<_Spoken?>(null);
+
+  /// Keeps the spoken line on screen until the reader scrolls away.
+  var _following = true;
+  (int, int)? _followed;
+  (int, int)? _pendingReveal;
+
+  /// The line with its menu open: a chapter index and a line index.
+  (int, int)? _selected;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final listening = AppScope.servicesOf(context)?.listening;
+    if (listening != _listening) {
+      _listening?.removeListener(_onListening);
+      _listening = listening;
+      listening?.addListener(_onListening);
+      _onListening();
+    }
+  }
+
   @override
   void dispose() {
+    _listening?.removeListener(_onListening);
+    _spoken.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
-  Future<List<String>> _text(int index) => _texts.putIfAbsent(
-    index,
-    () => widget.bookshelf
-        .paragraphs(widget.book.id, widget.chapters[index].number)
-        .then((paragraphs) => _loaded[index] = paragraphs),
-  );
+  void _onListening() {
+    final state = _listening?.value;
+    final spoken = state != null && state.bookId == widget.book.id
+        ? _Spoken(state.chapter, {...state.activeLines})
+        : null;
+    if (spoken == _spoken.value) return;
+    _spoken.value = spoken;
+    _follow();
+  }
+
+  Future<List<List<LineSegment>>> _text(int index) =>
+      _texts.putIfAbsent(index, () async {
+        final number = widget.chapters[index].number;
+        final listening = _listening;
+        List<List<LineSegment>>? segments;
+        if (listening != null) {
+          try {
+            final lines = await listening.lines(widget.book.id, number);
+            if (lines.isNotEmpty) segments = layoutLines(lines);
+          } catch (_) {
+            // Read the plain text instead; listening reports its own errors.
+          }
+        }
+        segments ??= plainParagraphs(
+          await widget.bookshelf.paragraphs(widget.book.id, number),
+        );
+        _loaded[index] = segments;
+        if (_pendingReveal?.$1 == index) _revealLater();
+        return segments;
+      });
+
+  void _follow() {
+    final spoken = _spoken.value;
+    if (spoken == null || !_following || spoken.lines.isEmpty) return;
+    final index = widget.chapters.indexWhere((c) => c.number == spoken.chapter);
+    if (index < 0) return;
+    final target = (index, spoken.lines.reduce(math.min));
+    if (target == _followed) return;
+    _followed = target;
+    _pendingReveal = target;
+    _revealLater();
+  }
+
+  void _revealLater() =>
+      WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
+
+  /// Brings the pending spoken line into view, jumping to its chapter first
+  /// when that chapter is not built.
+  void _reveal() {
+    final target = _pendingReveal;
+    if (target == null || !mounted) return;
+    final (index, line) = target;
+    if (_sections[index]?.currentContext == null) {
+      _jump(index);
+      _revealLater();
+      return;
+    }
+    final segments = _loaded[index];
+    if (segments == null) return; // Revealed once the text arrives.
+    _pendingReveal = null;
+    final paragraph = segments.indexWhere((p) => p.any((s) => s.line == line));
+    final keys = _paragraphKeys[index];
+    if (paragraph < 0 || keys == null || paragraph >= keys.length) return;
+    final target0 = keys[paragraph].currentContext;
+    final view = _viewport.currentContext?.findRenderObject() as RenderBox?;
+    final box = target0?.findRenderObject() as RenderBox?;
+    if (target0 == null || view == null || box == null || !box.attached) {
+      return;
+    }
+    // Leave it be while it sits comfortably in the upper part of the screen.
+    final top = box.localToGlobal(Offset.zero, ancestor: view).dy;
+    final height = view.size.height;
+    if (top >= height * 0.08 &&
+        top + math.min(box.size.height, 64) <= height * 0.75) {
+      return;
+    }
+    Scrollable.ensureVisible(
+      target0,
+      alignment: 0.2,
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : PsMotion.slow,
+      curve: PsMotion.standard,
+    );
+  }
+
+  void _resumeFollowing() {
+    setState(() => _following = true);
+    _followed = null;
+    _follow();
+  }
 
   bool _onScroll(ScrollNotification notification) {
     if (notification.depth != 0) return false;
+    if (notification is UserScrollNotification &&
+        notification.direction != ScrollDirection.idle &&
+        _spoken.value != null &&
+        _following) {
+      setState(() => _following = false);
+    }
     final view = _viewport.currentContext?.findRenderObject() as RenderBox?;
     if (view == null) return false;
     // The chapter that crosses a line just below the top of the screen.
@@ -121,7 +264,38 @@ class _ReaderPageState extends State<ReaderPage> {
         current: _current,
       ),
     );
-    if (index != null && mounted) _jump(index);
+    if (index != null && mounted) {
+      // Choosing a chapter is scrolling away from the spoken line.
+      if (_spoken.value != null) _following = false;
+      _jump(index);
+    }
+  }
+
+  /// A tap on a line only offers to play from it; playback moves only when
+  /// the reader chooses to.
+  Future<void> _tapLine(int index, LineSegment segment, Offset at) async {
+    final listening = _listening;
+    final line = segment.line;
+    if (listening == null || line == null || !segment.spoken) return;
+    final l = AppLocalizations.of(context);
+    setState(() => _selected = (index, line));
+    final choice = await showPsMenu(
+      context,
+      anchor: Rect.fromLTWH(at.dx, at.dy + PsSpace.s3, 0, 0),
+      items: [
+        PsMenuItem(#playFromHere, l.playFromHere, icon: PsIcons.playFrom),
+      ],
+    );
+    if (!mounted) return;
+    setState(() => _selected = null);
+    if (choice != #playFromHere) return;
+    _following = true;
+    _followed = null;
+    await listening.open(
+      widget.book.id,
+      chapter: widget.chapters[index].number,
+      line: line,
+    );
   }
 
   @override
@@ -129,6 +303,7 @@ class _ReaderPageState extends State<ReaderPage> {
     final l = AppLocalizations.of(context);
     final chapters = widget.chapters;
     return Scaffold(
+      bottomNavigationBar: ListeningDock(readingBookId: widget.book.id),
       body: Column(
         children: [
           PsNavBar(
@@ -150,39 +325,105 @@ class _ReaderPageState extends State<ReaderPage> {
             ],
           ),
           Expanded(
-            child: ValueListenableBuilder(
-              key: _viewport,
-              valueListenable: widget.readingSettings,
-              builder: (context, preferences, _) =>
-                  NotificationListener<ScrollNotification>(
-                    onNotification: _onScroll,
-                    child: CustomScrollView(
-                      key: ValueKey(_anchor),
-                      controller: _scroll,
-                      center: _center,
-                      slivers: [
-                        SliverList.builder(
-                          itemCount: _anchor,
-                          itemBuilder: (context, i) =>
-                              _section(_anchor - 1 - i, preferences),
+            child: Stack(
+              children: [
+                ValueListenableBuilder(
+                  key: _viewport,
+                  valueListenable: widget.readingSettings,
+                  builder: (context, preferences, _) =>
+                      NotificationListener<ScrollNotification>(
+                        onNotification: _onScroll,
+                        child: CustomScrollView(
+                          key: ValueKey(_anchor),
+                          controller: _scroll,
+                          center: _center,
+                          slivers: [
+                            SliverList.builder(
+                              itemCount: _anchor,
+                              itemBuilder: (context, i) =>
+                                  _section(_anchor - 1 - i, preferences),
+                            ),
+                            SliverList.builder(
+                              key: _center,
+                              itemCount: chapters.length - _anchor,
+                              itemBuilder: (context, i) =>
+                                  _section(_anchor + i, preferences),
+                            ),
+                            SliverToBoxAdapter(
+                              child: SizedBox(
+                                height:
+                                    MediaQuery.paddingOf(context).bottom +
+                                    PsSpace.s16,
+                              ),
+                            ),
+                          ],
                         ),
-                        SliverList.builder(
-                          key: _center,
-                          itemCount: chapters.length - _anchor,
-                          itemBuilder: (context, i) =>
-                              _section(_anchor + i, preferences),
-                        ),
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: MediaQuery.paddingOf(context).bottom,
-                          ),
-                        ),
-                      ],
+                      ),
+                ),
+                if (_listening != null)
+                  Positioned(
+                    left: PsSpace.s5,
+                    right: PsSpace.s5,
+                    bottom: PsSpace.s4,
+                    child: ValueListenableBuilder(
+                      valueListenable: _spoken,
+                      builder: (context, spoken, _) => _floating(spoken, l),
                     ),
                   ),
+              ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Back to the spoken line, or a way to start listening here.
+  Widget _floating(_Spoken? spoken, AppLocalizations l) {
+    final Widget? button;
+    if (spoken == null) {
+      button = PsButton(
+        key: const ValueKey('listen'),
+        label: l.listenToChapter,
+        icon: PsIcons.play,
+        small: true,
+        variant: PsButtonVariant.primary,
+        onPressed: () {
+          _following = true;
+          _followed = null;
+          _listening!.open(
+            widget.book.id,
+            chapter: widget.chapters[_current].number,
+          );
+        },
+      );
+    } else if (!_following) {
+      button = PsButton(
+        key: const ValueKey('follow'),
+        label: l.backToSpokenLine,
+        icon: PsIcons.playFrom,
+        small: true,
+        onPressed: _resumeFollowing,
+      );
+    } else {
+      button = null;
+    }
+    final p = context.ps;
+    return Align(
+      alignment: Alignment.bottomRight,
+      child: AnimatedSwitcher(
+        duration: PsMotion.base,
+        child: button == null
+            ? const SizedBox.shrink()
+            : DecoratedBox(
+                key: button.key,
+                decoration: BoxDecoration(
+                  color: p.paper,
+                  borderRadius: BorderRadius.circular(PsRadius.full),
+                  boxShadow: p.shadowFloat,
+                ),
+                child: button,
+              ),
       ),
     );
   }
@@ -209,20 +450,49 @@ class _ReaderPageState extends State<ReaderPage> {
                 onRetry: () => setState(() => _texts.remove(index)),
               );
             }
-            final paragraphs = snapshot.data;
-            if (paragraphs == null) {
+            final segments = snapshot.data;
+            if (segments == null) {
               // Tall enough that one placeholder fills the screen, so the
               // list does not ask for every chapter at once.
               return SizedBox(height: MediaQuery.sizeOf(context).height);
             }
-            return PsPassage(
-              heading: PsPassageHeading(title: chapter.title),
-              paragraphs: [
-                for (final text in paragraphs) [PsLine(text)],
-              ],
-              fontSize: preferences.fontSize,
-              lineSpacing: preferences.lineSpacing,
-              english: widget.book.language == BookLanguage.english,
+            var keys = _paragraphKeys[index];
+            if (keys == null || keys.length != segments.length) {
+              keys = _paragraphKeys[index] = [
+                for (var i = 0; i < segments.length; i++) GlobalKey(),
+              ];
+            }
+            final paragraphKeys = keys;
+            return ValueListenableBuilder(
+              valueListenable: _spoken,
+              builder: (context, spoken, _) {
+                final active = spoken?.chapter == chapter.number
+                    ? spoken!.lines
+                    : const <int>{};
+                return PsPassage(
+                  heading: PsPassageHeading(title: chapter.title),
+                  paragraphKeys: paragraphKeys,
+                  paragraphs: [
+                    for (final paragraph in segments)
+                      [
+                        for (final s in paragraph)
+                          PsLine(
+                            s.text,
+                            speaker: s.spoken ? s.speaker : null,
+                            current: s.spoken && active.contains(s.line),
+                            skip: s.nonStory,
+                            selected: s.spoken && _selected == (index, s.line),
+                          ),
+                      ],
+                  ],
+                  fontSize: preferences.fontSize,
+                  lineSpacing: preferences.lineSpacing,
+                  english: widget.book.language == BookLanguage.english,
+                  onLineTap: _listening == null
+                      ? null
+                      : (pi, li, at) => _tapLine(index, segments[pi][li], at),
+                );
+              },
             );
           },
         ),

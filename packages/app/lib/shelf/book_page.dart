@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../application/app_services.dart';
+import '../cast/cast_page.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import '../listening/app_scope.dart';
+import '../listening/player.dart';
 import 'bookshelf.dart';
 import 'contents.dart';
 import 'delete_book.dart';
@@ -33,23 +37,88 @@ class _BookPageState extends State<BookPage> {
   var _loadFailed = false;
   var _loads = 0;
 
+  AppServices? _services;
+  ListeningBookmark? _bookmark;
+  var _opening = false;
+
   @override
   void initState() {
     super.initState();
     widget.bookshelf.addListener(_load);
     _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final services = AppScope.servicesOf(context);
+    if (services == _services && _loads > 0) return;
+    _services?.listening.removeListener(_onListening);
+    _services = services;
+    services?.listening.addListener(_onListening);
     _load();
   }
 
   @override
   void dispose() {
     widget.bookshelf.removeListener(_load);
+    _services?.listening.removeListener(_onListening);
     _scroll.dispose();
     super.dispose();
   }
 
+  bool _active = false;
+
+  /// Rebuilds when this book starts or stops being the one open for
+  /// listening, and refreshes the bookmark then.
+  void _onListening() {
+    final active = _services!.listening.value.bookId == widget.book.id;
+    if (active == _active) return;
+    setState(() => _active = active);
+    _loadBookmark();
+  }
+
+  Future<void> _loadBookmark() async {
+    try {
+      final bookmark = await _services?.listening.bookmark(widget.book.id);
+      if (mounted) setState(() => _bookmark = bookmark);
+    } catch (_) {
+      // Without a bookmark the button simply starts the book.
+    }
+  }
+
+  Future<void> _listen() async {
+    final listening = _services!.listening;
+    if (listening.value.bookId == widget.book.id) {
+      await openPlayer(context, readingBookId: null);
+      return;
+    }
+    setState(() => _opening = true);
+    try {
+      await listening.open(widget.book.id);
+    } catch (_) {
+      // The player reports why it could not start.
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
+  }
+
+  void _openCast() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => CastPage(
+        services: _services!,
+        book: widget.book,
+        chapters: _contents?.chapters ?? const [],
+      ),
+    ),
+  );
+
   Future<void> _load() async {
     final load = ++_loads;
+    if (_services != null) {
+      _active = _services!.listening.value.bookId == widget.book.id;
+      _loadBookmark();
+    }
     try {
       final chapters = await widget.bookshelf.chapters(widget.book.id);
       if (!mounted || load != _loads) return;
@@ -107,6 +176,7 @@ class _BookPageState extends State<BookPage> {
     final contents = _contents;
     final latin = book.language == BookLanguage.english;
     return Scaffold(
+      bottomNavigationBar: const ListeningDock(),
       body: Column(
         children: [
           PsNavBar(
@@ -131,11 +201,11 @@ class _BookPageState extends State<BookPage> {
               slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
+                    padding: EdgeInsets.fromLTRB(
                       PsSpace.s5,
                       PsSpace.s2,
                       PsSpace.s5,
-                      PsSpace.s8,
+                      _services == null ? PsSpace.s8 : PsSpace.s6,
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
@@ -180,6 +250,8 @@ class _BookPageState extends State<BookPage> {
                     ),
                   ),
                 ),
+                if (_services != null)
+                  SliverToBoxAdapter(child: _actions(l, p)),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(
@@ -222,6 +294,38 @@ class _BookPageState extends State<BookPage> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Listening and the cast, under the title.
+  Widget _actions(AppLocalizations l, PsPalette p) {
+    final bookmark = _bookmark;
+    final listenLabel = _active
+        ? l.openPlayer
+        : bookmark == null
+        ? l.startListening
+        : l.resumeListening(bookmark.chapter);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(PsSpace.s5, 0, PsSpace.s5, PsSpace.s8),
+      child: Row(
+        spacing: PsSpace.s3,
+        children: [
+          Expanded(
+            child: PsButton(
+              label: listenLabel,
+              icon: PsIcons.play,
+              variant: PsButtonVariant.primary,
+              expand: true,
+              loading: _opening,
+              onPressed: _listen,
+            ),
+          ),
+          PsButton(
+            label: l.cast,
+            onPressed: _contents == null ? null : _openCast,
           ),
         ],
       ),

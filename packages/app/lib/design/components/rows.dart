@@ -257,8 +257,8 @@ class PsChapterRow extends StatelessWidget {
 }
 
 /// A speaker in the cast list: seal, name, voice and an audition button.
-/// Personas look exactly like characters here; their link to the real
-/// character lives only in the collapsed profile.
+/// Personas look exactly like characters here, and nothing on screen links a
+/// persona to the character behind it.
 class PsCastRow extends StatelessWidget {
   const PsCastRow({
     super.key,
@@ -268,8 +268,11 @@ class PsCastRow extends StatelessWidget {
     this.narrator = false,
     this.extra = false,
     this.auditioning = false,
+    this.tag,
     this.onAudition,
     this.onMore,
+    this.onTap,
+    this.details,
   });
 
   final String name;
@@ -282,96 +285,134 @@ class PsCastRow extends StatelessWidget {
   /// Shares a voice from the extras pool; tagged 群演.
   final bool extra;
   final bool auditioning;
+
+  /// One word of state beside the name. Never for a persona.
+  final String? tag;
   final VoidCallback? onAudition;
   final VoidCallback? onMore;
+
+  /// Toggles [details], such as the collapsed profile.
+  final VoidCallback? onTap;
+
+  /// Shown under the row, indented to the name; null keeps it collapsed.
+  final Widget? details;
 
   @override
   Widget build(BuildContext context) {
     final p = context.ps;
     final l = AppLocalizations.of(context);
     final sub = PsType.subhead.copyWith(color: p.ink2);
-    return Stack(
-      children: [
-        Container(
-          constraints: const BoxConstraints(minHeight: 68),
-          padding: const EdgeInsets.fromLTRB(
-            PsSpace.s5,
-            PsSpace.s3,
-            PsSpace.s3,
-            PsSpace.s3,
-          ),
-          child: Row(
-            spacing: PsSpace.s3,
-            children: [
-              PsSeal(name: name, tone: tone, narrator: narrator),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 2,
+    final row = Container(
+      constraints: const BoxConstraints(minHeight: 68),
+      padding: const EdgeInsets.fromLTRB(
+        PsSpace.s5,
+        PsSpace.s3,
+        PsSpace.s3,
+        PsSpace.s3,
+      ),
+      child: Row(
+        spacing: PsSpace.s3,
+        children: [
+          PsSeal(name: name, tone: tone, narrator: narrator),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 2,
+              children: [
+                Row(
+                  spacing: PsSpace.s2,
                   children: [
-                    Row(
-                      spacing: PsSpace.s2,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: PsType.style(
-                              PsFonts.sans,
-                              16,
-                              22,
-                              FontWeight.w600,
-                            ).copyWith(color: p.ink),
-                          ),
-                        ),
-                        if (extra) PsTag(l.extra),
-                      ],
-                    ),
-                    if (auditioning)
-                      Row(
-                        spacing: 6,
-                        children: [
-                          const PsEq(),
-                          Text(
-                            l.auditioning,
-                            style: sub.copyWith(color: p.vermilion),
-                          ),
-                        ],
-                      )
-                    else if (subtitle != null)
-                      Text(
-                        subtitle!,
+                    Flexible(
+                      child: Text(
+                        name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: sub,
+                        style: PsType.style(
+                          PsFonts.sans,
+                          16,
+                          22,
+                          FontWeight.w600,
+                        ).copyWith(color: p.ink),
                       ),
+                    ),
+                    if (extra) PsTag(l.extra),
+                    if (tag != null) PsTag(tag!),
                   ],
                 ),
-              ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                spacing: 2,
-                children: [
-                  PsIconButton(
-                    icon: auditioning ? PsIcons.pause : PsIcons.play,
-                    label: auditioning ? l.stopAudition : l.audition,
-                    onPressed: onAudition,
-                    variant: PsIconButtonVariant.outline,
-                    size: PsControlSize.sm,
-                    iconSize: 16,
+                if (auditioning)
+                  Row(
+                    spacing: 6,
+                    children: [
+                      const PsEq(),
+                      Text(
+                        l.auditioning,
+                        style: sub.copyWith(color: p.vermilion),
+                      ),
+                    ],
+                  )
+                else if (subtitle != null)
+                  Text(
+                    subtitle!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: sub,
                   ),
-                  if (onMore != null)
-                    PsIconButton(
-                      icon: PsIcons.more,
-                      label: l.more,
-                      onPressed: onMore,
-                      size: PsControlSize.sm,
-                      muted: true,
-                    ),
-                ],
+              ],
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            spacing: 2,
+            children: [
+              PsIconButton(
+                icon: auditioning ? PsIcons.pause : PsIcons.play,
+                label: auditioning ? l.stopAudition : l.audition,
+                onPressed: onAudition,
+                variant: PsIconButtonVariant.outline,
+                size: PsControlSize.sm,
+                iconSize: 16,
               ),
+              if (onMore != null)
+                PsIconButton(
+                  icon: PsIcons.more,
+                  label: l.more,
+                  onPressed: onMore,
+                  size: PsControlSize.sm,
+                  muted: true,
+                ),
             ],
+          ),
+        ],
+      ),
+    );
+    return Stack(
+      children: [
+        Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                row,
+                AnimatedSize(
+                  duration: PsMotion.base,
+                  curve: PsMotion.standard,
+                  alignment: Alignment.topCenter,
+                  child: details == null
+                      ? const SizedBox(width: double.infinity)
+                      : Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                            PsSpace.s5 + PsSize.seal + PsSpace.s3,
+                            0,
+                            PsSpace.s5,
+                            PsSpace.s4,
+                          ),
+                          child: details,
+                        ),
+                ),
+              ],
+            ),
           ),
         ),
         Positioned(

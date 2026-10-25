@@ -2,8 +2,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../application/contracts.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import '../listening/app_scope.dart';
+import '../listening/player.dart';
+import '../settings/settings_page.dart';
 import 'book_page.dart';
 import 'bookshelf.dart';
 import 'delete_book.dart';
@@ -35,17 +39,36 @@ class _ShelfPageState extends State<ShelfPage> {
   var _importing = false;
   ImportFailed? _failure;
 
+  Listening? _listening;
+
+  /// Where each book was last listened to, by book id.
+  var _bookmarks = <String, ListeningBookmark>{};
+
+  /// The book and chapter last heard, to refresh its bookmark on change.
+  (String?, int)? _heard;
+
   @override
   void initState() {
     super.initState();
     widget.bookshelf.addListener(_load);
     _scroll.addListener(_onScroll);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final listening = AppScope.servicesOf(context)?.listening;
+    if (listening == _listening && _loads > 0) return;
+    _listening?.removeListener(_onListening);
+    _listening = listening;
+    listening?.addListener(_onListening);
     _load();
   }
 
   @override
   void dispose() {
     widget.bookshelf.removeListener(_load);
+    _listening?.removeListener(_onListening);
     _scroll.dispose();
     super.dispose();
   }
@@ -54,9 +77,11 @@ class _ShelfPageState extends State<ShelfPage> {
     final load = ++_loads;
     try {
       final books = await widget.bookshelf.books();
+      final bookmarks = await _bookmarksOf(books);
       if (!mounted || load != _loads) return;
       setState(() {
         _books = books;
+        _bookmarks = bookmarks;
         _loadFailed = false;
       });
     } catch (_) {
@@ -64,6 +89,51 @@ class _ShelfPageState extends State<ShelfPage> {
       setState(() => _loadFailed = true);
     }
   }
+
+  Future<Map<String, ListeningBookmark>> _bookmarksOf(
+    List<ShelfBook> books,
+  ) async {
+    final listening = _listening;
+    if (listening == null) return const {};
+    final out = <String, ListeningBookmark>{};
+    for (final book in books) {
+      try {
+        final bookmark = await listening.bookmark(book.id);
+        if (bookmark != null) out[book.id] = bookmark;
+      } catch (_) {
+        // A missing bookmark only hides the progress bar.
+      }
+    }
+    return out;
+  }
+
+  /// Refreshes the progress of the book being heard whenever its chapter
+  /// changes or it stops, rather than on every tick.
+  Future<void> _onListening() async {
+    final state = _listening!.value;
+    final heard = (state.bookId, state.playing ? state.chapter : -1);
+    if (heard == _heard) return;
+    final previous = _heard?.$1;
+    _heard = heard;
+    for (final id in {?previous, ?state.bookId}) {
+      try {
+        final bookmark = await _listening!.bookmark(id);
+        if (!mounted) return;
+        setState(() {
+          _bookmarks = {..._bookmarks}..remove(id);
+          if (bookmark != null) _bookmarks[id] = bookmark;
+        });
+      } catch (_) {
+        // Keep the last known progress.
+      }
+    }
+  }
+
+  void _openSettings() => Navigator.of(context).push(
+    MaterialPageRoute<void>(
+      builder: (_) => SettingsPage(services: AppScope.servicesOf(context)!),
+    ),
+  );
 
   void _onScroll() {
     // Past the large title, the bar shows the small one.
@@ -128,6 +198,7 @@ class _ShelfPageState extends State<ShelfPage> {
     final l = AppLocalizations.of(context);
     final books = _books;
     return Scaffold(
+      bottomNavigationBar: const ListeningDock(),
       body: Column(
         children: [
           PsNavBar(
@@ -135,6 +206,12 @@ class _ShelfPageState extends State<ShelfPage> {
             showTitle: _scrolled,
             divider: _scrolled,
             actions: [
+              if (_listening != null)
+                PsIconButton(
+                  icon: PsIcons.settings,
+                  label: l.settings,
+                  onPressed: _openSettings,
+                ),
               if (_importing)
                 SizedBox.square(
                   dimension: PsSize.touch,
@@ -264,11 +341,14 @@ class _ShelfPageState extends State<ShelfPage> {
             itemWidth,
             ((width - (columns - 1) * minGap) / columns).floorToDouble(),
           );
-          // Cover, title on up to two lines, then one line of state.
+          // Cover, title on up to two lines, the listening progress, then
+          // one line of state.
           final extent =
               (cover * 1.5).roundToDouble() +
               PsSpace.s3 +
               scaler.scale(20) * 2 +
+              PsSpace.s2 +
+              2 +
               6 +
               scaler.scale(16);
           return SliverGrid.builder(
@@ -281,6 +361,7 @@ class _ShelfPageState extends State<ShelfPage> {
             itemCount: books.length,
             itemBuilder: (context, i) {
               final book = books[i];
+              final bookmark = _bookmarks[book.id];
               return Align(
                 alignment: Alignment.topLeft,
                 child: Builder(
@@ -288,7 +369,10 @@ class _ShelfPageState extends State<ShelfPage> {
                     key: ValueKey(book.id),
                     title: book.title,
                     width: cover,
-                    meta: l.chapterCount(book.chapterCount),
+                    progress: bookmark?.progress,
+                    meta: bookmark == null
+                        ? l.chapterCount(book.chapterCount)
+                        : l.listenedTo(bookmark.chapter),
                     onTap: () => _open(book),
                     onLongPress: () => _menu(item, book),
                   ),

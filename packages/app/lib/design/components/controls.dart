@@ -122,7 +122,14 @@ class PsButton extends StatelessWidget {
           )
         else if (icon != null)
           PsIcon(icon!, size: iconSize, color: fg),
-        Text(label),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            softWrap: false,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
         if (trailingIcon != null)
           PsIcon(trailingIcon!, size: iconSize, color: fg),
       ],
