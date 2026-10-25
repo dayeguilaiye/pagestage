@@ -22,7 +22,7 @@ class AppStorage {
     try {
       return AppStorage._(
         store,
-        Library(store, pickFile: pickFile ?? _pickTxt),
+        Library(store, pickFile: pickFile ?? _pickBook),
         await SavedReadingSettings.open(store),
       );
     } catch (_) {
@@ -31,13 +31,16 @@ class AppStorage {
     }
   }
 
-  static Future<String?> _pickTxt() async => (await openFile(
+  static Future<String?> _pickBook() async => (await openFile(
     acceptedTypeGroups: const [
       XTypeGroup(
-        label: 'TXT',
-        extensions: ['txt'],
-        uniformTypeIdentifiers: ['public.plain-text'],
-        mimeTypes: ['text/plain'],
+        label: 'TXT / EPUB',
+        extensions: ['txt', 'epub'],
+        uniformTypeIdentifiers: [
+          'public.plain-text',
+          'org.idpf.epub-container',
+        ],
+        mimeTypes: ['text/plain', 'application/epub+zip'],
       ),
     ],
   ))?.path;

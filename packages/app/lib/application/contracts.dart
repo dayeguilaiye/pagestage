@@ -1,5 +1,14 @@
 import 'package:flutter/foundation.dart';
 
+/// Local diagnostic export and user-initiated external feedback.
+abstract interface class Diagnostics {
+  /// Exports a sanitized local report through the system share sheet.
+  Future<void> export();
+
+  /// Opens this project's new GitHub issue page in the system browser.
+  Future<void> feedback();
+}
+
 /// Application capabilities consumed by screens and their test doubles.
 abstract interface class Listening implements ValueListenable<ListeningState> {
   Future<void> open(String bookId, {int? chapter, int? line});

@@ -179,6 +179,76 @@ void main() {
     await root.delete(recursive: true);
   });
   test(
+    'prepared chapter plays directly with no keys or generation requests',
+    () async {
+      await prepare();
+      await casts.scheduler.enqueue(book.id, TaskKind.synthesize, through: 2);
+      await casts.idle;
+      final original = (await AudioRepository(store).get(book.id, 1))!;
+      final compressed = await File(
+        '${root.path}/example.m4a',
+      ).writeAsBytes(List.filled(64, 0));
+      final json = original.toJson();
+      json['path'] = compressed.path;
+      json['utterances'] = [
+        for (final u in original.utterances)
+          {
+            ...u.toJson(),
+            'audioPath': compressed.path,
+            'rawAudioPath': compressed.path,
+          },
+      ];
+      await AudioRepository(store).save(ChapterAudio.fromJson(json));
+      final count = tts.requests.length;
+      await providers.save(providers.value, llmKey: '', minimaxKey: '');
+      await automatic();
+      await listening.open(book.id);
+      expect(engine.loads.last, compressed.path);
+      expect(engine.replacements, 0);
+      expect(listening.value.source, ListeningSource.synthesized);
+      expect(listening.value.playing, isTrue);
+      expect(generation.value.request, isNull);
+      expect(tts.requests.length, count);
+      expect(speech.requests, isEmpty);
+      await listening.nextLine();
+      expect(listening.value.line, 1);
+    },
+  );
+
+  test(
+    'library update refreshes active chapter count while retaining its bookmark',
+    () async {
+      await prepare();
+      await automatic();
+      await listening.open(book.id);
+      await casts.idle;
+      await listening.settled;
+      await listening.nextLine();
+      final library = Library(store);
+      library.editBook = (id, action) async {
+        await listening.invalidate(id);
+        await casts.scheduler.withBookPaused(id, () async {
+          await casts.scheduler.cancelGeneration(id);
+          await action();
+        });
+        await listening.refreshBook(id);
+      };
+      final source = await File('${root.path}/updated.txt').writeAsString(
+        'Chapter 1\nOne.\nTwo.\nThree.\nChapter 2\nFour.\nFive.\nChapter 3\nSix.\nChapter 4\nNew chapter.\n',
+      );
+      final outcome = await library.importFile(source.path);
+      expect(outcome.book.id, book.id);
+      expect(outcome.addedChapters, 1);
+      expect(listening.value.chapterCount, 4);
+      expect(listening.value.playing, isFalse);
+      expect(listening.value.line, 1);
+      await listening.play();
+      expect(listening.value.playing, isTrue);
+      expect(listening.value.line, 1);
+    },
+  );
+
+  test(
     'reading stays idle; cancel and outside-range system choice send no requests',
     () async {
       await listening.lines(book.id, 1);

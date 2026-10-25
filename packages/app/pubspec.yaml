@@ -8,6 +8,7 @@ environment:
   sdk: ^3.11.0
 
 dependencies:
+  args: ^2.7.0
   crypto: ^3.0.7
   flutter:
     sdk: flutter
@@ -37,6 +38,7 @@ flutter:
   generate: true
   uses-material-design: true
   assets:
+    - assets/examples/
     - assets/fonts/NotoSerifSC-OFL.txt
     - assets/fonts/Newsreader-OFL.txt
     - assets/fonts/InstrumentSans-OFL.txt
