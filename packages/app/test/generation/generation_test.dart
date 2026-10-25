@@ -204,6 +204,8 @@ void main() {
         150,
         scrollable: find.byType(Scrollable).first,
       );
+      // The whole group, from its header down, on screen.
+      await tester.ensureVisible(find.text('边听边生成'));
       await tester.pumpAndSettle();
       return fakes;
     }

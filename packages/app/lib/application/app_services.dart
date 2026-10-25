@@ -27,6 +27,7 @@ class AppServices {
     this.generation,
     this.voices,
     this.audioStorage,
+    this.diagnostics,
     Future<void> Function()? onClose,
   }) : _onClose = onClose;
   final Listening listening;
@@ -36,10 +37,14 @@ class AppServices {
   final Generation? generation;
   final Voices? voices;
   final AudioStorage? audioStorage;
+  final Diagnostics? diagnostics;
   final Future<void> Function()? _onClose;
   bool _closed = false;
 
-  static Future<AppServices> open(AppStorage storage) async {
+  static Future<AppServices> open(
+    AppStorage storage, {
+    Diagnostics? diagnostics,
+  }) async {
     final providers = await ProviderStore.open(
       storage.store,
       const PlatformSecretStore(),
@@ -70,6 +75,18 @@ class AppServices {
       listening,
       voices,
     );
+    storage.library.editBook = (bookId, action) async {
+      await listening.invalidate(bookId);
+      await voices.idle;
+      await voices.stopAudition();
+      await casts.stopAudition();
+      await casts.idleAuditions;
+      await casts.scheduler.withBookPaused(bookId, () async {
+        await casts.scheduler.cancelGeneration(bookId);
+        await action();
+      });
+      await listening.refreshBook(bookId);
+    };
     var wasPlaying = false;
     void stopSampleOnPlayback() {
       final playing = listening.value.playing;
@@ -111,7 +128,9 @@ class AppServices {
       generation: generation,
       voices: voices,
       audioStorage: audioStorage,
+      diagnostics: diagnostics,
       onClose: () async {
+        storage.library.editBook = null;
         await interruptions.cancel();
         await noisy.cancel();
         listening.removeListener(stopSampleOnPlayback);

@@ -29,10 +29,15 @@ void main() {
       [0xb5, 0xda, 0x31, 0xd5, 0xc2, 0x0a, 0xb7, 0xe7],
     ]) {
       await File(source).writeAsBytes(bytes);
-      final outcome = await library.importBook() as BookImported;
+      final outcome = await library.importBook();
+      final imported = switch (outcome) {
+        BookImported(:final book) => book,
+        BookUpdated(:final book) => book,
+        _ => throw StateError('Expected a successful import'),
+      };
       final cli = await Library(store).importTxt(source);
-      expect(outcome.book.id, cli.id);
-      expect(outcome.book.language, BookLanguage.chinese);
+      expect(imported.id, cli.id);
+      expect(imported.language, BookLanguage.chinese);
       expect(await library.paragraphs(cli.id, 1), ['风']);
     }
   });
@@ -44,7 +49,7 @@ void main() {
       (await library.importBook() as ImportFailed).reason,
       ImportFailure.unreadable,
     );
-    source = '${dir.path}/no.epub';
+    source = '${dir.path}/no.pdf';
     expect(
       (await library.importBook() as ImportFailed).reason,
       ImportFailure.unsupportedFormat,

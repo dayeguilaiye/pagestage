@@ -36,3 +36,4 @@ export 'src/models/loudness.dart';
 
 export 'src/providers/request_recovery.dart';
 export 'src/book_storage.dart';
+export 'src/example_library.dart';

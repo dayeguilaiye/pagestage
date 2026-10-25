@@ -92,7 +92,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shelfEmptyTitle => '书架还是空的';
 
   @override
-  String get shelfEmptyBody => '导入手机里的 TXT 小说，就可以在这里读和听。';
+  String get shelfEmptyBody => '导入手机里的 TXT 或无 DRM 的 EPUB 小说，就可以在这里读和听。';
 
   @override
   String get shelfEmptyAction => '导入一本书';
@@ -112,11 +112,30 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String importUnsupportedTitle(String file) {
-    return '「$file」不是 TXT 文件';
+    return '不支持「$file」的格式';
   }
 
   @override
-  String get importUnsupportedBody => '目前只能导入 TXT 文本文件，书架没有变化。';
+  String get importUnsupportedBody => '目前可以导入 TXT 和没有 DRM 的 EPUB 文件，书架没有变化。';
+
+  @override
+  String importDrmTitle(String file) {
+    return '「$file」有 DRM 版权保护';
+  }
+
+  @override
+  String get importDrmBody =>
+      '受 DRM 保护的 EPUB 无法读取正文。请导入没有 DRM 的 EPUB 或 TXT 文件，书架没有变化。';
+
+  @override
+  String bookUpdated(String title, int added, int changed) {
+    return '《$title》已更新：新增 $added 章，$changed 章内容有变化';
+  }
+
+  @override
+  String bookUnchanged(String title) {
+    return '《$title》已经是最新的，没有变化';
+  }
 
   @override
   String importEmptyTitle(String file) {
@@ -132,7 +151,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get importUnreadableBody => '文件可能损坏了，或者不是 UTF-8、GBK 编码。书架没有变化。';
+  String get importUnreadableBody => '文件可能损坏了；TXT 文件需要是 UTF-8 或 GBK 编码。书架没有变化。';
 
   @override
   String get importAnother => '换一个文件';
@@ -880,4 +899,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get listenAgain => '重新试听';
+
+  @override
+  String get diagnosticsSection => '诊断与反馈';
+
+  @override
+  String get exportDiagnostics => '导出诊断报告';
+
+  @override
+  String get exportDiagnosticsNote => '生成报告，通过系统分享发给你选择的人或应用';
+
+  @override
+  String get exportingDiagnostics => '正在准备报告…';
+
+  @override
+  String get reportProblem => '反馈问题';
+
+  @override
+  String get reportProblemNote => '在浏览器里打开项目的 GitHub，新建一个问题';
+
+  @override
+  String get openingBrowser => '正在打开浏览器…';
+
+  @override
+  String get exportDiagnosticsFailed => '没能导出诊断报告';
+
+  @override
+  String get exportDiagnosticsFailedBody => '报告没有生成或没有打开分享，请再试一次。';
+
+  @override
+  String get reportProblemFailed => '没能打开反馈页面';
+
+  @override
+  String get reportProblemFailedBody => '浏览器没有打开，请检查网络或默认浏览器后再试。';
+
+  @override
+  String get diagnosticsPrivacyTitle => '报告里有什么';
+
+  @override
+  String get diagnosticsIncludes => '包含：应用版本、系统与设备信息、近期的错误和崩溃记录。';
+
+  @override
+  String get diagnosticsExcludes => '不包含：任何密钥，以及书的正文。';
+
+  @override
+  String get diagnosticsNoUpload => '不会自动上传：只有你在分享里选择发送时，报告才会离开手机。';
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../application/app_services.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import 'diagnostics_section.dart';
 import 'storage_page.dart';
 
 /// The reader's own service accounts and the cast-wide voice setting. Keys
@@ -400,6 +401,16 @@ class _SettingsPageState extends State<SettingsPage> {
                         ),
                       ],
                     ),
+                  ),
+                if (widget.services.diagnostics case final diagnostics?)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      PsSpace.s5,
+                      PsSpace.s8,
+                      PsSpace.s5,
+                      0,
+                    ),
+                    child: DiagnosticsSection(diagnostics: diagnostics),
                   ),
               ],
             ),

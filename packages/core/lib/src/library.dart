@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -6,6 +7,7 @@ import 'encoding/gb18030.dart';
 import 'package:path/path.dart' as p;
 
 import 'local_store.dart';
+import 'epub.dart';
 import 'models/book.dart';
 import 'models/cast.dart';
 import 'bookshelf.dart';
@@ -13,13 +15,18 @@ import 'audio_repository.dart';
 import 'script_repository.dart';
 import 'synthesizer.dart';
 
-/// Imports TXT novels and provides the saved books and chapter bodies.
+/// Imports local TXT/EPUB novels and merges subsequent editions atomically.
 class Library implements Bookshelf {
   Library(this.store, {this.pickFile});
   final LocalStore store;
 
   /// App supplies the system picker; CLI supplies a path to [importTxt].
   final Future<String?> Function()? pickFile;
+
+  /// App coordinates playback and scheduler checkpoints around an update.
+  Future<void> Function(String bookId, Future<void> Function() action)?
+  editBook;
+  Future<void> _imports = Future.value();
 
   @override
   void addListener(void Function() listener) => store.addListener(listener);
@@ -53,10 +60,22 @@ class Library implements Bookshelf {
     try {
       path = await pickFile?.call();
       if (path == null) return const ImportCancelled();
-      if (p.extension(path).toLowerCase() != '.txt') {
+      if (!['.txt', '.epub'].contains(p.extension(path).toLowerCase())) {
         return ImportFailed(p.basename(path), ImportFailure.unsupportedFormat);
       }
-      return BookImported(_shelfBook(await importTxt(path)));
+      final result = await importFile(path);
+      return result.updated
+          ? BookUpdated(
+              _shelfBook(result.book),
+              addedChapters: result.addedChapters,
+              changedChapters: result.changedChapters,
+            )
+          : BookImported(_shelfBook(result.book));
+    } on ProtectedEpub {
+      return ImportFailed(
+        path == null ? '' : p.basename(path),
+        ImportFailure.drmProtected,
+      );
     } on FormatException catch (error) {
       return ImportFailed(
         path == null ? '' : p.basename(path),
@@ -163,30 +182,146 @@ class Library implements Bookshelf {
     await store.deleteBook(bookId);
   }
 
-  Future<Book> importTxt(String path, {String? title}) async {
+  Future<Book> importTxt(String path, {String? title}) async =>
+      (await importFile(path, title: title)).book;
+
+  Future<LibraryImport> importFile(String path, {String? title}) {
+    final result = _imports.then((_) => _importFile(path, title: title));
+    _imports = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    return result;
+  }
+
+  Future<LibraryImport> _importFile(String path, {String? title}) async {
     final file = File(path);
     final bytes = await file.readAsBytes();
-    String text;
-    try {
-      text = utf8.decode(bytes);
-    } on FormatException {
-      text = decodeGb18030(bytes);
+    late List<Chapter> chapters;
+    late String identity;
+    if (p.extension(path).toLowerCase() == '.epub') {
+      final epub = EpubReader(bytes).read();
+      chapters = epub.chapters;
+      title ??= epub.title;
+      identity = jsonEncode(chapters.map((c) => c.text).toList());
+    } else if (p.extension(path).toLowerCase() == '.txt') {
+      String text;
+      try {
+        text = utf8.decode(bytes);
+      } on FormatException {
+        text = decodeGb18030(bytes);
+      }
+      if (text.startsWith('\ufeff')) text = text.substring(1);
+      if (text.trim().isEmpty) {
+        throw const FormatException('The book is empty.');
+      }
+      chapters = _chapters(text);
+      identity = text;
+    } else {
+      throw const FormatException('Supported formats are TXT and EPUB.');
     }
-    if (text.startsWith('\ufeff')) text = text.substring(1);
-    if (text.trim().isEmpty) throw const FormatException('The book is empty.');
+    final id = sha256
+        .convert(utf8.encode(identity))
+        .toString()
+        .substring(0, 24);
+    final books = await listBooks();
+    Book? previous = books.where((b) => b.id == id).firstOrNull;
+    if (previous == null && chapters.length >= 3) {
+      final matches = books
+          .where(
+            (b) =>
+                b.chapters.length >= 3 &&
+                List.generate(
+                  3,
+                  (i) => _body(b.chapters[i].text) == _body(chapters[i].text),
+                ).every((same) => same),
+          )
+          .toList();
+      if (matches.length == 1) previous = matches.single;
+    }
+    final changed = <int>[];
+    final merged = <Chapter>[];
+    for (final chapter in chapters) {
+      final old = previous != null && chapter.number <= previous.chapters.length
+          ? previous.chapter(chapter.number)
+          : null;
+      if (old != null && _body(old.text) == _body(chapter.text)) {
+        merged.add(
+          Chapter(
+            number: old.number,
+            title: chapter.title,
+            text: old.text,
+            volume: chapter.volume,
+          ),
+        );
+      } else {
+        merged.add(chapter);
+        if (old != null) changed.add(chapter.number);
+      }
+    }
+    // A shorter copy never discards the reader's already-imported tail.
+    if (previous != null) {
+      merged.addAll(previous.chapters.skip(chapters.length));
+    }
     final book = Book(
-      id: sha256.convert(utf8.encode(text)).toString().substring(0, 24),
-      title: title ?? p.basenameWithoutExtension(path),
-      language: RegExp(r'[\u3400-\u9fff]').hasMatch(text) ? 'zh' : 'en',
+      id: previous?.id ?? id,
+      title: title?.isNotEmpty == true
+          ? title!
+          : previous?.title ?? p.basenameWithoutExtension(path),
+      language:
+          RegExp(r'[\u3400-\u9fff]').hasMatch(merged.map((c) => c.text).join())
+          ? 'zh'
+          : 'en',
       sourcePath: file.absolute.path,
-      chapters: _chapters(text),
+      chapters: merged,
     );
-    await store.put('books', book.id, {
-      ...book.toJson(),
-      'importedAt': DateTime.now().microsecondsSinceEpoch,
+    final added = previous == null
+        ? 0
+        : (chapters.length - previous.chapters.length).clamp(
+            0,
+            chapters.length,
+          );
+    Future<void> save() => store.transaction(() async {
+      for (final number in changed) {
+        await store.delete('scripts', '${book.id}:$number');
+        for (final mode in PerformanceMode.values) {
+          await store.delete('audio', '${book.id}:$number:${mode.name}');
+        }
+        for (final row in await store.list('tasks')) {
+          if (row['bookId'] == book.id &&
+              row['chapter'] == number &&
+              row['kind'] != 'profile') {
+            await store.delete('tasks', row['id'] as String);
+          }
+        }
+      }
+      if (changed.isNotEmpty) {
+        final bookmark = await store.get('listening', book.id);
+        if (bookmark != null && changed.contains(bookmark['chapter'])) {
+          await store.put('listening', book.id, {
+            ...bookmark,
+            'line': 0,
+            'sourceOffset': 0,
+          });
+        }
+      }
+      await store.put('books', book.id, {
+        ...book.toJson(),
+        'importedAt': DateTime.now().microsecondsSinceEpoch,
+      });
     });
-    return book;
+    if (previous != null && editBook != null) {
+      await editBook!(book.id, save);
+    } else {
+      await save();
+    }
+    return LibraryImport(
+      book,
+      updated: previous != null,
+      addedChapters: added,
+      changedChapters: List.unmodifiable(changed),
+    );
   }
+
+  String _body(String text) =>
+      text.replaceAll('\r\n', '\n').replaceAll('\r', '\n').trim();
 
   Future<Book> getBook(String id) async {
     final data = await store.get('books', id);
@@ -246,4 +381,17 @@ class Library implements Bookshelf {
     }
     return chapters;
   }
+}
+
+class LibraryImport {
+  const LibraryImport(
+    this.book, {
+    required this.updated,
+    required this.addedChapters,
+    required this.changedChapters,
+  });
+  final Book book;
+  final bool updated;
+  final int addedChapters;
+  final List<int> changedChapters;
 }

@@ -72,6 +72,17 @@ final class BookImported extends ImportOutcome {
   final ShelfBook book;
 }
 
+final class BookUpdated extends ImportOutcome {
+  const BookUpdated(
+    this.book, {
+    required this.addedChapters,
+    required this.changedChapters,
+  });
+  final ShelfBook book;
+  final int addedChapters;
+  final List<int> changedChapters;
+}
+
 /// The reader closed the picker without choosing a file.
 final class ImportCancelled extends ImportOutcome {
   const ImportCancelled();
@@ -85,6 +96,7 @@ final class ImportFailed extends ImportOutcome {
 
 enum ImportFailure {
   unsupportedFormat,
+  drmProtected,
 
   /// Decoded, but there is no text in it.
   empty,

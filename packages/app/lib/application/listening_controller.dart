@@ -109,6 +109,15 @@ class ListeningController extends ValueNotifier<ListeningState>
     _publish();
   }
 
+  Future<void> refreshBook(String bookId) => _command(() async {
+    if (_book?.id != bookId) return;
+    _book = await Library(store).getBook(bookId);
+    _replaceLines(await lines(bookId, _chapter));
+    final saved = await bookmark(bookId);
+    _line = (saved?.line ?? 0).clamp(0, (_lines.length - 1).clamp(0, 10000000));
+    _publish();
+  });
+
   Future<void> _command(Future<void> Function() action) {
     final next = _commands.then((_) async {
       if (_closed) return;
@@ -305,7 +314,15 @@ class ListeningController extends ValueNotifier<ListeningState>
       final mapped = _lines.indexWhere((l) => l.end > _requestedOffset);
       line = mapped < 0 ? 0 : mapped;
     }
-    if (_source == ListeningSource.synthesized && generation != null) {
+    final completed = hasAudio
+        ? await AudioRepository(store).get(book.id, chapter, mode: _mode)
+        : null;
+    final preparedPath = completed?.path;
+    final hasPreparedFile =
+        preparedPath != null && await File(preparedPath).exists();
+    if (_source == ListeningSource.synthesized &&
+        generation != null &&
+        !hasPreparedFile) {
       _streaming = true;
       _waiting = true;
       _audioComplete = false;
@@ -328,8 +345,9 @@ class ListeningController extends ValueNotifier<ListeningState>
       ).get(book.id, chapter, mode: _mode))!;
       _queue = PlaybackQueue(audio.utterances);
       if (_queue!.entries.isEmpty) throw StateError('Empty audio.');
-      final path =
-          '${AudioRepository(store).bookDirectory(book.id).path}/playback-$chapter-${audio.inputsHash}.wav';
+      final path = hasPreparedFile
+          ? preparedPath
+          : '${AudioRepository(store).bookDirectory(book.id).path}/playback-$chapter-${audio.inputsHash}.wav';
       final file = File(path);
       // Input hash includes voices and pronunciation; completed files can be
       // reused when opening the chapter or choosing another starting line.

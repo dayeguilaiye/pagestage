@@ -263,7 +263,7 @@ abstract class AppLocalizations {
   /// No description provided for @shelfEmptyBody.
   ///
   /// In zh, this message translates to:
-  /// **'导入手机里的 TXT 小说，就可以在这里读和听。'**
+  /// **'导入手机里的 TXT 或无 DRM 的 EPUB 小说，就可以在这里读和听。'**
   String get shelfEmptyBody;
 
   /// No description provided for @shelfEmptyAction.
@@ -293,14 +293,38 @@ abstract class AppLocalizations {
   /// No description provided for @importUnsupportedTitle.
   ///
   /// In zh, this message translates to:
-  /// **'「{file}」不是 TXT 文件'**
+  /// **'不支持「{file}」的格式'**
   String importUnsupportedTitle(String file);
 
   /// No description provided for @importUnsupportedBody.
   ///
   /// In zh, this message translates to:
-  /// **'目前只能导入 TXT 文本文件，书架没有变化。'**
+  /// **'目前可以导入 TXT 和没有 DRM 的 EPUB 文件，书架没有变化。'**
   String get importUnsupportedBody;
+
+  /// No description provided for @importDrmTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{file}」有 DRM 版权保护'**
+  String importDrmTitle(String file);
+
+  /// No description provided for @importDrmBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'受 DRM 保护的 EPUB 无法读取正文。请导入没有 DRM 的 EPUB 或 TXT 文件，书架没有变化。'**
+  String get importDrmBody;
+
+  /// No description provided for @bookUpdated.
+  ///
+  /// In zh, this message translates to:
+  /// **'《{title}》已更新：新增 {added} 章，{changed} 章内容有变化'**
+  String bookUpdated(String title, int added, int changed);
+
+  /// No description provided for @bookUnchanged.
+  ///
+  /// In zh, this message translates to:
+  /// **'《{title}》已经是最新的，没有变化'**
+  String bookUnchanged(String title);
 
   /// No description provided for @importEmptyTitle.
   ///
@@ -323,7 +347,7 @@ abstract class AppLocalizations {
   /// No description provided for @importUnreadableBody.
   ///
   /// In zh, this message translates to:
-  /// **'文件可能损坏了，或者不是 UTF-8、GBK 编码。书架没有变化。'**
+  /// **'文件可能损坏了；TXT 文件需要是 UTF-8 或 GBK 编码。书架没有变化。'**
   String get importUnreadableBody;
 
   /// No description provided for @importAnother.
@@ -1705,6 +1729,96 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'重新试听'**
   String get listenAgain;
+
+  /// No description provided for @diagnosticsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'诊断与反馈'**
+  String get diagnosticsSection;
+
+  /// No description provided for @exportDiagnostics.
+  ///
+  /// In zh, this message translates to:
+  /// **'导出诊断报告'**
+  String get exportDiagnostics;
+
+  /// No description provided for @exportDiagnosticsNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成报告，通过系统分享发给你选择的人或应用'**
+  String get exportDiagnosticsNote;
+
+  /// No description provided for @exportingDiagnostics.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在准备报告…'**
+  String get exportingDiagnostics;
+
+  /// No description provided for @reportProblem.
+  ///
+  /// In zh, this message translates to:
+  /// **'反馈问题'**
+  String get reportProblem;
+
+  /// No description provided for @reportProblemNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'在浏览器里打开项目的 GitHub，新建一个问题'**
+  String get reportProblemNote;
+
+  /// No description provided for @openingBrowser.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在打开浏览器…'**
+  String get openingBrowser;
+
+  /// No description provided for @exportDiagnosticsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能导出诊断报告'**
+  String get exportDiagnosticsFailed;
+
+  /// No description provided for @exportDiagnosticsFailedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'报告没有生成或没有打开分享，请再试一次。'**
+  String get exportDiagnosticsFailedBody;
+
+  /// No description provided for @reportProblemFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能打开反馈页面'**
+  String get reportProblemFailed;
+
+  /// No description provided for @reportProblemFailedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'浏览器没有打开，请检查网络或默认浏览器后再试。'**
+  String get reportProblemFailedBody;
+
+  /// No description provided for @diagnosticsPrivacyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'报告里有什么'**
+  String get diagnosticsPrivacyTitle;
+
+  /// No description provided for @diagnosticsIncludes.
+  ///
+  /// In zh, this message translates to:
+  /// **'包含：应用版本、系统与设备信息、近期的错误和崩溃记录。'**
+  String get diagnosticsIncludes;
+
+  /// No description provided for @diagnosticsExcludes.
+  ///
+  /// In zh, this message translates to:
+  /// **'不包含：任何密钥，以及书的正文。'**
+  String get diagnosticsExcludes;
+
+  /// No description provided for @diagnosticsNoUpload.
+  ///
+  /// In zh, this message translates to:
+  /// **'不会自动上传：只有你在分享里选择发送时，报告才会离开手机。'**
+  String get diagnosticsNoUpload;
 }
 
 class _AppLocalizationsDelegate
