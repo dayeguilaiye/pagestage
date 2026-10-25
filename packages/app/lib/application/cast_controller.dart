@@ -135,7 +135,7 @@ class CastController extends ChangeNotifier implements Casts {
         if (await store.get('books', bookId) == null) return;
         await store.put('castingFailure', bookId, {
           'bookId': bookId,
-          'reason': 'missingKey',
+          'reason': 'interrupted',
         });
       }
       _notify();
@@ -194,8 +194,14 @@ class CastController extends ChangeNotifier implements Casts {
       targetChapter: target,
       chapterCount: book.chapters.length,
       status: status,
-      provider: paused?.provider ?? (failure == null ? null : 'llm'),
-      reason: failure?['reason'] as String? ?? _reason(paused?.reason),
+      provider: paused?.provider == 'local'
+          ? 'system'
+          : paused?.provider ?? (failure == null ? null : 'system'),
+      reason:
+          failure?['reason'] as String? ??
+          (paused?.provider == 'local'
+              ? 'interrupted'
+              : _reason(paused?.reason)),
       members: [
         for (final speaker in cast.cast.speakers)
           CastMember(

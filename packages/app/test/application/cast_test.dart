@@ -198,4 +198,17 @@ void main() {
       consents.removeListener(capture);
     },
   );
+  test('local task failures expose only localized categories', () async {
+    llm.before = (_) => throw StateError('private-response-content');
+    await casts.profile(book.id, through: 1);
+    await casts.idle;
+    final state = await casts.load(book.id);
+    expect(state.status, ProfilingStatus.paused);
+    expect(state.provider, 'system');
+    expect(state.reason, 'interrupted');
+    expect(
+      (await store.list('tasks')).toString(),
+      isNot(contains('private-response-content')),
+    );
+  });
 }
