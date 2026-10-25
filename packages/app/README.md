@@ -1,6 +1,6 @@
 # pagestage App
 
-Android 和 iOS 的 Flutter App。书架、章节目录和正文直接使用 core 的 `Library`，通过系统文件选择器导入 TXT，数据库保存在 App 私有目录。字号、行距和夜间模式在重启后恢复。
+Android 和 iOS 的 Flutter App。书架、章节目录和正文直接使用 core 的 `Library`，通过系统文件选择器导入 TXT，数据库保存在 App 私有目录。字号、行距和夜间模式在重启后恢复。App 支持已合成音频与系统朗读的统一播放、服务商安全配置、建档进度、演员表与试听，详见[收听与演员表](../../docs/app-listening-casting.md)。
 
 ```sh
 cd packages/app

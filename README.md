@@ -66,4 +66,4 @@ dart test packages/core/test
 
 core 的公共入口是 `package:pagestage_core/pagestage_core.dart`。CLI 命令使用共享的 `CliContext`，业务功能通过书库等模块的公共接口调用。单元测试在 LLM、TTS 服务商接缝使用假适配器，书库测试通过公共接口验证导入结果。
 
-Flutter App 在 `packages/app`，包含书架、章节目录、正文、持久化阅读设置和播放原型，见 [App 说明](packages/app/README.md)。core 的持久化任务接口见 [调度](docs/scheduler.md)，播放引擎的验证入口见 [播放原型](docs/playback-prototype.md)。
+Flutter App 在 `packages/app`，包含书架、章节目录、正文、持久化阅读设置、正式播放器、系统朗读、服务商设置、建档和演员表，见 [App 说明](packages/app/README.md)。core 的持久化任务接口见 [调度](docs/scheduler.md)，播放引擎的验证入口见 [播放原型](docs/playback-prototype.md)。
