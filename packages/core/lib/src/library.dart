@@ -11,6 +11,7 @@ import 'models/cast.dart';
 import 'bookshelf.dart';
 import 'audio_repository.dart';
 import 'script_repository.dart';
+import 'synthesizer.dart';
 
 /// Imports TXT novels and provides the saved books and chapter bodies.
 class Library implements Bookshelf {
@@ -76,13 +77,23 @@ class Library implements Bookshelf {
     final book = await getBook(bookId);
     final cast = await CastRepository(store).get(bookId);
     final audio = AudioRepository(store);
+    final modeName = (await store.get('performance', bookId))?['mode'];
+    final mode = modeName == 'drama'
+        ? PerformanceMode.drama
+        : PerformanceMode.audiobook;
     return [
       for (final chapter in book.chapters)
         ChapterEntry(
           number: chapter.number,
           title: chapter.title,
           volume: chapter.volume,
-          state: await _state(bookId, chapter, cast.profiledThrough, audio),
+          state: await _state(
+            bookId,
+            chapter,
+            cast.profiledThrough,
+            audio,
+            mode,
+          ),
         ),
     ];
   }
@@ -92,10 +103,11 @@ class Library implements Bookshelf {
     Chapter chapter,
     int profiledThrough,
     AudioRepository audio,
+    PerformanceMode mode,
   ) async {
     final script = await ScriptRepository(store).get(bookId, chapter.number);
     if (script != null && script.sourceTextHash == chapter.textHash) {
-      return await audio.isComplete(script)
+      return await audio.isComplete(script, mode: mode)
           ? ChapterState.synthesized
           : ChapterState.directed;
     }

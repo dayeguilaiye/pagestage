@@ -124,6 +124,8 @@ class Scheduler {
     this.directorLlm,
     this.ttsAdapters,
     this.runtime,
+    this.beforeTask,
+    this.recoverVoice,
   ) : _audio = AudioRepository(store);
 
   static Future<Scheduler> open({
@@ -132,6 +134,8 @@ class Scheduler {
     required LlmAdapter directorLlm,
     required Map<String, TtsAdapter> ttsAdapters,
     RequestRuntime? runtime,
+    Future<void> Function(ScheduledTask)? beforeTask,
+    Future<bool> Function(ScheduledTask, ProviderException)? recoverVoice,
   }) async {
     final scheduler = Scheduler._(
       store,
@@ -139,6 +143,8 @@ class Scheduler {
       directorLlm,
       Map.unmodifiable(ttsAdapters),
       runtime ?? RequestRuntime(),
+      beforeTask,
+      recoverVoice,
     );
     for (final json in await store.list('tasks')) {
       var task = ScheduledTask.fromJson(json);
@@ -158,6 +164,12 @@ class Scheduler {
   final LlmAdapter directorLlm;
   final Map<String, TtsAdapter> ttsAdapters;
   final RequestRuntime runtime;
+  final Future<void> Function(ScheduledTask)? beforeTask;
+  final Future<bool> Function(ScheduledTask, ProviderException)? recoverVoice;
+  final _suspended = <String>{};
+  final _voiceRecoveries = <String, int>{};
+  ScheduledTask? _active;
+  Completer<void>? _checkpoint;
   final AudioRepository _audio;
   final _tasks = <String, ScheduledTask>{};
   final _events = StreamController<SchedulerEvent>.broadcast(sync: true);
@@ -250,14 +262,44 @@ class Scheduler {
     _kick();
   });
 
-  Future<void> resume({String? provider}) => _command(() async {
-    for (final task in tasks) {
-      if (task.status == TaskStatus.paused &&
-          (provider == null || task.provider == provider)) {
-        await _save(task.copyWith(status: TaskStatus.queued));
-      }
+  Future<void> resume({String? provider, String? bookId, TaskKind? kind}) =>
+      _command(() async {
+        for (final task in tasks) {
+          if (task.status == TaskStatus.paused &&
+              (provider == null || task.provider == provider) &&
+              (bookId == null || task.bookId == bookId) &&
+              (kind == null || task.kind == kind)) {
+            _voiceRecoveries.remove(task.id);
+            await _save(task.copyWith(status: TaskStatus.queued));
+          }
+        }
+        _kick();
+      });
+
+  /// Stops this book at its next durable checkpoint before mutating its files.
+  Future<T> withBookPaused<T>(
+    String bookId,
+    Future<T> Function() action,
+  ) async {
+    if (!_suspended.add(bookId)) throw StateError('Book is busy.');
+    try {
+      if (_active?.bookId == bookId) await _checkpoint?.future;
+      return await action();
+    } finally {
+      _suspended.remove(bookId);
+      _kick();
     }
-    _kick();
+  }
+
+  /// Explicit cleanup cancels queued generation while retaining profile tasks.
+  Future<void> cancelGeneration(String bookId) => _command(() async {
+    for (final task in tasks.where(
+      (t) => t.bookId == bookId && t.kind != TaskKind.profile,
+    )) {
+      _tasks.remove(task.id);
+      _lookaheadIds.remove(task.id);
+      await store.delete('tasks', task.id);
+    }
   });
 
   Future<void> get idle async {
@@ -359,6 +401,7 @@ class Scheduler {
               .where(
                 (t) =>
                     t.status == TaskStatus.queued &&
+                    !_suspended.contains(t.bookId) &&
                     (t.origin == TaskOrigin.user ||
                         (t.bookId == _listeningBook &&
                             _lookaheadIds.contains(t.id))),
@@ -381,9 +424,15 @@ class Scheduler {
       }
       if (next == null || _closing) return;
       var task = next.copyWith(status: TaskStatus.running);
-      if (!await _save(task)) continue;
+      if (_suspended.contains(task.bookId)) continue;
+      _active = task;
+      _checkpoint = Completer<void>();
       try {
+        if (!await _save(task)) continue;
+        if (_suspended.contains(task.bookId)) throw const _Interrupted();
+        await beforeTask?.call(task);
         await _execute(task);
+        _voiceRecoveries.remove(task.id);
         task = _tasks[task.id]!.copyWith(status: TaskStatus.completed);
         await _save(task);
       } on _BookDeleted {
@@ -391,6 +440,21 @@ class Scheduler {
       } on _Interrupted {
         await _save(_tasks[task.id]!.copyWith(status: TaskStatus.queued));
       } on ProviderException catch (error) {
+        var recovered = false;
+        if (error.kind == ProviderErrorKind.invalidVoice &&
+            recoverVoice != null &&
+            (_voiceRecoveries[task.id] ?? 0) < 32) {
+          _voiceRecoveries[task.id] = (_voiceRecoveries[task.id] ?? 0) + 1;
+          try {
+            recovered = await recoverVoice!(task, error);
+          } catch (_) {
+            /* Pause with the original safe error. */
+          }
+        }
+        if (recovered) {
+          await _save(_tasks[task.id]!.copyWith(status: TaskStatus.queued));
+          continue;
+        }
         await _save(
           _tasks[task.id]!.copyWith(
             status: TaskStatus.paused,
@@ -407,6 +471,10 @@ class Scheduler {
             reason: ProviderErrorKind.invalidConfiguration,
           ),
         );
+      } finally {
+        _active = null;
+        _checkpoint?.complete();
+        _checkpoint = null;
       }
     }
   }
@@ -463,7 +531,9 @@ class Scheduler {
         await _audio.isComplete(script, mode: task.mode)) {
       return;
     }
-    if (_closing) throw const _Interrupted();
+    if (_closing || _suspended.contains(task.bookId)) {
+      throw const _Interrupted();
+    }
     final speakerIds = script.lines
         .where(
           (line) =>
@@ -511,6 +581,7 @@ class Scheduler {
             );
             if (!saved) throw const _BookDeleted();
             if (_closing ||
+                _suspended.contains(task.bookId) ||
                 (task.origin == TaskOrigin.lookahead &&
                     !_lookaheadIds.contains(task.id))) {
               throw const _Interrupted();

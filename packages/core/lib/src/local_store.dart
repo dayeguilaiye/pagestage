@@ -66,6 +66,20 @@ class LocalStore {
     return rows.map((row) => _decode(row.read<String>('value'))).toList();
   }
 
+  /// Exact UTF-8 payload bytes belonging to one book, excluding shared SQLite overhead.
+  Future<int> bookDataBytes(String bookId) async {
+    final row = await _database
+        .customSelect(
+          'SELECT COALESCE(SUM(length(CAST(value AS BLOB))), 0) AS bytes FROM documents WHERE '
+          "json_extract(value, '\$.bookId') = ? OR "
+          "json_extract(value, '\$.voice.bookId') = ? OR "
+          "(collection IN ('books', 'casting') AND key = ?)",
+          variables: [Variable(bookId), Variable(bookId), Variable(bookId)],
+        )
+        .getSingle();
+    return row.read<int>('bytes');
+  }
+
   Future<void> delete(String collection, String key) async {
     await _database.customStatement(
       'DELETE FROM documents WHERE collection = ? AND key = ?',
