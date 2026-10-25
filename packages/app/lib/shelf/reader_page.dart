@@ -69,6 +69,16 @@ class _ReaderPageState extends State<ReaderPage> {
   final _texts = <int, Future<List<List<LineSegment>>>>{};
   final _loaded = <int, List<List<LineSegment>>>{};
 
+  /// Bumped per chapter index on each refresh; a fetch from an older
+  /// generation is discarded when it finishes.
+  final _generations = <int, int>{};
+
+  /// Chapters showing old lines while new ones load.
+  final _stale = <int>{};
+
+  /// The chapter, source and line revision the lines were last seen for.
+  (int, ListeningSource, int)? _linesOf;
+
   /// The chapter the scroll view is built around; earlier chapters grow
   /// upwards from it, so loading them never shifts the page.
   late var _anchor = widget.start;
@@ -112,34 +122,66 @@ class _ReaderPageState extends State<ReaderPage> {
 
   void _onListening() {
     final state = _listening?.value;
-    final spoken = state != null && state.bookId == widget.book.id
-        ? _Spoken(state.chapter, {...state.activeLines})
+    final ours = state != null && state.bookId == widget.book.id;
+    // Lines change when the chapter moves from system sentences to a
+    // directed script, or the script itself is revised.
+    final lines = ours
+        ? (state.chapter, state.source, state.lineRevision)
         : null;
+    if (lines != _linesOf) {
+      final previous = _linesOf?.$1;
+      _linesOf = lines;
+      for (final number in {?previous, ?lines?.$1}) {
+        _refresh(number);
+      }
+    }
+    final spoken = ours ? _Spoken(state.chapter, {...state.activeLines}) : null;
     if (spoken == _spoken.value) return;
     _spoken.value = spoken;
     _follow();
   }
 
+  /// Fetches chapter number [number] again. Its old text stays on screen
+  /// until the new lines arrive, without highlights or line taps, which
+  /// would point into the old segmentation.
+  void _refresh(int number) {
+    final index = widget.chapters.indexWhere((c) => c.number == number);
+    if (index < 0 || _texts.remove(index) == null) return;
+    _generations[index] = (_generations[index] ?? 0) + 1;
+    if (_loaded.containsKey(index)) _stale.add(index);
+    if (_selected?.$1 == index) _selected = null;
+    // The spoken line is looked up again in the new paragraphs.
+    if (_followed?.$1 == index) _followed = null;
+    if (mounted) setState(() {});
+    _follow();
+  }
+
   Future<List<List<LineSegment>>> _text(int index) =>
-      _texts.putIfAbsent(index, () async {
-        final number = widget.chapters[index].number;
-        final listening = _listening;
-        List<List<LineSegment>>? segments;
-        if (listening != null) {
-          try {
-            final lines = await listening.lines(widget.book.id, number);
-            if (lines.isNotEmpty) segments = layoutLines(lines);
-          } catch (_) {
-            // Read the plain text instead; listening reports its own errors.
-          }
-        }
-        segments ??= plainParagraphs(
-          await widget.bookshelf.paragraphs(widget.book.id, number),
-        );
-        _loaded[index] = segments;
-        if (_pendingReveal?.$1 == index) _revealLater();
-        return segments;
-      });
+      _texts.putIfAbsent(index, () => _fetch(index));
+
+  Future<List<List<LineSegment>>> _fetch(int index) async {
+    final generation = _generations[index] ?? 0;
+    final number = widget.chapters[index].number;
+    final listening = _listening;
+    List<List<LineSegment>>? segments;
+    if (listening != null) {
+      try {
+        final lines = await listening.lines(widget.book.id, number);
+        if (lines.isNotEmpty) segments = layoutLines(lines);
+      } catch (_) {
+        // Read the plain text instead; listening reports its own errors.
+      }
+    }
+    segments ??= plainParagraphs(
+      await widget.bookshelf.paragraphs(widget.book.id, number),
+    );
+    // A newer fetch was started meanwhile; never let this one win.
+    if (!mounted || generation != (_generations[index] ?? 0)) return segments;
+    _loaded[index] = segments;
+    if (_stale.remove(index)) setState(() {});
+    if (_pendingReveal?.$1 == index) _revealLater();
+    return segments;
+  }
 
   void _follow() {
     final spoken = _spoken.value;
@@ -168,7 +210,8 @@ class _ReaderPageState extends State<ReaderPage> {
       return;
     }
     final segments = _loaded[index];
-    if (segments == null) return; // Revealed once the text arrives.
+    // Revealed once the (new) text arrives.
+    if (segments == null || _stale.contains(index)) return;
     _pendingReveal = null;
     final paragraph = segments.indexWhere((p) => p.any((s) => s.line == line));
     final keys = _paragraphKeys[index];
@@ -278,6 +321,7 @@ class _ReaderPageState extends State<ReaderPage> {
     final line = segment.line;
     if (listening == null || line == null || !segment.spoken) return;
     final l = AppLocalizations.of(context);
+    final generation = _generations[index] ?? 0;
     setState(() => _selected = (index, line));
     final choice = await showPsMenu(
       context,
@@ -289,6 +333,11 @@ class _ReaderPageState extends State<ReaderPage> {
     if (!mounted) return;
     setState(() => _selected = null);
     if (choice != #playFromHere) return;
+    // The lines were re-segmented while the menu was open: this index
+    // belongs to the old text.
+    if (generation != (_generations[index] ?? 0) || _stale.contains(index)) {
+      return;
+    }
     _following = true;
     _followed = null;
     await listening.open(
@@ -466,7 +515,8 @@ class _ReaderPageState extends State<ReaderPage> {
             return ValueListenableBuilder(
               valueListenable: _spoken,
               builder: (context, spoken, _) {
-                final active = spoken?.chapter == chapter.number
+                final stale = _stale.contains(index);
+                final active = !stale && spoken?.chapter == chapter.number
                     ? spoken!.lines
                     : const <int>{};
                 return PsPassage(
@@ -488,7 +538,7 @@ class _ReaderPageState extends State<ReaderPage> {
                   fontSize: preferences.fontSize,
                   lineSpacing: preferences.lineSpacing,
                   english: widget.book.language == BookLanguage.english,
-                  onLineTap: _listening == null
+                  onLineTap: _listening == null || stale
                       ? null
                       : (pi, li, at) => _tapLine(index, segments[pi][li], at),
                 );

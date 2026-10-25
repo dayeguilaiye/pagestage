@@ -5,6 +5,7 @@ import '../cast/cast_page.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import '../listening/app_scope.dart';
+import '../listening/generation_failures.dart';
 import '../listening/player.dart';
 import 'bookshelf.dart';
 import 'contents.dart';
@@ -40,6 +41,10 @@ class _BookPageState extends State<BookPage> {
   AppServices? _services;
   ListeningBookmark? _bookmark;
   var _opening = false;
+
+  /// How the book is performed; null until loaded or without generation.
+  BookPerformanceMode? _mode;
+  var _modeFailed = false;
 
   @override
   void initState() {
@@ -118,6 +123,7 @@ class _BookPageState extends State<BookPage> {
     if (_services != null) {
       _active = _services!.listening.value.bookId == widget.book.id;
       _loadBookmark();
+      _loadMode();
     }
     try {
       final chapters = await widget.bookshelf.chapters(widget.book.id);
@@ -308,27 +314,106 @@ class _BookPageState extends State<BookPage> {
         : bookmark == null
         ? l.startListening
         : l.resumeListening(bookmark.chapter);
+    final mode = _mode;
     return Padding(
       padding: const EdgeInsets.fromLTRB(PsSpace.s5, 0, PsSpace.s5, PsSpace.s8),
-      child: Row(
-        spacing: PsSpace.s3,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Expanded(
-            child: PsButton(
-              label: listenLabel,
-              icon: PsIcons.play,
-              variant: PsButtonVariant.primary,
-              expand: true,
-              loading: _opening,
-              onPressed: _listen,
+          Row(
+            spacing: PsSpace.s3,
+            children: [
+              Expanded(
+                child: PsButton(
+                  label: listenLabel,
+                  icon: PsIcons.play,
+                  variant: PsButtonVariant.primary,
+                  expand: true,
+                  loading: _opening,
+                  onPressed: _listen,
+                ),
+              ),
+              PsButton(
+                label: l.cast,
+                onPressed: _contents == null ? null : _openCast,
+              ),
+            ],
+          ),
+          GenerationFailures(
+            bookId: widget.book.id,
+            padding: const EdgeInsets.only(top: PsSpace.s4),
+          ),
+          if (mode != null) ...[
+            const SizedBox(height: PsSpace.s5),
+            Row(
+              spacing: PsSpace.s3,
+              children: [
+                Text(
+                  l.performanceMode,
+                  style: PsType.subhead.copyWith(
+                    color: p.ink,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Expanded(
+                  child: PsSegmentedControl<BookPerformanceMode>(
+                    expand: true,
+                    small: true,
+                    value: mode,
+                    onChanged: _setMode,
+                    segments: [
+                      PsSegment(BookPerformanceMode.audiobook, l.modeAudiobook),
+                      PsSegment(BookPerformanceMode.drama, l.modeDrama),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-          PsButton(
-            label: l.cast,
-            onPressed: _contents == null ? null : _openCast,
-          ),
+            const SizedBox(height: PsSpace.s2),
+            Text(
+              _modeFailed
+                  ? l.modeSaveFailed
+                  : mode == BookPerformanceMode.audiobook
+                  ? l.modeAudiobookNote
+                  : l.modeDramaNote,
+              style: PsType.caption.copyWith(
+                color: _modeFailed ? p.danger : p.ink2,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ],
         ],
       ),
     );
+  }
+
+  Future<void> _loadMode() async {
+    final generation = _services?.generation;
+    if (generation == null) return;
+    try {
+      final mode = await generation.mode(widget.book.id);
+      if (mounted) setState(() => _mode = mode);
+    } catch (_) {
+      // Without a stored mode the control stays hidden.
+    }
+  }
+
+  Future<void> _setMode(BookPerformanceMode mode) async {
+    final previous = _mode;
+    if (mode == previous) return;
+    setState(() {
+      _mode = mode;
+      _modeFailed = false;
+    });
+    try {
+      await _services!.generation!.setMode(widget.book.id, mode);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _mode = previous;
+          _modeFailed = true;
+        });
+      }
+    }
   }
 }

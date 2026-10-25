@@ -6,6 +6,7 @@ import 'consent/consent_gate.dart';
 import 'design/design.dart';
 import 'l10n/app_localizations.dart';
 import 'listening/app_scope.dart';
+import 'listening/generation_gate.dart';
 import 'shelf/bookshelf.dart';
 import 'shelf/reading_settings.dart';
 import 'shelf/shelf_page.dart';
@@ -93,11 +94,21 @@ class _PagestageAppState extends State<PagestageApp> {
         ],
         builder: services == null
             ? null
-            : (context, child) => ConsentGate(
-                consents: services.consents,
-                navigatorKey: _navigator,
-                child: child!,
-              ),
+            : (context, child) {
+                Widget gated = ConsentGate(
+                  consents: services.consents,
+                  navigatorKey: _navigator,
+                  child: child!,
+                );
+                if (services.generation case final generation?) {
+                  gated = GenerationGate(
+                    generation: generation,
+                    navigatorKey: _navigator,
+                    child: gated,
+                  );
+                }
+                return gated;
+              },
         home: ShelfPage(
           bookshelf: widget.bookshelf,
           readingSettings: widget.readingSettings,

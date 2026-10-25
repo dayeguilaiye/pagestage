@@ -1255,6 +1255,456 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'同意并发送'**
   String get consentAccept;
+
+  /// No description provided for @generationTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{chapter}还没有配音'**
+  String generationTitle(String chapter);
+
+  /// No description provided for @generationBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'可以现在生成 AI 配音，边听边生成；也可以先用手机自带的声音朗读。'**
+  String get generationBody;
+
+  /// No description provided for @generationOutOfRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'{chapter}还没有建档，暂时不能生成配音。把建档延伸到这一章后就可以生成；现在也可以先用手机自带的声音朗读。'**
+  String generationOutOfRange(String chapter);
+
+  /// No description provided for @generateNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成配音'**
+  String get generateNow;
+
+  /// No description provided for @useSystemVoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'用系统声音朗读'**
+  String get useSystemVoice;
+
+  /// No description provided for @extendProfilingTo.
+  ///
+  /// In zh, this message translates to:
+  /// **'把建档延伸到{chapter}'**
+  String extendProfilingTo(String chapter);
+
+  /// No description provided for @waitingForSynthesis.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在生成接下来的配音，好了就继续播放'**
+  String get waitingForSynthesis;
+
+  /// No description provided for @generationPausedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音生成暂停了'**
+  String get generationPausedTitle;
+
+  /// No description provided for @generationResumeFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能继续生成，请稍后再试'**
+  String get generationResumeFailed;
+
+  /// No description provided for @generationPausedLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'{chapter} · {provider}：{reason}'**
+  String generationPausedLine(String chapter, String provider, String reason);
+
+  /// No description provided for @resumeGeneration.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续生成'**
+  String get resumeGeneration;
+
+  /// No description provided for @reasonVoiceUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'分配的声音已不可用，请在演员表里换一个'**
+  String get reasonVoiceUnavailable;
+
+  /// No description provided for @errorAudioChanged.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频已更新（清理过或换了声音），点播放重新准备。'**
+  String get errorAudioChanged;
+
+  /// No description provided for @errorGenerationCancelled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消生成，点播放可以重新选择。'**
+  String get errorGenerationCancelled;
+
+  /// No description provided for @performanceMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'演绎方式'**
+  String get performanceMode;
+
+  /// No description provided for @modeAudiobook.
+  ///
+  /// In zh, this message translates to:
+  /// **'有声书'**
+  String get modeAudiobook;
+
+  /// No description provided for @modeDrama.
+  ///
+  /// In zh, this message translates to:
+  /// **'广播剧'**
+  String get modeDrama;
+
+  /// No description provided for @modeAudiobookNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'旁白完整朗读原文，包括「他说」「她问道」这类提示。'**
+  String get modeAudiobookNote;
+
+  /// No description provided for @modeDramaNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'角色直接开口，跳过「他说」这类说话提示。'**
+  String get modeDramaNote;
+
+  /// No description provided for @modeSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能保存演绎方式，请再试一次'**
+  String get modeSaveFailed;
+
+  /// No description provided for @generationSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'边听边生成'**
+  String get generationSection;
+
+  /// No description provided for @generationSectionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'提前量是在你听到之前预先处理的章数；合成提前量不能超过导演提前量，设为 0 表示关闭。'**
+  String get generationSectionNote;
+
+  /// No description provided for @autoGenerate.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动生成配音'**
+  String get autoGenerate;
+
+  /// No description provided for @autoGenerateNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放没有配音的章节时直接生成，不再询问'**
+  String get autoGenerateNote;
+
+  /// No description provided for @directingAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'导演提前量'**
+  String get directingAhead;
+
+  /// No description provided for @synthesisAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'合成提前量'**
+  String get synthesisAhead;
+
+  /// No description provided for @aheadOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭'**
+  String get aheadOff;
+
+  /// No description provided for @aheadChapters.
+  ///
+  /// In zh, this message translates to:
+  /// **'提前 {count} 章'**
+  String aheadChapters(int count);
+
+  /// No description provided for @fewerDirectingAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'减少导演提前量'**
+  String get fewerDirectingAhead;
+
+  /// No description provided for @moreDirectingAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'增加导演提前量'**
+  String get moreDirectingAhead;
+
+  /// No description provided for @fewerSynthesisAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'减少合成提前量'**
+  String get fewerSynthesisAhead;
+
+  /// No description provided for @moreSynthesisAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'增加合成提前量'**
+  String get moreSynthesisAhead;
+
+  /// No description provided for @generationSettingsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能保存生成设置'**
+  String get generationSettingsFailed;
+
+  /// No description provided for @storageSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'存储'**
+  String get storageSection;
+
+  /// No description provided for @storage.
+  ///
+  /// In zh, this message translates to:
+  /// **'存储空间'**
+  String get storage;
+
+  /// No description provided for @storageRowNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看每本书占用的空间，清理音频'**
+  String get storageRowNote;
+
+  /// No description provided for @storageNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'按书统计：书的正文、剧本、演员表等记录加上它的音频文件。数据库文件由所有书共用，其中的索引和日志开销不计入。'**
+  String get storageNote;
+
+  /// No description provided for @storageLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取存储空间'**
+  String get storageLoadFailed;
+
+  /// No description provided for @storageEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有占用空间的书'**
+  String get storageEmpty;
+
+  /// No description provided for @storageTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'总占用'**
+  String get storageTotal;
+
+  /// No description provided for @storageAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'可清理的音频'**
+  String get storageAudio;
+
+  /// No description provided for @storageBooks.
+  ///
+  /// In zh, this message translates to:
+  /// **'书'**
+  String get storageBooks;
+
+  /// No description provided for @storageBookLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'共 {total} · 音频 {audio}'**
+  String storageBookLine(String total, String audio);
+
+  /// No description provided for @clearAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理音频'**
+  String get clearAudio;
+
+  /// No description provided for @clearAudioNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。'**
+  String get clearAudioNote;
+
+  /// No description provided for @clearAudioTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理《{title}》的音频？'**
+  String clearAudioTitle(String title);
+
+  /// No description provided for @clearAudioBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'将释放 {size}。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。'**
+  String clearAudioBody(String size);
+
+  /// No description provided for @clearAudioConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理音频'**
+  String get clearAudioConfirm;
+
+  /// No description provided for @clearAudioFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能清理音频，请再试一次'**
+  String get clearAudioFailed;
+
+  /// No description provided for @audioCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'已清理《{title}》的音频'**
+  String audioCleared(String title);
+
+  /// No description provided for @changeVoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'换音色'**
+  String get changeVoice;
+
+  /// No description provided for @designVoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'设计音色'**
+  String get designVoice;
+
+  /// No description provided for @changeVoiceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'给{name}换声音'**
+  String changeVoiceTitle(String name);
+
+  /// No description provided for @currentVoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'现在用的是「{voice}」'**
+  String currentVoice(String voice);
+
+  /// No description provided for @presetVoices.
+  ///
+  /// In zh, this message translates to:
+  /// **'预设音色'**
+  String get presetVoices;
+
+  /// No description provided for @voiceDesign.
+  ///
+  /// In zh, this message translates to:
+  /// **'音色设计'**
+  String get voiceDesign;
+
+  /// No description provided for @hearBeforeChoosing.
+  ///
+  /// In zh, this message translates to:
+  /// **'先试听，听过之后才能选用。'**
+  String get hearBeforeChoosing;
+
+  /// No description provided for @chooseVoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'选用'**
+  String get chooseVoice;
+
+  /// No description provided for @voiceInUse.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用中'**
+  String get voiceInUse;
+
+  /// No description provided for @chooseVoiceFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能换上这个声音，请再试一次'**
+  String get chooseVoiceFailed;
+
+  /// No description provided for @presetsLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取预设音色'**
+  String get presetsLoadFailed;
+
+  /// No description provided for @presetsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'当前配置下没有适合这本书语言的预设音色。'**
+  String get presetsEmpty;
+
+  /// No description provided for @designProvider.
+  ///
+  /// In zh, this message translates to:
+  /// **'设计服务商'**
+  String get designProvider;
+
+  /// No description provided for @voiceDescriptionLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'声音描述'**
+  String get voiceDescriptionLabel;
+
+  /// No description provided for @voiceDescriptionHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'例如：五十岁上下的男声，低沉沙哑，说话慢条斯理'**
+  String get voiceDescriptionHint;
+
+  /// No description provided for @designCandidates.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成 3 个候选'**
+  String get designCandidates;
+
+  /// No description provided for @designCandidatesAgain.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新生成候选'**
+  String get designCandidatesAgain;
+
+  /// No description provided for @designing.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在设计声音，需要一点时间'**
+  String get designing;
+
+  /// No description provided for @designFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能设计出声音'**
+  String get designFailed;
+
+  /// No description provided for @designFailedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'描述和服务商都还在，可以直接重试或改一改描述。'**
+  String get designFailedBody;
+
+  /// No description provided for @candidates.
+  ///
+  /// In zh, this message translates to:
+  /// **'候选声音'**
+  String get candidates;
+
+  /// No description provided for @voiceChanged.
+  ///
+  /// In zh, this message translates to:
+  /// **'已为{name}换上新声音'**
+  String voiceChanged(String name);
+
+  /// No description provided for @voiceRebuiltTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{name}的声音重建了'**
+  String voiceRebuiltTitle(String name);
+
+  /// No description provided for @voiceRebuiltBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'{provider}的声音绑定已重新建立，听起来可能和之前不同，建议重新试听。'**
+  String voiceRebuiltBody(String provider);
+
+  /// No description provided for @listenAgain.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新试听'**
+  String get listenAgain;
 }
 
 class _AppLocalizationsDelegate

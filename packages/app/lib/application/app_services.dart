@@ -7,6 +7,9 @@ import 'package:pagestage_core/pagestage_core.dart';
 import '../playback/just_audio_engine.dart';
 import '../storage.dart';
 import 'cast_controller.dart';
+import 'generation_controller.dart';
+import 'voice_controller.dart';
+import 'audio_storage_controller.dart';
 import 'contracts.dart';
 import 'listening_controller.dart';
 import 'listening_handler.dart';
@@ -21,12 +24,18 @@ class AppServices {
     required this.providers,
     required this.consents,
     required this.casts,
+    this.generation,
+    this.voices,
+    this.audioStorage,
     Future<void> Function()? onClose,
   }) : _onClose = onClose;
   final Listening listening;
   final Providers providers;
   final Consents consents;
   final Casts casts;
+  final Generation? generation;
+  final Voices? voices;
+  final AudioStorage? audioStorage;
   final Future<void> Function()? _onClose;
   bool _closed = false;
 
@@ -49,10 +58,25 @@ class AppServices {
       listening: listening,
       auditionEngine: JustAudioEngine(),
     );
+    final generation = await GenerationController.open(
+      storage.store,
+      casts.scheduler,
+    );
+    listening.attachGeneration(generation);
+    final voices = await VoiceController.open(storage.store, casts, listening);
+    final audioStorage = AudioStorageController(
+      storage.store,
+      casts,
+      listening,
+      voices,
+    );
     var wasPlaying = false;
     void stopSampleOnPlayback() {
       final playing = listening.value.playing;
-      if (playing && !wasPlaying) unawaited(casts.stopAudition());
+      if (playing && !wasPlaying) {
+        unawaited(casts.stopAudition());
+        unawaited(voices.stopAudition());
+      }
       wasPlaying = playing;
     }
 
@@ -71,25 +95,34 @@ class AppServices {
       if (event.begin) {
         unawaited(listening.pause());
         unawaited(casts.stopAudition());
+        unawaited(voices.stopAudition());
       }
     });
     final noisy = session.becomingNoisyEventStream.listen((_) {
       unawaited(listening.pause());
       unawaited(casts.stopAudition());
+      unawaited(voices.stopAudition());
     });
     return AppServices(
       listening: listening,
       providers: providers,
       consents: consents,
       casts: casts,
+      generation: generation,
+      voices: voices,
+      audioStorage: audioStorage,
       onClose: () async {
         await interruptions.cancel();
         await noisy.cancel();
         listening.removeListener(stopSampleOnPlayback);
         await consents.close();
-        await casts.close();
+        audioStorage.dispose();
+        await listening.pause();
+        await voices.close();
         await handler.close();
         await listening.close();
+        await generation.close();
+        await casts.close();
         await providers.saved;
         providers.dispose();
       },

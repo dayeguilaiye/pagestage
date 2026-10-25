@@ -625,4 +625,259 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get consentAccept => '同意并发送';
+
+  @override
+  String generationTitle(String chapter) {
+    return '$chapter还没有配音';
+  }
+
+  @override
+  String get generationBody => '可以现在生成 AI 配音，边听边生成；也可以先用手机自带的声音朗读。';
+
+  @override
+  String generationOutOfRange(String chapter) {
+    return '$chapter还没有建档，暂时不能生成配音。把建档延伸到这一章后就可以生成；现在也可以先用手机自带的声音朗读。';
+  }
+
+  @override
+  String get generateNow => '生成配音';
+
+  @override
+  String get useSystemVoice => '用系统声音朗读';
+
+  @override
+  String extendProfilingTo(String chapter) {
+    return '把建档延伸到$chapter';
+  }
+
+  @override
+  String get waitingForSynthesis => '正在生成接下来的配音，好了就继续播放';
+
+  @override
+  String get generationPausedTitle => '配音生成暂停了';
+
+  @override
+  String get generationResumeFailed => '没能继续生成，请稍后再试';
+
+  @override
+  String generationPausedLine(String chapter, String provider, String reason) {
+    return '$chapter · $provider：$reason';
+  }
+
+  @override
+  String get resumeGeneration => '继续生成';
+
+  @override
+  String get reasonVoiceUnavailable => '分配的声音已不可用，请在演员表里换一个';
+
+  @override
+  String get errorAudioChanged => '音频已更新（清理过或换了声音），点播放重新准备。';
+
+  @override
+  String get errorGenerationCancelled => '已取消生成，点播放可以重新选择。';
+
+  @override
+  String get performanceMode => '演绎方式';
+
+  @override
+  String get modeAudiobook => '有声书';
+
+  @override
+  String get modeDrama => '广播剧';
+
+  @override
+  String get modeAudiobookNote => '旁白完整朗读原文，包括「他说」「她问道」这类提示。';
+
+  @override
+  String get modeDramaNote => '角色直接开口，跳过「他说」这类说话提示。';
+
+  @override
+  String get modeSaveFailed => '没能保存演绎方式，请再试一次';
+
+  @override
+  String get generationSection => '边听边生成';
+
+  @override
+  String get generationSectionNote =>
+      '提前量是在你听到之前预先处理的章数；合成提前量不能超过导演提前量，设为 0 表示关闭。';
+
+  @override
+  String get autoGenerate => '自动生成配音';
+
+  @override
+  String get autoGenerateNote => '播放没有配音的章节时直接生成，不再询问';
+
+  @override
+  String get directingAhead => '导演提前量';
+
+  @override
+  String get synthesisAhead => '合成提前量';
+
+  @override
+  String get aheadOff => '关闭';
+
+  @override
+  String aheadChapters(int count) {
+    return '提前 $count 章';
+  }
+
+  @override
+  String get fewerDirectingAhead => '减少导演提前量';
+
+  @override
+  String get moreDirectingAhead => '增加导演提前量';
+
+  @override
+  String get fewerSynthesisAhead => '减少合成提前量';
+
+  @override
+  String get moreSynthesisAhead => '增加合成提前量';
+
+  @override
+  String get generationSettingsFailed => '没能保存生成设置';
+
+  @override
+  String get storageSection => '存储';
+
+  @override
+  String get storage => '存储空间';
+
+  @override
+  String get storageRowNote => '查看每本书占用的空间，清理音频';
+
+  @override
+  String get storageNote =>
+      '按书统计：书的正文、剧本、演员表等记录加上它的音频文件。数据库文件由所有书共用，其中的索引和日志开销不计入。';
+
+  @override
+  String get storageLoadFailed => '没能读取存储空间';
+
+  @override
+  String get storageEmpty => '还没有占用空间的书';
+
+  @override
+  String get storageTotal => '总占用';
+
+  @override
+  String get storageAudio => '可清理的音频';
+
+  @override
+  String get storageBooks => '书';
+
+  @override
+  String storageBookLine(String total, String audio) {
+    return '共 $total · 音频 $audio';
+  }
+
+  @override
+  String get clearAudio => '清理音频';
+
+  @override
+  String get clearAudioNote => '清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。';
+
+  @override
+  String clearAudioTitle(String title) {
+    return '清理《$title》的音频？';
+  }
+
+  @override
+  String clearAudioBody(String size) {
+    return '将释放 $size。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。';
+  }
+
+  @override
+  String get clearAudioConfirm => '清理音频';
+
+  @override
+  String get clearAudioFailed => '没能清理音频，请再试一次';
+
+  @override
+  String audioCleared(String title) {
+    return '已清理《$title》的音频';
+  }
+
+  @override
+  String get changeVoice => '换音色';
+
+  @override
+  String get designVoice => '设计音色';
+
+  @override
+  String changeVoiceTitle(String name) {
+    return '给$name换声音';
+  }
+
+  @override
+  String currentVoice(String voice) {
+    return '现在用的是「$voice」';
+  }
+
+  @override
+  String get presetVoices => '预设音色';
+
+  @override
+  String get voiceDesign => '音色设计';
+
+  @override
+  String get hearBeforeChoosing => '先试听，听过之后才能选用。';
+
+  @override
+  String get chooseVoice => '选用';
+
+  @override
+  String get voiceInUse => '使用中';
+
+  @override
+  String get chooseVoiceFailed => '没能换上这个声音，请再试一次';
+
+  @override
+  String get presetsLoadFailed => '没能读取预设音色';
+
+  @override
+  String get presetsEmpty => '当前配置下没有适合这本书语言的预设音色。';
+
+  @override
+  String get designProvider => '设计服务商';
+
+  @override
+  String get voiceDescriptionLabel => '声音描述';
+
+  @override
+  String get voiceDescriptionHint => '例如：五十岁上下的男声，低沉沙哑，说话慢条斯理';
+
+  @override
+  String get designCandidates => '生成 3 个候选';
+
+  @override
+  String get designCandidatesAgain => '重新生成候选';
+
+  @override
+  String get designing => '正在设计声音，需要一点时间';
+
+  @override
+  String get designFailed => '没能设计出声音';
+
+  @override
+  String get designFailedBody => '描述和服务商都还在，可以直接重试或改一改描述。';
+
+  @override
+  String get candidates => '候选声音';
+
+  @override
+  String voiceChanged(String name) {
+    return '已为$name换上新声音';
+  }
+
+  @override
+  String voiceRebuiltTitle(String name) {
+    return '$name的声音重建了';
+  }
+
+  @override
+  String voiceRebuiltBody(String provider) {
+    return '$provider的声音绑定已重新建立，听起来可能和之前不同，建议重新试听。';
+  }
+
+  @override
+  String get listenAgain => '重新试听';
 }

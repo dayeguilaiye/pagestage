@@ -404,4 +404,31 @@ void main() {
       expect(tts.requests, isEmpty);
     },
   );
+  test(
+    'cleanup at task-start notification holds the checkpoint before removing tasks',
+    () async {
+      await prepare();
+      final s = await open();
+      Future<void>? cleanup;
+      final subscription = s.events.listen((event) {
+        if (cleanup == null &&
+            event.task.kind == TaskKind.direct &&
+            event.task.status == TaskStatus.running) {
+          cleanup = s.withBookPaused(
+            book.id,
+            () => s.cancelGeneration(book.id),
+          );
+        }
+      });
+      await s.enqueue(book.id, TaskKind.synthesize, through: 1);
+      await s.idle;
+      await cleanup;
+      await s.idle;
+      await subscription.cancel();
+      expect(cleanup, isNotNull);
+      expect(director.chapters, isEmpty);
+      expect(tts.requests, isEmpty);
+      expect(s.tasks, isEmpty);
+    },
+  );
 }
