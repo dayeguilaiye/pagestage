@@ -66,12 +66,17 @@ class Casting {
     int exclusiveCount = 20,
     Set<String>? providers,
     String bailianRegion = 'beijing',
-  }) => _recommend(
-    book,
-    exclusiveCount: exclusiveCount,
-    providers: providers,
-    bailianRegion: bailianRegion,
-  );
+    bool preserveExisting = false,
+  }) async {
+    final previous = preserveExisting ? await getCasting(book.id) : null;
+    return _recommend(
+      book,
+      exclusiveCount: exclusiveCount,
+      providers: providers,
+      bailianRegion: bailianRegion,
+      fixedExclusiveIds: previous?.exclusiveSpeakerIds,
+    );
+  }
 
   Future<CastingResult> _recommend(
     Book book, {

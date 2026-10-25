@@ -5,6 +5,15 @@ import 'dart:io';
 /// It intentionally has no JSON/logging representation containing credentials.
 class ProviderConfiguration {
   ProviderConfiguration._(this._sections, this._environment);
+
+  /// App callers supply a snapshot from platform secure storage. Environment
+  /// variables and local configuration files are deliberately not consulted.
+  factory ProviderConfiguration.fromValues(
+    Map<String, Map<String, String>> sections,
+  ) => ProviderConfiguration._({
+    for (final entry in sections.entries)
+      entry.key: Map<String, String>.unmodifiable(entry.value),
+  }, const {});
   final Map<String, Object?> _sections;
   final Map<String, String> _environment;
 

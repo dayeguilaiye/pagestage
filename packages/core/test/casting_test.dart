@@ -34,6 +34,68 @@ void main() {
   });
 
   test(
+    'extending a cast keeps existing voices despite changed character ranks',
+    () async {
+      await CastRepository(store).save(
+        Cast(
+          bookId: book.id,
+          profiledThrough: 1,
+          speakers: [
+            Speaker(id: 'narrator', name: '旁白', kind: SpeakerKind.narrator),
+            Speaker(
+              id: 'a',
+              name: '甲',
+              dialogueCount: 10,
+              gender: 'female',
+              ageGroup: 'youngAdult',
+              chapters: [1],
+            ),
+            Speaker(
+              id: 'b',
+              name: '乙',
+              dialogueCount: 1,
+              gender: 'female',
+              ageGroup: 'youngAdult',
+              chapters: [1],
+            ),
+          ],
+        ),
+      );
+      final first = await casting.recommend(book, exclusiveCount: 1);
+      await CastRepository(store).save(
+        first.cast.copyWith(
+          profiledThrough: 2,
+          speakers: [
+            ...first.cast.speakers.map(
+              (speaker) => speaker.id == 'b'
+                  ? speaker.copyWith(dialogueCount: 100)
+                  : speaker,
+            ),
+            Speaker(
+              id: 'new',
+              name: '新人物',
+              dialogueCount: 200,
+              gender: 'male',
+              ageGroup: 'youngAdult',
+              chapters: [2],
+            ),
+          ],
+        ),
+      );
+      final extended = await casting.recommend(
+        book,
+        preserveExisting: true,
+        exclusiveCount: 1,
+      );
+      expect(extended.exclusiveSpeakerIds, first.exclusiveSpeakerIds);
+      for (final entry in first.voices.entries) {
+        expect(extended.voices[entry.key]!.toJson(), entry.value.toJson());
+      }
+      expect(extended.voices['new'], isNotNull);
+    },
+  );
+
+  test(
     'top requested characters own distinct voices separate from narrator',
     () async {
       await CastRepository(store).save(
