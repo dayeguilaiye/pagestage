@@ -31,6 +31,7 @@ class JustAudioEngine implements PlaybackEngine {
     completed: _player.processingState == ProcessingState.completed,
     speed: _player.speed,
     error: _error,
+    duration: _player.duration,
   );
   @override
   Stream<EngineState> get states => _events.stream;

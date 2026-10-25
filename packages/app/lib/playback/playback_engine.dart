@@ -6,6 +6,7 @@ class EngineState {
     this.completed = false,
     this.speed = 1,
     this.error,
+    this.duration,
   });
   final Duration position;
   final bool playing;
@@ -13,6 +14,7 @@ class EngineState {
   final bool completed;
   final double speed;
   final String? error;
+  final Duration? duration;
 }
 
 /// Native engine seam exercised by just_audio, SoLoud and the offline fake.
