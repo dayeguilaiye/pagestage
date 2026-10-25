@@ -99,19 +99,20 @@ void main() {
     final shelf = MemoryBookshelf(
       books: [_aq],
       onImport: (_) =>
-          const ImportFailed('红楼梦.epub', ImportFailure.unsupportedFormat),
+          const ImportFailed('红楼梦.pdf', ImportFailure.unsupportedFormat),
     );
     await _pump(tester, shelf);
 
     await tester.tap(find.byTooltip('导入'));
     await tester.pumpAndSettle();
 
-    expect(find.text('「红楼梦.epub」不是 TXT 文件'), findsOneWidget);
+    expect(find.text('不支持「红楼梦.pdf」的格式'), findsOneWidget);
+    expect(find.textContaining('TXT 和没有 DRM 的 EPUB'), findsOneWidget);
     expect(find.text('全部 · 1 本'), findsOneWidget);
 
     await tester.tap(find.byTooltip('关闭'));
     await tester.pumpAndSettle();
-    expect(find.text('「红楼梦.epub」不是 TXT 文件'), findsNothing);
+    expect(find.text('不支持「红楼梦.pdf」的格式'), findsNothing);
   });
 
   testWidgets('a book opens to its contents, and a chapter to its text', (

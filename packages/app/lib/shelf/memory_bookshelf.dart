@@ -68,7 +68,7 @@ class MemoryBookshelf extends ChangeNotifier implements Bookshelf {
             return BookImported(shelf.add(book));
           }
         }
-        return const ImportFailed('红楼梦.epub', ImportFailure.unsupportedFormat);
+        return const ImportFailed('红楼梦.pdf', ImportFailure.unsupportedFormat);
       },
     );
   }

@@ -99,7 +99,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shelfEmptyBody =>
-      'Import a TXT novel from your phone to read and listen to it here.';
+      'Import a TXT or DRM-free EPUB novel from your phone to read and listen to it here.';
 
   @override
   String get shelfEmptyAction => 'Import a book';
@@ -125,12 +125,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String importUnsupportedTitle(String file) {
-    return '“$file” isn’t a TXT file';
+    return '“$file” isn’t a supported format';
   }
 
   @override
   String get importUnsupportedBody =>
-      'Only TXT files can be imported for now. Your bookshelf hasn’t changed.';
+      'You can import TXT files and DRM-free EPUB files. Your bookshelf hasn’t changed.';
+
+  @override
+  String importDrmTitle(String file) {
+    return '“$file” is DRM-protected';
+  }
+
+  @override
+  String get importDrmBody =>
+      'The text of a DRM-protected EPUB can’t be read. Import a DRM-free EPUB or a TXT file instead. Your bookshelf hasn’t changed.';
+
+  @override
+  String bookUpdated(String title, int added, int changed) {
+    String _temp0 = intl.Intl.pluralLogic(
+      added,
+      locale: localeName,
+      other: '$added chapters added',
+      one: '1 chapter added',
+    );
+    String _temp1 = intl.Intl.pluralLogic(
+      changed,
+      locale: localeName,
+      other: '$changed chapters changed',
+      one: '1 chapter changed',
+    );
+    return 'Updated “$title”: $_temp0, $_temp1';
+  }
+
+  @override
+  String bookUnchanged(String title) {
+    return '“$title” is already up to date';
+  }
 
   @override
   String importEmptyTitle(String file) {
@@ -148,7 +179,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importUnreadableBody =>
-      'The file may be damaged, or not encoded as UTF-8 or GBK. Your bookshelf hasn’t changed.';
+      'The file may be damaged; TXT files need to be UTF-8 or GBK. Your bookshelf hasn’t changed.';
 
   @override
   String get importAnother => 'Choose another file';
@@ -948,4 +979,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get listenAgain => 'Play again';
+
+  @override
+  String get diagnosticsSection => 'Diagnostics and feedback';
+
+  @override
+  String get exportDiagnostics => 'Export a diagnostic report';
+
+  @override
+  String get exportDiagnosticsNote =>
+      'Creates a report and opens the share sheet so you choose where it goes';
+
+  @override
+  String get exportingDiagnostics => 'Preparing the report…';
+
+  @override
+  String get reportProblem => 'Report a problem';
+
+  @override
+  String get reportProblemNote =>
+      'Opens a new issue on the project’s GitHub in your browser';
+
+  @override
+  String get openingBrowser => 'Opening the browser…';
+
+  @override
+  String get exportDiagnosticsFailed => 'Couldn’t export the report';
+
+  @override
+  String get exportDiagnosticsFailedBody =>
+      'The report wasn’t created or the share sheet didn’t open. Try again.';
+
+  @override
+  String get reportProblemFailed => 'Couldn’t open the feedback page';
+
+  @override
+  String get reportProblemFailedBody =>
+      'The browser didn’t open. Check your connection or default browser and try again.';
+
+  @override
+  String get diagnosticsPrivacyTitle => 'What the report contains';
+
+  @override
+  String get diagnosticsIncludes =>
+      'Included: app version, system and device details, recent errors and crashes.';
+
+  @override
+  String get diagnosticsExcludes =>
+      'Never included: your keys or the text of your books.';
+
+  @override
+  String get diagnosticsNoUpload =>
+      'Nothing is uploaded automatically: the report leaves your phone only if you send it from the share sheet.';
 }

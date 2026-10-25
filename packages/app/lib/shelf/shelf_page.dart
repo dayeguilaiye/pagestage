@@ -158,6 +158,21 @@ class _ShelfPageState extends State<ShelfPage> {
     switch (outcome) {
       case BookImported(:final book):
         showPsToast(context, l.bookImported(book.title));
+      case BookUpdated(
+        :final book,
+        :final addedChapters,
+        :final changedChapters,
+      ):
+        showPsToast(
+          context,
+          addedChapters == 0 && changedChapters.isEmpty
+              ? l.bookUnchanged(book.title)
+              : l.bookUpdated(
+                  book.title,
+                  addedChapters,
+                  changedChapters.length,
+                ),
+        );
       case ImportCancelled():
         break;
       case final ImportFailed failure:
@@ -299,6 +314,10 @@ class _ShelfPageState extends State<ShelfPage> {
       ImportFailure.unsupportedFormat => (
         l.importUnsupportedTitle(failure.fileName),
         l.importUnsupportedBody,
+      ),
+      ImportFailure.drmProtected => (
+        l.importDrmTitle(failure.fileName),
+        l.importDrmBody,
       ),
       ImportFailure.empty => (
         l.importEmptyTitle(failure.fileName),

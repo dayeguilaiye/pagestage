@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pagestage_app/app.dart';
@@ -356,6 +358,33 @@ class FakeAudioStorage extends ChangeNotifier implements AudioStorage {
   }
 }
 
+/// Each call waits for the test to finish it through [finishExport] or
+/// [finishFeedback].
+class FakeDiagnostics implements Diagnostics {
+  var exports = 0;
+  var feedbacks = 0;
+  Completer<void>? _export;
+  Completer<void>? _feedback;
+
+  @override
+  Future<void> export() {
+    exports++;
+    return (_export = Completer<void>()).future;
+  }
+
+  @override
+  Future<void> feedback() {
+    feedbacks++;
+    return (_feedback = Completer<void>()).future;
+  }
+
+  void finishExport([Object? error]) => _finish(_export!, error);
+  void finishFeedback([Object? error]) => _finish(_feedback!, error);
+
+  static void _finish(Completer<void> c, Object? error) =>
+      error == null ? c.complete() : c.completeError(error);
+}
+
 class Fakes {
   Fakes({
     FakeListening? listening,
@@ -365,7 +394,9 @@ class Fakes {
     FakeGeneration? generation,
     FakeVoices? voices,
     FakeAudioStorage? audioStorage,
-  }) : listening = listening ?? FakeListening(),
+    bool withDiagnostics = true,
+  }) : diagnostics = withDiagnostics ? FakeDiagnostics() : null,
+       listening = listening ?? FakeListening(),
        providers = providers ?? FakeProviders(),
        consents = consents ?? FakeConsents(),
        casts = casts ?? FakeCasts(),
@@ -380,8 +411,10 @@ class Fakes {
   final FakeGeneration generation;
   final FakeVoices voices;
   final FakeAudioStorage audioStorage;
+  final FakeDiagnostics? diagnostics;
 
   late final services = AppServices(
+    diagnostics: diagnostics,
     listening: listening,
     providers: providers,
     consents: consents,
