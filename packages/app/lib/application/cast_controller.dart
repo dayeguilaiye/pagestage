@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -8,6 +7,7 @@ import 'package:pagestage_core/pagestage_core.dart';
 import '../playback/playback_engine.dart';
 import 'contracts.dart';
 import 'provider_store.dart';
+import 'provider_gateway.dart';
 
 typedef ProfileAdapterFactory =
     LlmAdapter Function(ProviderConfiguration configuration);
@@ -32,6 +32,7 @@ class CastController extends ChangeNotifier implements Casts {
   final ProfileAdapterFactory? profileFactory;
   final AuditionAdapterFactory? auditionFactory;
   late final Scheduler scheduler;
+  late final ProviderGateway gateway;
   late final StreamSubscription<SchedulerEvent> _events;
   late final StreamSubscription<EngineState> _auditionEvents;
   String? _auditioning;
@@ -41,11 +42,9 @@ class CastController extends ChangeNotifier implements Casts {
   Future<void> _auditions = Future.value();
   int _exclusiveCount = 20;
   bool _closed = false;
+  Future<void> Function()? beforeAudition;
+  Future<void> Function(String bookId)? onCastingChanged;
   int _auditionGeneration = 0;
-  final _requestRuntime = RequestRuntime();
-  final _ttsQueues = <String, ProviderRequestQueue>{};
-  UsageLedger get _usage =>
-      JsonlUsageLedger(File('${File(store.path).parent.path}/usage.jsonl'));
   @override
   int get exclusiveCount => _exclusiveCount;
 
@@ -57,6 +56,8 @@ class CastController extends ChangeNotifier implements Casts {
     required PlaybackEngine auditionEngine,
     ProfileAdapterFactory? profileFactory,
     AuditionAdapterFactory? auditionFactory,
+    LlmFactory? directorFactory,
+    ProviderGateway? gateway,
   }) async {
     final service = CastController._(
       store: store,
@@ -70,11 +71,26 @@ class CastController extends ChangeNotifier implements Casts {
     service._exclusiveCount =
         (await store.get('settings', 'casting'))?['exclusiveCount'] as int? ??
         20;
+    service.gateway =
+        gateway ??
+        ProviderGateway(
+          store: store,
+          providers: providers,
+          consents: consents,
+          profileFactory: profileFactory,
+          directorFactory: directorFactory,
+          ttsFactory: auditionFactory,
+        );
     service.scheduler = await Scheduler.open(
       store: store,
-      profileLlm: _ProfileAdapter(service),
-      directorLlm: _UnavailableDirector(),
-      ttsAdapters: const {},
+      profileLlm: service.gateway.llm(profile: true),
+      directorLlm: service.gateway.llm(profile: false),
+      ttsAdapters: service.gateway.tts(
+        () => service.gateway.activeTask!.bookId,
+      ),
+      runtime: service.gateway.runtime,
+      beforeTask: service.gateway.beforeTask,
+      recoverVoice: service.gateway.recover,
     );
     service._events = service.scheduler.events.listen((event) {
       if (event.task.kind == TaskKind.profile &&
@@ -150,6 +166,8 @@ class CastController extends ChangeNotifier implements Casts {
     // Assigning a preset is local. Users may configure its provider before audition.
     return selected.isEmpty ? {'minimax'} : selected;
   }
+
+  Future<void> get idleAuditions => _auditions;
 
   Future<void> get idle async {
     await scheduler.idle;
@@ -263,7 +281,7 @@ class CastController extends ChangeNotifier implements Casts {
   Future<void> resume(String bookId) async {
     if (!await _approveProfile(bookId, await providers.configuration())) return;
     await store.delete('profileFailure', bookId);
-    await scheduler.resume();
+    await scheduler.resume(bookId: bookId, kind: TaskKind.profile);
     _queueReconcile(bookId);
   }
 
@@ -276,12 +294,15 @@ class CastController extends ChangeNotifier implements Casts {
       for (final book in await Library(store).listBooks()) {
         final cast = await CastRepository(store).get(book.id);
         if (cast.profiledThrough > 0) {
-          await Casting(store).recommend(
-            book,
-            exclusiveCount: count,
-            providers: _configuredTts,
-            bailianRegion: providers.value.region.name,
-          );
+          await scheduler.withBookPaused(book.id, () async {
+            await onCastingChanged?.call(book.id);
+            await Casting(store).recommend(
+              book,
+              exclusiveCount: count,
+              providers: _configuredTts,
+              bailianRegion: providers.value.region.name,
+            );
+          });
         }
       }
       _notify();
@@ -299,6 +320,7 @@ class CastController extends ChangeNotifier implements Casts {
     final generation = _auditionGeneration;
     final next = _auditions.then((_) async {
       await stopped;
+      await beforeAudition?.call();
       await _audition(bookId, speakerId, generation);
     });
     _auditions = next.then<void>((_) {}, onError: (Object _, StackTrace _) {});
@@ -321,48 +343,36 @@ class CastController extends ChangeNotifier implements Casts {
       );
     }
     if (!await _hasSample(voice)) {
-      final config = await providers.configuration();
-      final provider = voice.binding.provider;
-      final region = config.value('bailian', 'region') ?? 'beijing';
-      final endpoint = provider == 'minimax'
-          ? 'https://api.minimax.io/v1'
-          : region == 'beijing'
-          ? 'https://dashscope.aliyuncs.com/api/v1'
-          : 'https://dashscope-intl.aliyuncs.com/api/v1';
-      final injected = auditionFactory?.call(config, provider);
-      final session = injected == null
-          ? TtsProviderSession.open(
-              config,
-              providers: {provider},
-              runtime: _requestRuntime,
-              queues: _ttsQueues,
-              usageLedger: _usage,
-            )
-          : null;
       try {
-        if (!await consents.request(
-          bookTitle: book.title,
-          provider: provider,
-          endpoint: endpoint,
-          content: 'voiceSample',
-        )) {
+        voice =
+            (await Casting(
+                  store,
+                  adapters: gateway.tts(() => bookId, content: 'voiceSample'),
+                ).audition(
+                  book,
+                  speakerId: speakerId,
+                  outputDirectory:
+                      '${AudioRepository(store).bookDirectory(bookId).path}/auditions',
+                ))
+                .single;
+      } on ProviderException catch (error) {
+        if (error.code == 'consentDeclined') return;
+        if (error.kind == ProviderErrorKind.invalidVoice &&
+            await gateway.recover(
+              ScheduledTask(
+                id: '$bookId:audition:$speakerId',
+                bookId: bookId,
+                chapter: 1,
+                kind: TaskKind.synthesize,
+                origin: TaskOrigin.user,
+                order: 0,
+              ),
+              error,
+            )) {
+          await _audition(bookId, speakerId, generation);
           return;
         }
-        final result =
-            await Casting(
-              store,
-              adapters: injected == null
-                  ? session!.adapters
-                  : {provider: injected},
-            ).audition(
-              book,
-              speakerId: speakerId,
-              outputDirectory:
-                  '${AudioRepository(store).bookDirectory(bookId).path}/auditions',
-            );
-        voice = result.single;
-      } finally {
-        session?.close();
+        rethrow;
       }
     }
     if (await store.get('books', bookId) == null) {
@@ -409,51 +419,4 @@ class CastController extends ChangeNotifier implements Casts {
     await auditionEngine.dispose();
     super.dispose();
   }
-}
-
-class _ProfileAdapter implements LlmAdapter {
-  _ProfileAdapter(this.service);
-  final CastController service;
-  @override
-  String get model => service.providers.value.profileModel;
-  @override
-  Future<LlmResponse> complete(LlmRequest request) async {
-    final json = jsonDecode(request.user) as Map;
-    final bookId = (json['existingCast'] as Map)['bookId'] as String;
-    final config = await service.providers.configuration();
-    if (!await service._approveProfile(bookId, config)) {
-      await service.store.put('profileFailure', bookId, {
-        'bookId': bookId,
-        'reason': 'consentDeclined',
-      });
-      throw const ProviderException(
-        provider: 'llm',
-        kind: ProviderErrorKind.invalidConfiguration,
-        code: 'consentDeclined',
-      );
-    }
-    await service.store.delete('profileFailure', bookId);
-    final adapter =
-        service.profileFactory?.call(config) ??
-        LlmSettings.fromConfiguration(config).createProfileAdapter(
-          runtime: service._requestRuntime,
-          usageLedger: service._usage,
-        );
-    try {
-      return await adapter.complete(request);
-    } finally {
-      if (adapter is OpenAiLlmAdapter) adapter.close();
-    }
-  }
-}
-
-class _UnavailableDirector implements LlmAdapter {
-  @override
-  String get model => 'unconfigured';
-  @override
-  Future<LlmResponse> complete(LlmRequest request) async =>
-      throw const ProviderException(
-        provider: 'llm',
-        kind: ProviderErrorKind.invalidConfiguration,
-      );
 }

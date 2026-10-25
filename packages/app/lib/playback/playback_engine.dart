@@ -28,3 +28,15 @@ abstract interface class PlaybackEngine {
   Future<void> setSpeed(double speed);
   Future<void> dispose();
 }
+
+class PlaybackSegment {
+  const PlaybackSegment(this.path, this.duration);
+  final String path;
+  final Duration duration;
+}
+
+/// A growing native playlist with global timeline positions and gapless tracks.
+abstract interface class GrowingPlaybackEngine implements PlaybackEngine {
+  Future<void> loadPlaylist(List<PlaybackSegment> segments);
+  Future<void> appendPlaylist(List<PlaybackSegment> segments);
+}

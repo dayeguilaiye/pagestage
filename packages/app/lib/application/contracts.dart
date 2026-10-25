@@ -28,12 +28,14 @@ class ListeningState {
     this.chapterCount = 0,
     this.line = 0,
     this.lineCount = 0,
+    this.lineRevision = 0,
     this.activeLines = const [],
     this.playing = false,
     this.buffering = false,
     this.source = ListeningSource.synthesized,
     this.position = Duration.zero,
     this.duration = Duration.zero,
+    this.durationComplete = true,
     this.speed = 1,
     this.sleepRemaining,
     this.sleepAfterChapter = false,
@@ -46,12 +48,18 @@ class ListeningState {
   final int chapterCount;
   final int line;
   final int lineCount;
+
+  /// Changes when authoritative line segmentation/source changes.
+  final int lineRevision;
   final List<int> activeLines;
   final bool playing;
   final bool buffering;
   final ListeningSource source;
   final Duration position;
   final Duration duration;
+
+  /// A growing playlist's duration covers only its available audio.
+  final bool durationComplete;
   final double speed;
   final Duration? sleepRemaining;
   final bool sleepAfterChapter;
@@ -60,7 +68,7 @@ class ListeningState {
   final String? error;
   double get progress => error == 'endOfBook'
       ? 1
-      : source == ListeningSource.system && lineCount > 0
+      : (source == ListeningSource.system || !durationComplete) && lineCount > 0
       ? (line / lineCount).clamp(0, 1)
       : duration.inMicroseconds <= 0
       ? 0
@@ -90,11 +98,13 @@ class ListeningBookmark {
     required this.chapter,
     required this.line,
     required this.progress,
+    this.sourceOffset,
   });
   final String bookId;
   final int chapter;
   final int line;
   final double progress;
+  final int? sourceOffset;
 }
 
 enum LlmProtocol { chatCompletions, responses }
@@ -218,4 +228,152 @@ abstract interface class Casts implements Listenable {
   Future<void> audition(String bookId, String speakerId);
   Future<void> stopAudition();
   Future<void> setExclusiveCount(int count);
+}
+
+enum BookPerformanceMode { audiobook, drama }
+
+enum GenerationChoice { generate, system, cancel }
+
+class GenerationPreferences {
+  const GenerationPreferences({
+    this.automatic = false,
+    this.directing = 2,
+    this.synthesis = 1,
+  });
+  final bool automatic;
+  final int directing;
+  final int synthesis;
+}
+
+class GenerationRequest {
+  const GenerationRequest({
+    required this.id,
+    required this.bookId,
+    required this.bookTitle,
+    required this.chapter,
+    required this.canGenerate,
+  });
+  final int id;
+  final String bookId;
+  final String bookTitle;
+  final int chapter;
+  final bool canGenerate;
+}
+
+class GenerationFailure {
+  const GenerationFailure({
+    required this.bookId,
+    required this.chapter,
+    required this.provider,
+    required this.reason,
+  });
+  final String bookId;
+  final int chapter;
+  final String provider;
+
+  /// Uses the same safe reason codes as CastState.reason.
+  final String reason;
+}
+
+class GenerationState {
+  const GenerationState({
+    this.preferences = const GenerationPreferences(),
+    this.request,
+    this.failures = const [],
+  });
+  final GenerationPreferences preferences;
+  final GenerationRequest? request;
+  final List<GenerationFailure> failures;
+}
+
+abstract interface class Generation
+    implements ValueListenable<GenerationState> {
+  Future<void> savePreferences(GenerationPreferences preferences);
+  void respond(int requestId, GenerationChoice choice);
+  Future<BookPerformanceMode> mode(String bookId);
+  Future<void> setMode(String bookId, BookPerformanceMode mode);
+  Future<void> resume(String bookId);
+}
+
+class VoiceOption {
+  const VoiceOption({
+    required this.id,
+    required this.name,
+    required this.provider,
+    this.description = '',
+    this.selected = false,
+  });
+  final String id;
+  final String name;
+  final String provider;
+  final String description;
+  final bool selected;
+}
+
+class VoiceRebuildNotice {
+  const VoiceRebuildNotice({
+    required this.id,
+    required this.bookId,
+    required this.speakerId,
+    required this.speakerName,
+    required this.provider,
+  });
+  final String id;
+  final String bookId;
+  final String speakerId;
+  final String speakerName;
+  final String provider;
+}
+
+abstract interface class Voices implements Listenable {
+  /// ID of a playing preset or candidate; null after playback completes/stops.
+  String? get auditioning;
+  List<VoiceRebuildNotice> get notices;
+  Future<List<VoiceOption>> presets(String bookId, String speakerId);
+  Future<void> auditionPreset(String bookId, String speakerId, String presetId);
+  Future<void> selectPreset(String bookId, String speakerId, String presetId);
+
+  /// Provider names supporting design for the current configuration and region.
+  Future<List<String>> designProviders(String bookId);
+  Future<List<VoiceOption>> candidates(String bookId, String speakerId);
+  Future<List<VoiceOption>> design(
+    String bookId,
+    String speakerId, {
+    required String provider,
+    required String description,
+  });
+  Future<void> auditionCandidate(
+    String bookId,
+    String speakerId,
+    String candidateId,
+  );
+  Future<void> selectCandidate(
+    String bookId,
+    String speakerId,
+    String candidateId,
+  );
+  Future<void> stopAudition();
+  Future<void> dismissNotice(String id);
+}
+
+class BookStorageUsage {
+  const BookStorageUsage({
+    required this.bookId,
+    required this.title,
+    required this.totalBytes,
+    required this.audioBytes,
+  });
+  final String bookId;
+  final String title;
+
+  /// Encoded book-owned records plus owned files; excludes shared SQLite overhead.
+  final int totalBytes;
+
+  /// Bytes released by clearAudio, including speech, previews and synthesis cache.
+  final int audioBytes;
+}
+
+abstract interface class AudioStorage implements Listenable {
+  Future<List<BookStorageUsage>> usage();
+  Future<void> clearAudio(String bookId);
 }
