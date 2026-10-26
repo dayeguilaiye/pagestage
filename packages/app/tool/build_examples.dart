@@ -27,10 +27,14 @@ Future<void> main(List<String> arguments) async {
   await output.create(recursive: true);
   try {
     for (final id in expected) {
-      final book = await Library(store).getBook(id);
-      if (book.chapters.length != 5) {
-        throw StateError('Each example must contain exactly five chapters.');
-      }
+      final sourceBook = await Library(store).getBook(id);
+      final book = Book(
+        id: sourceBook.id,
+        title: sourceBook.title,
+        language: sourceBook.language,
+        sourcePath: sourceBook.sourcePath,
+        chapters: [sourceBook.chapter(1)],
+      );
       final records = <Map<String, Object?>>[];
       for (final collection in ['casts', 'voices', 'casting', 'scripts']) {
         if (collection == 'casting') {
@@ -41,6 +45,7 @@ Future<void> main(List<String> arguments) async {
         } else {
           for (final row in await store.list(collection)) {
             if (row['bookId'] != id) continue;
+            if (collection == 'scripts' && row['chapterNumber'] != 1) continue;
             final key = collection == 'casts'
                 ? id
                 : collection == 'scripts'
