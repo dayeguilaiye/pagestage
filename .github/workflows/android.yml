@@ -1,8 +1,9 @@
-name: Android test APK
+name: Android APK and release
 
 on:
   push:
     branches: [main]
+    tags: ['**']
   workflow_dispatch:
 
 permissions:
@@ -10,7 +11,7 @@ permissions:
 
 concurrency:
   group: android-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
 
 jobs:
   build:
@@ -18,10 +19,38 @@ jobs:
     timeout-minutes: 45
     env:
       REQUIRE_ANDROID_SIGNING: 'true'
+    outputs:
+      prerelease: ${{ steps.version.outputs.prerelease }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           persist-credentials: false
+      - name: Resolve version
+        id: version
+        shell: python
+        run: |
+          import os
+          import re
+
+          values = {'version': '', 'prerelease': 'false'}
+          if os.environ['GITHUB_REF_TYPE'] == 'tag':
+              tag = os.environ['GITHUB_REF_NAME']
+              version = tag.removeprefix('v')
+              number = r'(?:0|[1-9][0-9]*)'
+              identifier = r'(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z-][0-9A-Za-z-]*)'
+              pattern = rf'{number}\.{number}\.{number}(?:-({identifier}(?:\.{identifier})*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?'
+              match = re.fullmatch(pattern, version)
+              if not match:
+                  raise SystemExit('Release tags must be SemVer, such as v1.2.3 or v1.2.3-rc.1')
+              values.update(version=version.split('+')[0], prerelease=str(bool(match.group(1))).lower())
+              values['name'] = f'pagestage-{tag}-android'
+              values['artifact'] = 'release-android'
+          else:
+              values['name'] = f"pagestage-{os.environ['GITHUB_RUN_NUMBER']}-{os.environ['GITHUB_SHA'][:7]}"
+              values['artifact'] = values['name']
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+              for key, value in values.items():
+                  print(f'{key}={value}', file=output)
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
@@ -62,20 +91,27 @@ jobs:
           properties.chmod(0o600)
       - name: Build release APK
         working-directory: packages/app
-        run: flutter build apk --release --build-number "$GITHUB_RUN_NUMBER"
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          args=(--release --build-number "$GITHUB_RUN_NUMBER")
+          if [[ -n "$RELEASE_VERSION" ]]; then
+            args+=(--build-name "$RELEASE_VERSION")
+          fi
+          flutter build apk "${args[@]}"
       - name: Name APK
         id: apk
         shell: bash
+        env:
+          APK_NAME: ${{ steps.version.outputs.name }}
         run: |
-          name="pagestage-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
           mkdir -p dist
-          cp packages/app/build/app/outputs/flutter-apk/app-release.apk "dist/$name.apk"
-          echo "name=$name" >> "$GITHUB_OUTPUT"
+          cp packages/app/build/app/outputs/flutter-apk/app-release.apk "dist/$APK_NAME.apk"
       - name: Upload APK
         id: upload
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: ${{ steps.apk.outputs.name }}
+          name: ${{ steps.version.outputs.artifact }}
           path: dist/*.apk
           if-no-files-found: error
           retention-days: 14
@@ -92,3 +128,33 @@ jobs:
       - name: Remove signing files
         if: always()
         run: rm -f packages/app/android/key.properties "$RUNNER_TEMP/android-test.jks"
+
+  release:
+    if: github.ref_type == 'tag'
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Collect release assets
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ needs.build.outputs.prerelease }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" dist/* --clobber
+          else
+            args=(--verify-tag --title "$RELEASE_TAG" --generate-notes)
+            if [[ "$PRERELEASE" == 'true' ]]; then
+              args+=(--prerelease)
+            fi
+            gh release create "$RELEASE_TAG" dist/* "${args[@]}"
+          fi

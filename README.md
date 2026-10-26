@@ -59,6 +59,21 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --config .pages
 
 当前验证使用假 LLM/TTS 和依据官方文档构造的离线 HTTP 契约。真实 key 的整章合成、音色区分与人工试听验收待补验。
 
+## 安装包与版本发布
+
+推送到 `main` 或手动运行 GitHub Actions 的 `Android APK and release` 工作流，会构建 APK 并保存在 Actions Artifacts 中，保留 14 天。
+
+推送版本 tag 会构建并发布同名 GitHub Release，附带 `pagestage-<tag>-android.apk`。tag 使用语义化版本，可带 `v` 前缀，例如 `v1.2.3`、`1.2.3`、`v1.2.3-rc.1`；带预发布标识的版本会标记为 Pre-release。无效的版本 tag 会使工作流失败。手动选择 tag 运行工作流也会发布该版本。
+
+APK 的版本名称取 tag 去掉 `v` 前缀和 `+` 构建元数据后的值，Android 版本代码使用 Actions 运行编号。签名使用仓库已配置的 `ANDROID_TEST_KEYSTORE_BASE64` 和 `ANDROID_TEST_KEYSTORE_PASSWORD`，与 main 分支安装包保持一致。
+
+```sh
+git tag v1.2.3
+git push origin v1.2.3
+```
+
+发布任务统一收集 `release-*` 构建产物，目前包含 Android APK。扩展平台时，在对应构建任务上传独立命名的 `release-<平台>` 产物，并把该任务加入发布任务的依赖。同一 tag 重跑时更新同名附件，保留 Release 中的其他附件。
+
 ## 开发验证
 
 ```sh
