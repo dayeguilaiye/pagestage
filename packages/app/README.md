@@ -89,8 +89,6 @@ Android 11 / API 30 起从 `ApplicationExitInfo` 读取历史崩溃与 ANR。iOS
 dart run packages/app/tool/build_examples.dart --source-dir .pagestage/examples-v5
 ```
 
-源目录需具备当前 `director-v5` 的两本公版书各五章、演员表及完整 CLI 合成结果。脚本按 64 kbps 单声道 AAC-LC 压缩，输出 M4A 和包含实际总字节数、时长的 `assets/examples/manifest.json`；macOS 使用 `afconvert`，其他系统使用 `ffmpeg`，打包本身不调用服务商。
+示例书为《阿Q正传》和 *Pride and Prejudice* 各第 1 章。源目录需具备两本书的演员表，以及首章当前 `director-v5` 剧本和完整 CLI 合成结果；打包脚本从书库中选取首章正文、剧本和音频。脚本按 64 kbps 单声道 AAC-LC 压缩，输出 M4A 和包含实际总字节数、时长的 `assets/examples/manifest.json`；macOS 使用 `afconvert`，其他系统使用 `ffmpeg`，打包本身不调用服务商。
 
-实际随包素材在 [#35](https://github.com/dayeguilaiye/pagestage/issues/35) 跟进；当前清单为空，待完成素材生产与分发条款核对后填入。2026-10-25 已获准为两本书各前五章生成当前版本剧本，第一章因三次连接失败停止，未收到可记账的服务商响应。音频合成需在剧本完成后另行确认具体请求范围。
-
-分发许可依据为 [MiniMax 开放平台用户协议](https://platform.minimaxi.com/zh/protocol/user-agreement)与[百炼服务协议](https://terms.alicdn.com/legal-agreement/terms/common_platform_service/20230728213935489/20230728213935489.html)。百炼第 7.5–7.6 条讨论生成内容权利及对外使用责任；随 App 分发所用具体音色与音频的许可结论继续记录在 #35，当前资源包不包含服务商生成音频。
+素材生成记录、分发条款核对、实际格式与体积、离线及模拟器验证见 [示例书资源](../../docs/bundled-examples.md)，对应 [#35](https://github.com/dayeguilaiye/pagestage/issues/35)。
