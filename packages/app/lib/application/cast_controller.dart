@@ -119,7 +119,7 @@ class CastController extends ChangeNotifier implements Casts {
 
   void _queueReconcile(String bookId) {
     _reconciled = _reconciled.then((_) async {
-      if (await store.get('books', bookId) == null) return;
+      if (!await store.exists('books', bookId)) return;
       try {
         final cast = await CastRepository(store).get(bookId);
         if (cast.profiledThrough == 0 ||
@@ -148,7 +148,7 @@ class CastController extends ChangeNotifier implements Casts {
         }
         await store.delete('castingFailure', bookId);
       } catch (_) {
-        if (await store.get('books', bookId) == null) return;
+        if (!await store.exists('books', bookId)) return;
         await store.put('castingFailure', bookId, {
           'bookId': bookId,
           'reason': 'interrupted',
@@ -177,7 +177,8 @@ class CastController extends ChangeNotifier implements Casts {
 
   @override
   Future<CastState> load(String bookId) async {
-    final book = await Library(store).getBook(bookId);
+    // Runs on every store change while the cast page is open.
+    final chapterCount = await Library(store).chapterCount(bookId);
     final cast = await Casting(store).getCasting(bookId);
     final tasks = scheduler.tasks
         .where((t) => t.bookId == bookId && t.kind == TaskKind.profile)
@@ -210,7 +211,7 @@ class CastController extends ChangeNotifier implements Casts {
       bookId: bookId,
       profiledThrough: cast.cast.profiledThrough,
       targetChapter: target,
-      chapterCount: book.chapters.length,
+      chapterCount: chapterCount,
       status: status,
       provider: paused?.provider == 'local'
           ? 'system'
@@ -389,7 +390,7 @@ class CastController extends ChangeNotifier implements Casts {
         rethrow;
       }
     }
-    if (await store.get('books', bookId) == null) {
+    if (!await store.exists('books', bookId)) {
       await Library(store).deleteBook(bookId);
       return;
     }

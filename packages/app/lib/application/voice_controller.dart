@@ -241,7 +241,7 @@ class VoiceController extends ChangeNotifier implements Voices {
             '${AudioRepository(store).bookDirectory(bookId).path}/designs',
       ),
     );
-    if (await store.get('books', bookId) == null) {
+    if (!await store.exists('books', bookId)) {
       await Library(store).deleteBook(bookId);
       return [];
     }
@@ -277,7 +277,7 @@ class VoiceController extends ChangeNotifier implements Voices {
   });
 
   Future<void> _play(String bookId, String id, String path, int epoch) async {
-    if (await store.get('books', bookId) == null) {
+    if (!await store.exists('books', bookId)) {
       await Library(store).deleteBook(bookId);
       return;
     }

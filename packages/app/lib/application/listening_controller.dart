@@ -585,7 +585,7 @@ class ListeningController extends ValueNotifier<ListeningState>
         _lines[snapshot.line.clamp(0, _lines.length - 1)].start;
     _lastSavedLine = _line;
     final result = _saved.then((_) async {
-      if (await store.get('books', book.id) == null) return;
+      if (!await store.exists('books', book.id)) return;
       await store.put('listening', book.id, {
         'bookId': book.id,
         'chapter': snapshot.chapter,
@@ -768,8 +768,8 @@ class ListeningController extends ValueNotifier<ListeningState>
     final bookId = _book?.id;
     if (bookId == null || _closed) return;
     unawaited(
-      store.get('books', bookId).then((book) {
-        if (book == null && !_closed && _book?.id == bookId) {
+      store.exists('books', bookId).then((exists) {
+        if (!exists && !_closed && _book?.id == bookId) {
           unawaited(
             _command(() async {
               await engine.pause();

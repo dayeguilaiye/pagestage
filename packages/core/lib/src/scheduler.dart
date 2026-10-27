@@ -385,7 +385,7 @@ class Scheduler {
     ScheduledTask task, {
     SynthesizedUtterance? utterance,
   }) async {
-    if (await store.get('books', task.bookId) == null) {
+    if (!await store.exists('books', task.bookId)) {
       // A response already in flight may arrive after a book was deleted.
       // Remove that response's artifacts before it can restore task progress.
       await Library(store).deleteBook(task.bookId);
@@ -435,7 +435,7 @@ class Scheduler {
             });
       ScheduledTask? next;
       for (final task in pending) {
-        if (await store.get('books', task.bookId) == null) {
+        if (!await store.exists('books', task.bookId)) {
           _tasks.remove(task.id);
           await store.delete('tasks', task.id);
           continue;

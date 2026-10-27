@@ -329,6 +329,13 @@ class Library implements Bookshelf {
     return Book.fromJson(data);
   }
 
+  /// Chapter count without decoding the book's text.
+  Future<int> chapterCount(String id) async {
+    final count = await store.arrayLength('books', id, r'$.chapters');
+    if (count == null) throw StateError('Book not found: $id');
+    return count;
+  }
+
   Future<List<Book>> listBooks() async =>
       (await store.list('books')).map(Book.fromJson).toList();
 

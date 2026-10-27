@@ -35,6 +35,19 @@ void main() {
     expect(await library.listBooks(), hasLength(1));
   });
 
+  test('existence and chapter count are read without the book text', () async {
+    final file = await File(
+      '${directory.path}/novel.txt',
+    ).writeAsString('第一章 初见\n你好。\n\n第二章 重逢\n又见面了。\n');
+    final book = await library.importTxt(file.path);
+    expect(await store.exists('books', book.id), isTrue);
+    expect(await library.chapterCount(book.id), 2);
+    await library.deleteBook(book.id);
+    expect(await store.exists('books', book.id), isFalse);
+    expect(await store.arrayLength('books', book.id, r'$.chapters'), isNull);
+    await expectLater(library.chapterCount(book.id), throwsStateError);
+  });
+
   test('GBK and GB18030 decode to the same chapters as UTF-8', () async {
     const text = '第一章 初见\n你好。\n';
     final utf8File = await File(

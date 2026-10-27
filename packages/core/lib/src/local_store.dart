@@ -30,7 +30,8 @@ class LocalStore {
   static QueryExecutor _open(String path) {
     final file = File(path);
     file.parent.createSync(recursive: true);
-    return NativeDatabase(file);
+    // Keeps SQLite work, including large book documents, off the UI isolate.
+    return NativeDatabase.createInBackground(file);
   }
 
   Future<void> put(
@@ -54,6 +55,29 @@ class LocalStore {
         )
         .getSingleOrNull();
     return row == null ? null : _decode(row.read<String>('value'));
+  }
+
+  /// Checks for a document without reading its payload.
+  Future<bool> exists(String collection, String key) async =>
+      await _database
+          .customSelect(
+            'SELECT 1 FROM documents WHERE collection = ? AND key = ?',
+            variables: [Variable(collection), Variable(key)],
+          )
+          .getSingleOrNull() !=
+      null;
+
+  /// Length of the JSON array at [path], read inside SQLite so a large
+  /// document is not decoded; null when the document or array is missing.
+  Future<int?> arrayLength(String collection, String key, String path) async {
+    final row = await _database
+        .customSelect(
+          'SELECT json_array_length(value, ?) AS length FROM documents '
+          'WHERE collection = ? AND key = ?',
+          variables: [Variable(path), Variable(collection), Variable(key)],
+        )
+        .getSingleOrNull();
+    return row?.read<int?>('length');
   }
 
   Future<List<Map<String, Object?>>> list(String collection) async {
