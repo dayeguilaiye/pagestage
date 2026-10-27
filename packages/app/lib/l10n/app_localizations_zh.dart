@@ -483,7 +483,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reasonInvalidResponse => '模型的回复格式不对，可以稍后继续或换个模型';
 
   @override
-  String get reasonRequestRejected => '服务商拒绝了请求，请检查模型名称，或换一个支持结构化输出的模型';
+  String get reasonRequestRejected => '服务商拒绝了请求，请检查接口地址和模型名称';
+
+  @override
+  String get reasonSchemaUnsupported =>
+      '这个接口不支持结构化输出（JSON Schema），请换一个支持的模型或服务商';
 
   @override
   String get reasonContentRejected => '服务商拒绝处理这一章的内容';

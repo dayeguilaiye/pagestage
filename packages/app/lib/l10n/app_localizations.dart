@@ -953,8 +953,14 @@ abstract class AppLocalizations {
   /// No description provided for @reasonRequestRejected.
   ///
   /// In zh, this message translates to:
-  /// **'服务商拒绝了请求，请检查模型名称，或换一个支持结构化输出的模型'**
+  /// **'服务商拒绝了请求，请检查接口地址和模型名称'**
   String get reasonRequestRejected;
+
+  /// No description provided for @reasonSchemaUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个接口不支持结构化输出（JSON Schema），请换一个支持的模型或服务商'**
+  String get reasonSchemaUnsupported;
 
   /// No description provided for @reasonContentRejected.
   ///

@@ -260,6 +260,7 @@ String providerReason(ProviderErrorKind? reason, [String? code]) =>
 /// failed after the automatic retry.
 String invalidResponseReason(String? code) => switch (code) {
   LlmFailure.requestRejected => 'requestRejected',
+  LlmFailure.schemaUnsupported => 'schemaUnsupported',
   LlmFailure.contentFilter || LlmFailure.refusal => 'contentRejected',
   LlmFailure.truncated => 'truncated',
   _ => 'invalidResponse',

@@ -536,7 +536,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reasonRequestRejected =>
-      'The provider refused the request. Check the model name, or pick a model that supports structured output';
+      'The provider refused the request. Check the endpoint and model name';
+
+  @override
+  String get reasonSchemaUnsupported =>
+      'This endpoint doesn’t support structured output (JSON Schema). Pick a model or provider that does';
 
   @override
   String get reasonContentRejected =>

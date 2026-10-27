@@ -38,6 +38,7 @@ abstract final class Labels {
         'consentDeclined' => l.reasonConsentDeclined,
         'invalidResponse' => l.reasonInvalidResponse,
         'requestRejected' => l.reasonRequestRejected,
+        'schemaUnsupported' => l.reasonSchemaUnsupported,
         'contentRejected' => l.reasonContentRejected,
         'truncated' => l.reasonTruncated,
         'interrupted' => l.reasonInterrupted,

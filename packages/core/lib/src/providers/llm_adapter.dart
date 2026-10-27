@@ -118,15 +118,42 @@ class OpenAiLlmAdapter implements LlmAdapter {
     if (_ownsClient) _client.close();
   }
 
+  /// Chat Completions endpoints that answered strict JSON Schema through
+  /// Responses instead, by base URL and model, for this process.
+  static final _responsesForSchema = <String>{};
+
+  static void forgetSchemaFallbacks() => _responsesForSchema.clear();
+
   @override
   Future<LlmResponse> complete(LlmRequest request) async {
     if (request.maxAttempts < 1 || request.maxAttempts > 3) {
       throw ArgumentError.value(request.maxAttempts, 'maxAttempts');
     }
+    final endpoint = '$_baseUrl $model';
+    var api = jsonSchema && _responsesForSchema.contains(endpoint)
+        ? LlmApi.responses
+        : this.api;
     for (var attempt = 1; ; attempt++) {
       try {
-        return await _completeOnce(request, attempt);
+        final response = await _completeOnce(request, attempt, api);
+        if (api != this.api) _responsesForSchema.add(endpoint);
+        return response;
       } on ProviderException catch (error) {
+        // Some Chat Completions endpoints, such as DeepSeek, only offer JSON
+        // object mode. Strict JSON Schema may still be served by Responses at
+        // the same base URL; the refused request was not billed.
+        if (jsonSchema &&
+            error.code == LlmFailure.schemaUnsupported &&
+            api == LlmApi.chatCompletions) {
+          api = LlmApi.responses;
+          attempt--;
+          runtime.onEvent('llm: JSON Schema refused; retrying via Responses.');
+          continue;
+        }
+        if (api != this.api && error.code == LlmFailure.requestRejected) {
+          _responsesForSchema.remove(endpoint);
+          throw _invalid(LlmFailure.schemaUnsupported);
+        }
         final retryable =
             error.kind == ProviderErrorKind.unavailable &&
             const {
@@ -148,7 +175,11 @@ class OpenAiLlmAdapter implements LlmAdapter {
     }
   }
 
-  Future<LlmResponse> _completeOnce(LlmRequest request, int attempt) async {
+  Future<LlmResponse> _completeOnce(
+    LlmRequest request,
+    int attempt,
+    LlmApi api,
+  ) async {
     final path = _baseUrl.path.replaceFirst(RegExp(r'/$'), '');
     final isChat = api == LlmApi.chatCompletions;
     final endpoint = _baseUrl.replace(
@@ -440,6 +471,13 @@ class OpenAiLlmAdapter implements LlmAdapter {
       );
     }
     if (_moderated(error)) return _invalid(LlmFailure.contentFilter);
+    final param = error is Map ? '${error['param']}' : '';
+    final message = error is Map ? '${error['message']}' : '';
+    if (status < 500 &&
+        (param.contains('response_format') ||
+            message.contains('response_format'))) {
+      return _invalid(LlmFailure.schemaUnsupported);
+    }
     if (status == 429) {
       return const ProviderException(
         provider: 'llm',

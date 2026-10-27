@@ -11,6 +11,7 @@ import '../support/fake_request_clock.dart';
 // Synthetic responses from official OpenAI documentation, not recorded traffic.
 // https://developers.openai.com/api/docs/guides/structured-outputs
 void main() {
+  setUp(OpenAiLlmAdapter.forgetSchemaFallbacks);
   const request = LlmRequest(
     system: 'Return JSON.',
     user: 'Profile this chapter.',
@@ -326,6 +327,95 @@ void main() {
       }
     });
   }
+  group('Chat Completions refusing JSON Schema', () {
+    final refused = http.Response(
+      jsonEncode({
+        'error': {
+          'message': 'This response_format type is unavailable now',
+          'type': 'invalid_request_error',
+          'param': null,
+          'code': 'invalid_request_error',
+        },
+      }),
+      400,
+    );
+    OpenAiLlmAdapter adapter(MockClient client) => OpenAiLlmAdapter(
+      runtime: FakeRequestClock().runtime,
+      stream: false,
+      baseUrl: Uri.parse('https://example.invalid/v1'),
+      apiKey: 'secret-key',
+      model: 'model',
+      client: client,
+    );
+
+    test('answers through Responses with the same strict schema', () async {
+      final paths = <String>[];
+      final client = MockClient((incoming) async {
+        paths.add(incoming.url.path);
+        if (incoming.url.path.endsWith('/chat/completions')) return refused;
+        final body = jsonDecode(incoming.body) as Map;
+        final format = (body['text'] as Map)['format'] as Map;
+        expect(format['type'], 'json_schema');
+        expect(format['strict'], true);
+        expect(format['schema'], request.schema);
+        expect((body['input'] as List).first, {
+          'role': 'system',
+          'content': request.system,
+        });
+        return http.Response(
+          jsonEncode({
+            'status': 'completed',
+            'output': [
+              {
+                'type': 'message',
+                'content': [
+                  {'type': 'output_text', 'text': '{"characters":["林舟"]}'},
+                ],
+              },
+            ],
+          }),
+          200,
+          headers: {'content-type': 'application/json; charset=utf-8'},
+        );
+      });
+      final result = await adapter(client).complete(request);
+      expect(result.data, {
+        'characters': ['林舟'],
+      });
+      expect(result.attempts, 1);
+      // Later requests go straight to Responses.
+      await adapter(client).complete(request);
+      expect(paths, ['/v1/chat/completions', '/v1/responses', '/v1/responses']);
+    });
+
+    test('reports unsupported structured output without Responses', () async {
+      final paths = <String>[];
+      final client = MockClient((incoming) async {
+        paths.add(incoming.url.path);
+        return incoming.url.path.endsWith('/chat/completions')
+            ? refused
+            : http.Response('{"error":{"message":"Not Found"}}', 404);
+      });
+      for (var i = 0; i < 2; i++) {
+        await expectLater(
+          adapter(client).complete(request),
+          throwsA(
+            isA<ProviderException>().having(
+              (e) => e.code,
+              'code',
+              LlmFailure.schemaUnsupported,
+            ),
+          ),
+        );
+      }
+      expect(paths, [
+        '/v1/chat/completions',
+        '/v1/responses',
+        '/v1/chat/completions',
+        '/v1/responses',
+      ]);
+    });
+  });
   test('classifies unusable replies with fixed codes', () async {
     Map<String, Object?> chat(String finish, {String content = '{}'}) => {
       'choices': [

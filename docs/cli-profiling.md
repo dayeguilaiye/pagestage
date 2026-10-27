@@ -13,7 +13,7 @@ dart run packages/core/bin/pagestage.dart profile <book-id> --through 2
 dart run packages/core/bin/pagestage.dart profile <book-id> --through 5 --batch-size 2
 ```
 
-`LLM_API` 接受 `chat-completions` 或 `responses`，默认 `chat-completions`。`LLM_MODEL` 可为两个模型槽位提供共同值；`LLM_PROFILE_MODEL` 覆盖建档槽位，`LLM_DIRECTOR_MODEL` 覆盖导演槽位，导演默认沿用建档模型。`LLM_JSON_MODE` 默认 `schema`，使用严格 JSON Schema 输出；兼容服务商可显式设置为 `object`，建档模块仍会校验输出结构和角色关联。
+`LLM_API` 接受 `chat-completions` 或 `responses`，默认 `chat-completions`。`LLM_MODEL` 可为两个模型槽位提供共同值；`LLM_PROFILE_MODEL` 覆盖建档槽位，`LLM_DIRECTOR_MODEL` 覆盖导演槽位，导演默认沿用建档模型。`LLM_JSON_MODE` 默认 `schema`，使用严格 JSON Schema 输出；兼容服务商可显式设置为 `object`，建档模块仍会校验输出结构和角色关联。部分 Chat Completions 接口不支持 `json_schema`，例如 [DeepSeek](https://api-docs.deepseek.com/zh-cn/api/create-chat-completion) 只接受 `text` 和 `json_object`。这类接口以 400 拒绝请求时（不计费），适配器改走同一地址的 Responses 接口，仍使用严格 schema，并在本进程内记住该地址和模型；Responses 也不可用时报告 `schema_unsupported`。
 
 `LLM_STREAM` 或配置字段 `llm.stream` 取 `"true"` 或 `"false"`，默认 `true`，可显式设为 `false`。开启后以服务端事件流接收回复，Responses 读取 `response.completed` 事件，Chat Completions 拼接增量并请求 `stream_options.include_usage`；连接在生成期间持续有数据，避免代理或移动网络在长回复完成前断开空闲连接。原型实测经透明代理时，非流式请求约 25 秒无数据即被断开，开启流式后正常完成，见[原型报告](spike-report.md)。
 

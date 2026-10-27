@@ -110,7 +110,9 @@ class Profiler {
             );
             break;
           }
-          if (error.code == LlmFailure.requestRejected || attempt == 2) {
+          if (error.code == LlmFailure.requestRejected ||
+              error.code == LlmFailure.schemaUnsupported ||
+              attempt == 2) {
             rethrow;
           }
         }

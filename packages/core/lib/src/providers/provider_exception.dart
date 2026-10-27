@@ -20,9 +20,12 @@ abstract final class LlmFailure {
   /// The answer reached the output length limit.
   static const truncated = 'truncated';
 
-  /// The request itself was refused, such as an unknown model or unsupported
-  /// structured output. Every later request fails the same way.
+  /// The request itself was refused, such as an unknown model. Every later
+  /// request fails the same way.
   static const requestRejected = 'request_rejected';
+
+  /// The endpoint refused the structured output format.
+  static const schemaUnsupported = 'schema_unsupported';
 
   /// The answer could not be read; another request may succeed.
   static const malformed = 'malformed';
