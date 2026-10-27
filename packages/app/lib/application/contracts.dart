@@ -7,6 +7,14 @@ abstract interface class Diagnostics {
 
   /// Opens this project's new GitHub issue page in the system browser.
   Future<void> feedback();
+
+  /// Journals why generation paused, using fixed categories only.
+  Future<void> recordPause({
+    required String provider,
+    required String task,
+    required String reason,
+    String? code,
+  });
 }
 
 /// Application capabilities consumed by screens and their test doubles.

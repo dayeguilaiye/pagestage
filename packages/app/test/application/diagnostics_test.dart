@@ -132,4 +132,40 @@ void main() {
       ]);
     },
   );
+  test('pauses export fixed categories and drop anything else', () async {
+    await log.recordPause(
+      provider: 'llm',
+      task: 'profile',
+      reason: 'invalidResponse',
+      code: 'schema_unsupported',
+    );
+    await log.recordPause(
+      provider: 'sk-private-value',
+      task: 'profile',
+      reason: 'invalidResponse',
+      code: '正文不可泄露 {"secret": 1}',
+    );
+    final report = jsonDecode(await (await log.report()).readAsString()) as Map;
+    final pauses = (report['events'] as List)
+        .cast<Map>()
+        .where((e) => e['kind'] == 'pause')
+        .map((e) => Map.of(e)..remove('at'))
+        .toList();
+    expect(pauses, [
+      {
+        'source': 'scheduler',
+        'kind': 'pause',
+        'provider': 'llm',
+        'task': 'profile',
+        'reason': 'invalidResponse',
+        'code': 'schema_unsupported',
+      },
+      {
+        'source': 'scheduler',
+        'kind': 'pause',
+        'task': 'profile',
+        'reason': 'invalidResponse',
+      },
+    ]);
+  });
 }

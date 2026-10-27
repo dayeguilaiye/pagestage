@@ -68,6 +68,18 @@ class AppServices {
       casts.scheduler,
     );
     listening.attachGeneration(generation);
+    final pauses = casts.scheduler.events.listen((event) {
+      final task = event.task;
+      if (task.status != TaskStatus.paused) return;
+      unawaited(
+        diagnostics?.recordPause(
+          provider: task.provider ?? 'local',
+          task: task.kind.name,
+          reason: task.reason?.name ?? 'unknown',
+          code: task.code,
+        ),
+      );
+    });
     final voices = await VoiceController.open(storage.store, casts, listening);
     final audioStorage = AudioStorageController(
       storage.store,
@@ -131,6 +143,7 @@ class AppServices {
       diagnostics: diagnostics,
       onClose: () async {
         storage.library.editBook = null;
+        await pauses.cancel();
         await interruptions.cancel();
         await noisy.cancel();
         listening.removeListener(stopSampleOnPlayback);

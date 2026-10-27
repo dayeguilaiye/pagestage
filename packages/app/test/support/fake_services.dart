@@ -378,6 +378,14 @@ class FakeDiagnostics implements Diagnostics {
     return (_feedback = Completer<void>()).future;
   }
 
+  @override
+  Future<void> recordPause({
+    required String provider,
+    required String task,
+    required String reason,
+    String? code,
+  }) async {}
+
   void finishExport([Object? error]) => _finish(_export!, error);
   void finishFeedback([Object? error]) => _finish(_feedback!, error);
 

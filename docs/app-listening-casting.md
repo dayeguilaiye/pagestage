@@ -58,7 +58,7 @@ key 保存在 iOS Keychain 和 Android Keystore 支持的安全存储中。普�
 
 TXT 和无 DRM EPUB 共用 `Library.importFile`。EPUB 导航目录或 NCX 中的锚点按正文阅读顺序划分章节，支持同文件多章与跨文件合章。前三章正文一致的新版文件合并到原书；App 先停止该书试听与播放，等待生成任务保存检查点，再合并数据并刷新阅读与播放状态。未变化的章节保留原文区间、剧本及音频；变化章节的书签回到章首。
 
-设置通过 `Diagnostics` 接口导出本地报告或打开 GitHub 新建 Issue 页面。Dart 框架与未处理的异步异常记录固定类别及源码位置；Android 使用 `ApplicationExitInfo`，iOS 使用 MetricKit，提取系统数值摘要并去重入库。日志最多两份、每份 128 KiB。导出再次按字段白名单过滤，经系统分享面板交给用户选择去向，无自动上传。
+设置通过 `Diagnostics` 接口导出本地报告或打开 GitHub 新建 Issue 页面。Dart 框架与未处理的异步异常记录固定类别及源码位置；生成任务暂停时记录服务商、任务类型、错误类别和固定错误码；Android 使用 `ApplicationExitInfo`，iOS 使用 MetricKit，提取系统数值摘要并去重入库。日志最多两份、每份 128 KiB。导出再次按字段白名单过滤，经系统分享面板交给用户选择去向，无自动上传。
 
 ## 开发验证
 

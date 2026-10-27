@@ -99,6 +99,40 @@ class DiagnosticLog implements Diagnostics {
     });
   }
 
+  /// Provider names, task kinds and error codes are fixed program values;
+  /// anything else is dropped rather than journaled.
+  static final _pauseFields = {
+    'provider': RegExp(r'^(?:llm|minimax|bailian|local|system)$'),
+    'task': RegExp(r'^(?:profile|direct|synthesize)$'),
+    'reason': RegExp(r'^[A-Za-z]{1,40}$'),
+    'code': RegExp(r'^[A-Za-z0-9_. -]{1,64}$'),
+  };
+
+  static Map<String, Object?> _pause(Map fields) => {
+    for (final entry in _pauseFields.entries)
+      if (fields[entry.key] case final String value
+          when entry.value.hasMatch(value))
+        entry.key: value,
+  };
+
+  @override
+  Future<void> recordPause({
+    required String provider,
+    required String task,
+    required String reason,
+    String? code,
+  }) => _append({
+    'at': DateTime.now().toUtc().toIso8601String(),
+    'source': 'scheduler',
+    'kind': 'pause',
+    ..._pause({
+      'provider': provider,
+      'task': task,
+      'reason': reason,
+      'code': code,
+    }),
+  });
+
   Future<void> _append(Map<String, Object?> event) {
     final next = _writes.then((_) async {
       await directory.create(recursive: true);
@@ -219,6 +253,7 @@ class DiagnosticLog implements Diagnostics {
             'flutter',
             'exception',
             'crash',
+            'pause',
             for (final kind in ProviderErrorKind.values)
               'provider_${kind.name}',
           };
@@ -228,6 +263,7 @@ class DiagnosticLog implements Diagnostics {
                 'zone',
                 'application',
                 'native',
+                'scheduler',
               }.contains(source) ||
               !allowedKinds.contains(kind)) {
             continue;
@@ -239,6 +275,7 @@ class DiagnosticLog implements Diagnostics {
             'at': stamp?.toUtc().toIso8601String(),
             'source': source,
             'kind': kind,
+            if (kind == 'pause') ..._pause(event),
           };
           if (event['frames'] is List) {
             clean['frames'] = (event['frames'] as List)
