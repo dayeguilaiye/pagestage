@@ -244,13 +244,23 @@ class _GatewayTts implements TtsAdapter, VoiceDesignAdapter {
       });
 }
 
-String providerReason(ProviderErrorKind? reason) => switch (reason) {
-  ProviderErrorKind.invalidKey => 'unauthorized',
-  ProviderErrorKind.insufficientBalance => 'quotaExceeded',
-  ProviderErrorKind.rateLimited => 'rateLimited',
-  ProviderErrorKind.unavailable => 'network',
-  ProviderErrorKind.invalidResponse => 'invalidResponse',
-  ProviderErrorKind.invalidVoice => 'voiceUnavailable',
-  ProviderErrorKind.invalidConfiguration => 'missingKey',
-  null => 'interrupted',
+String providerReason(ProviderErrorKind? reason, [String? code]) =>
+    switch (reason) {
+      ProviderErrorKind.invalidKey => 'unauthorized',
+      ProviderErrorKind.insufficientBalance => 'quotaExceeded',
+      ProviderErrorKind.rateLimited => 'rateLimited',
+      ProviderErrorKind.unavailable => 'network',
+      ProviderErrorKind.invalidResponse => invalidResponseReason(code),
+      ProviderErrorKind.invalidVoice => 'voiceUnavailable',
+      ProviderErrorKind.invalidConfiguration => 'missingKey',
+      null => 'interrupted',
+    };
+
+/// Distinguishes a request the model setting cannot serve from content that
+/// failed after the automatic retry.
+String invalidResponseReason(String? code) => switch (code) {
+  LlmFailure.requestRejected => 'requestRejected',
+  LlmFailure.contentFilter || LlmFailure.refusal => 'contentRejected',
+  LlmFailure.truncated => 'truncated',
+  _ => 'invalidResponse',
 };

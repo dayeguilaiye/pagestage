@@ -9,6 +9,29 @@ enum ProviderErrorKind {
   invalidConfiguration,
 }
 
+/// Fixed codes on LLM [ProviderErrorKind.invalidResponse] failures.
+abstract final class LlmFailure {
+  /// Provider moderation refused the input or the answer.
+  static const contentFilter = 'content_filter';
+
+  /// The model declined to answer.
+  static const refusal = 'refusal';
+
+  /// The answer reached the output length limit.
+  static const truncated = 'truncated';
+
+  /// The request itself was refused, such as an unknown model or unsupported
+  /// structured output. Every later request fails the same way.
+  static const requestRejected = 'request_rejected';
+
+  /// The answer could not be read; another request may succeed.
+  static const malformed = 'malformed';
+
+  /// The same input fails again, while other chapters can still succeed.
+  static bool inputBound(String? code) =>
+      code == contentFilter || code == refusal || code == truncated;
+}
+
 /// Contains only a safe category and optional machine-readable error code.
 /// Raw provider messages and request/response bodies never enter this error.
 class ProviderException implements Exception {

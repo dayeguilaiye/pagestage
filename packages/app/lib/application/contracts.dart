@@ -214,6 +214,7 @@ class CastState {
     this.status = ProfilingStatus.idle,
     this.provider,
     this.reason,
+    this.skippedChapters = const [],
     this.members = const [],
   });
   final String bookId;
@@ -223,6 +224,9 @@ class CastState {
   final ProfilingStatus status;
   final String? provider;
   final String? reason;
+
+  /// Profiled chapters the provider would not process, in order.
+  final List<int> skippedChapters;
   final List<CastMember> members;
 }
 

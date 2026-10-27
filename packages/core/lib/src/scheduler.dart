@@ -46,6 +46,7 @@ class ScheduledTask {
     this.completedUtterances = 0,
     this.provider,
     this.reason,
+    this.code,
   });
   final String id;
   final String bookId;
@@ -59,12 +60,16 @@ class ScheduledTask {
   final String? provider;
   final ProviderErrorKind? reason;
 
+  /// The pause's fixed [ProviderException.code], when it has one.
+  final String? code;
+
   ScheduledTask copyWith({
     TaskStatus? status,
     TaskOrigin? origin,
     int? completedUtterances,
     String? provider,
     ProviderErrorKind? reason,
+    String? code,
   }) => ScheduledTask(
     id: id,
     bookId: bookId,
@@ -77,6 +82,7 @@ class ScheduledTask {
     completedUtterances: completedUtterances ?? this.completedUtterances,
     provider: provider,
     reason: reason,
+    code: code,
   );
   Map<String, Object?> toJson() => {
     'id': id,
@@ -90,6 +96,7 @@ class ScheduledTask {
     'completedUtterances': completedUtterances,
     'provider': provider,
     'reason': reason?.name,
+    'code': code,
   };
   factory ScheduledTask.fromJson(Map<String, Object?> json) => ScheduledTask(
     id: json['id'] as String,
@@ -105,6 +112,7 @@ class ScheduledTask {
     reason: json['reason'] == null
         ? null
         : ProviderErrorKind.values.byName(json['reason'] as String),
+    code: json['code'] as String?,
   );
 }
 
@@ -291,6 +299,20 @@ class Scheduler {
     }
   }
 
+  /// Drops waiting profile tasks past [through]; finished chapters stay.
+  Future<void> limitProfile(String bookId, int through) => _command(() async {
+    for (final task in tasks.where(
+      (t) =>
+          t.bookId == bookId &&
+          t.kind == TaskKind.profile &&
+          t.chapter > through &&
+          (t.status == TaskStatus.queued || t.status == TaskStatus.paused),
+    )) {
+      _tasks.remove(task.id);
+      await store.delete('tasks', task.id);
+    }
+  });
+
   /// Explicit cleanup cancels queued generation while retaining profile tasks.
   Future<void> cancelGeneration(String bookId) => _command(() async {
     for (final task in tasks.where(
@@ -460,6 +482,7 @@ class Scheduler {
             status: TaskStatus.paused,
             provider: error.provider,
             reason: error.kind,
+            code: error.code,
           ),
         );
       } catch (_) {

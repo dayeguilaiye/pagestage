@@ -128,6 +128,36 @@ void main() {
       expect((await casts.load(book.id)).status, ProfilingStatus.complete);
     },
   );
+  test('profiling a paused book moves its target down and continues', () async {
+    llm.before = (chapter) {
+      if (chapter == 1) {
+        throw const ProviderException(
+          provider: 'llm',
+          kind: ProviderErrorKind.invalidResponse,
+          code: LlmFailure.requestRejected,
+        );
+      }
+    };
+    await casts.profile(book.id, through: 2);
+    await casts.idle;
+    final paused = await casts.load(book.id);
+    expect(paused.status, ProfilingStatus.paused);
+    expect(paused.targetChapter, 2);
+    expect(paused.reason, 'requestRejected');
+    llm.before = null;
+    await casts.profile(book.id, through: 1);
+    await casts.idle;
+    final done = await casts.load(book.id);
+    expect(done.status, ProfilingStatus.complete);
+    expect(done.profiledThrough, 1);
+    expect(done.targetChapter, 1);
+    expect(
+      casts.scheduler.tasks.where(
+        (t) => t.kind == TaskKind.profile && t.chapter == 2,
+      ),
+      isEmpty,
+    );
+  });
   test(
     'reopening interrupted profiling continues from completed chapters',
     () async {

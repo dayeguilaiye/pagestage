@@ -215,11 +215,12 @@ class CastController extends ChangeNotifier implements Casts {
       provider: paused?.provider == 'local'
           ? 'system'
           : paused?.provider ?? (failure == null ? null : 'system'),
+      skippedChapters: cast.cast.skippedChapters.keys.toList()..sort(),
       reason:
           failure?['reason'] as String? ??
           (paused?.provider == 'local'
               ? 'interrupted'
-              : _reason(paused?.reason)),
+              : _reason(paused?.reason, paused?.code)),
       members: [
         for (final speaker in cast.cast.speakers)
           CastMember(
@@ -238,16 +239,17 @@ class CastController extends ChangeNotifier implements Casts {
     );
   }
 
-  static String? _reason(ProviderErrorKind? reason) => switch (reason) {
-    null => null,
-    ProviderErrorKind.invalidKey => 'unauthorized',
-    ProviderErrorKind.insufficientBalance => 'quotaExceeded',
-    ProviderErrorKind.rateLimited => 'rateLimited',
-    ProviderErrorKind.unavailable => 'network',
-    ProviderErrorKind.invalidResponse => 'invalidResponse',
-    ProviderErrorKind.invalidVoice => 'invalidResponse',
-    ProviderErrorKind.invalidConfiguration => 'missingKey',
-  };
+  static String? _reason(ProviderErrorKind? reason, String? code) =>
+      switch (reason) {
+        null => null,
+        ProviderErrorKind.invalidKey => 'unauthorized',
+        ProviderErrorKind.insufficientBalance => 'quotaExceeded',
+        ProviderErrorKind.rateLimited => 'rateLimited',
+        ProviderErrorKind.unavailable => 'network',
+        ProviderErrorKind.invalidResponse => invalidResponseReason(code),
+        ProviderErrorKind.invalidVoice => 'invalidResponse',
+        ProviderErrorKind.invalidConfiguration => 'missingKey',
+      };
 
   Future<bool> _approveProfile(
     String bookId,
@@ -270,10 +272,22 @@ class CastController extends ChangeNotifier implements Casts {
     book.chapter(through);
     final config = await providers.configuration();
     if (!await _approveProfile(bookId, config)) return;
+    final paused = scheduler.tasks.any(
+      (t) =>
+          t.bookId == bookId &&
+          t.kind == TaskKind.profile &&
+          t.status == TaskStatus.paused,
+    );
     final old = (await store.get('profiling', bookId))?['through'] as int? ?? 0;
-    final target = through > old ? through : old;
+    // A paused book may move its target either way; a running one only extends.
+    final target = paused || through > old ? through : old;
     await store.put('profiling', bookId, {'bookId': bookId, 'through': target});
+    await scheduler.limitProfile(bookId, target);
     await scheduler.enqueue(bookId, TaskKind.profile, through: target);
+    if (paused) {
+      await store.delete('profileFailure', bookId);
+      await scheduler.resume(bookId: bookId, kind: TaskKind.profile);
+    }
     _queueReconcile(bookId);
   }
 

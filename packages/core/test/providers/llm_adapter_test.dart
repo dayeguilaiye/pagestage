@@ -326,6 +326,117 @@ void main() {
       }
     });
   }
+  test('classifies unusable replies with fixed codes', () async {
+    Map<String, Object?> chat(String finish, {String content = '{}'}) => {
+      'choices': [
+        {
+          'finish_reason': finish,
+          'message': {'content': content, 'refusal': null},
+        },
+      ],
+    };
+    for (final (api, status, body, code) in [
+      (LlmApi.chatCompletions, 200, chat('length'), LlmFailure.truncated),
+      (
+        LlmApi.chatCompletions,
+        200,
+        chat('content_filter'),
+        LlmFailure.contentFilter,
+      ),
+      (
+        LlmApi.chatCompletions,
+        200,
+        chat('sensitive'),
+        LlmFailure.contentFilter,
+      ),
+      (
+        LlmApi.chatCompletions,
+        200,
+        chat('stop', content: 'not json'),
+        LlmFailure.malformed,
+      ),
+      (
+        LlmApi.chatCompletions,
+        400,
+        {
+          'error': {
+            'code': 'data_inspection_failed',
+            'type': 'data_inspection_failed',
+            'message': 'Input data may contain inappropriate content.',
+          },
+        },
+        LlmFailure.contentFilter,
+      ),
+      (
+        LlmApi.chatCompletions,
+        400,
+        {
+          'error': {
+            'message': 'Content Exists Risk',
+            'type': 'invalid_request_error',
+          },
+        },
+        LlmFailure.contentFilter,
+      ),
+      (
+        LlmApi.chatCompletions,
+        400,
+        {
+          'error': {
+            'code': 'model_not_found',
+            'message': 'The model does not exist.',
+          },
+        },
+        LlmFailure.requestRejected,
+      ),
+      (
+        LlmApi.responses,
+        200,
+        {
+          'status': 'incomplete',
+          'incomplete_details': {'reason': 'max_output_tokens'},
+          'output': [],
+        },
+        LlmFailure.truncated,
+      ),
+      (
+        LlmApi.responses,
+        200,
+        {
+          'status': 'incomplete',
+          'incomplete_details': {'reason': 'content_filter'},
+          'output': [],
+        },
+        LlmFailure.contentFilter,
+      ),
+    ]) {
+      final adapter = OpenAiLlmAdapter(
+        runtime: FakeRequestClock().runtime,
+        stream: false,
+        baseUrl: Uri.parse('https://example.invalid/v1'),
+        apiKey: 'secret-key',
+        model: 'model',
+        api: api,
+        client: MockClient(
+          (_) async => http.Response(jsonEncode(body), status),
+        ),
+      );
+      await expectLater(
+        adapter.complete(request),
+        throwsA(
+          isA<ProviderException>()
+              .having((e) => e.kind, 'kind', ProviderErrorKind.invalidResponse)
+              .having((e) => e.code, 'code', code)
+              .having(
+                (e) => e.toString(),
+                'message',
+                isNot(contains('inappropriate')),
+              ),
+        ),
+        reason: '$api $status $body',
+      );
+    }
+  });
   test(
     'distinguishes connection failure and timeout without exposing details',
     () async {

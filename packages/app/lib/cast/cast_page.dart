@@ -171,15 +171,16 @@ class _CastPageState extends State<CastPage> {
       cast.status == ProfilingStatus.queued ||
       cast.status == ProfilingStatus.running;
 
-  /// Profiling must reach past this chapter to add anything.
-  int _floor(CastState cast) => math.max(
-    cast.profiledThrough,
-    _working(cast) || cast.status == ProfilingStatus.paused
-        ? cast.targetChapter
-        : 0,
-  );
+  /// Profiling must reach past this chapter to add anything. A paused target
+  /// can still move either way, so only finished chapters bound it.
+  int _floor(CastState cast) =>
+      math.max(cast.profiledThrough, _working(cast) ? cast.targetChapter : 0);
 
   int _defaultThrough(CastState cast) {
+    if (cast.status == ProfilingStatus.paused &&
+        cast.targetChapter > _floor(cast)) {
+      return cast.targetChapter;
+    }
     final count = _count(cast);
     return math.min(count, _floor(cast) + 10);
   }
@@ -303,6 +304,11 @@ class _CastPageState extends State<CastPage> {
     final floor = _floor(cast);
     final whole = count > 0 && cast.profiledThrough >= count;
     final canProfile = !_busy && count > 0 && through > floor;
+    // A paused range continues from the main button; a pause after the range
+    // finished (casting) is retried from the banner.
+    final unfinished =
+        cast.status == ProfilingStatus.paused &&
+        cast.targetChapter > cast.profiledThrough;
     final tag = switch (cast.status) {
       ProfilingStatus.idle => null,
       ProfilingStatus.queued => PsTag(l.statusQueued),
@@ -377,6 +383,19 @@ class _CastPageState extends State<CastPage> {
                   style: PsType.subhead.copyWith(color: p.ink2),
                 ),
               ),
+            if (cast.skippedChapters.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: PsSpace.s2),
+                child: Text(
+                  l.profilingSkipped(
+                    cast.skippedChapters.join(l.chapterListSeparator),
+                  ),
+                  style: PsType.caption.copyWith(
+                    color: p.ink2,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ),
             if (cast.status == ProfilingStatus.paused)
               Padding(
                 padding: const EdgeInsets.only(top: PsSpace.s4),
@@ -387,8 +406,8 @@ class _CastPageState extends State<CastPage> {
                     Labels.provider(l, cast.provider),
                     Labels.pauseReason(l, cast.reason),
                   ),
-                  actionLabel: l.resumeProfiling,
-                  onAction: _busy
+                  actionLabel: unfinished ? null : l.retry,
+                  onAction: unfinished || _busy
                       ? null
                       : () => _run(() => _casts.resume(widget.book.id)),
                 ),
@@ -416,7 +435,9 @@ class _CastPageState extends State<CastPage> {
               ),
               const SizedBox(height: PsSpace.s3),
               PsButton(
-                label: cast.profiledThrough == 0 && !_working(cast)
+                label: unfinished
+                    ? l.resumeProfilingTo(through)
+                    : cast.profiledThrough == 0 && !_working(cast)
                     ? l.startProfiling
                     : l.extendProfiling,
                 variant: PsButtonVariant.primary,

@@ -150,10 +150,74 @@ void main() {
     );
     expect(find.text('已暂停'), findsOneWidget);
     expect(find.text('大模型：请求太频繁，过一会儿再继续'), findsOneWidget);
+    // One way on: the main button continues to the paused target.
+    expect(find.text('重试'), findsNothing);
+    expect(find.text('第 10 章'), findsOneWidget);
 
-    await tester.tap(find.text('继续建档'));
+    await tester.tap(find.text('继续建档到第 10 章'));
+    await tester.pumpAndSettle();
+    expect(fakes.casts.profiles, [(_bookId, 10)]);
+  });
+
+  testWidgets('a paused target can be moved before continuing', (tester) async {
+    final fakes = await _openCast(
+      tester,
+      const CastState(
+        bookId: _bookId,
+        profiledThrough: 3,
+        targetChapter: 10,
+        chapterCount: 30,
+        status: ProfilingStatus.paused,
+        provider: 'llm',
+        reason: 'invalidResponse',
+      ),
+    );
+    await tester.tap(find.text('建档到'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('第8章'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('继续建档到第 8 章'));
+    await tester.pumpAndSettle();
+    expect(fakes.casts.profiles, [(_bookId, 8)]);
+    expect(fakes.casts.resumes, isEmpty);
+  });
+
+  testWidgets('a pause after the range finished is retried from the banner', (
+    tester,
+  ) async {
+    final fakes = await _openCast(
+      tester,
+      const CastState(
+        bookId: _bookId,
+        profiledThrough: 10,
+        targetChapter: 10,
+        chapterCount: 30,
+        status: ProfilingStatus.paused,
+        provider: 'system',
+        reason: 'interrupted',
+      ),
+    );
+    expect(find.text('继续往后建档'), findsOneWidget);
+
+    await tester.tap(find.text('重试'));
     await tester.pumpAndSettle();
     expect(fakes.casts.resumes, [_bookId]);
+  });
+
+  testWidgets('skipped chapters are listed under the progress', (tester) async {
+    await _openCast(
+      tester,
+      const CastState(
+        bookId: _bookId,
+        profiledThrough: 10,
+        targetChapter: 10,
+        chapterCount: 30,
+        status: ProfilingStatus.complete,
+        skippedChapters: [3, 7],
+      ),
+    );
+    expect(find.text('已跳过第 3、7 章：服务商没能处理这些内容'), findsOneWidget);
   });
 
   testWidgets('the cast lists everyone with voices, collapsed profiles', (

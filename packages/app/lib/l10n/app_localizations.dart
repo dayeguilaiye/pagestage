@@ -854,11 +854,23 @@ abstract class AppLocalizations {
   /// **'{provider}：{reason}'**
   String profilingPausedBody(String provider, String reason);
 
-  /// No description provided for @resumeProfiling.
+  /// No description provided for @resumeProfilingTo.
   ///
   /// In zh, this message translates to:
-  /// **'继续建档'**
-  String get resumeProfiling;
+  /// **'继续建档到第 {chapter} 章'**
+  String resumeProfilingTo(int chapter);
+
+  /// No description provided for @profilingSkipped.
+  ///
+  /// In zh, this message translates to:
+  /// **'已跳过第 {chapters} 章：服务商没能处理这些内容'**
+  String profilingSkipped(String chapters);
+
+  /// No description provided for @chapterListSeparator.
+  ///
+  /// In zh, this message translates to:
+  /// **'、'**
+  String get chapterListSeparator;
 
   /// No description provided for @profilingActionFailed.
   ///
@@ -935,8 +947,26 @@ abstract class AppLocalizations {
   /// No description provided for @reasonInvalidResponse.
   ///
   /// In zh, this message translates to:
-  /// **'服务商返回的内容无法使用'**
+  /// **'模型的回复格式不对，可以稍后继续或换个模型'**
   String get reasonInvalidResponse;
+
+  /// No description provided for @reasonRequestRejected.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务商拒绝了请求，请检查模型名称，或换一个支持结构化输出的模型'**
+  String get reasonRequestRejected;
+
+  /// No description provided for @reasonContentRejected.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务商拒绝处理这一章的内容'**
+  String get reasonContentRejected;
+
+  /// No description provided for @reasonTruncated.
+  ///
+  /// In zh, this message translates to:
+  /// **'这一章的回复超出了模型的输出长度上限'**
+  String get reasonTruncated;
 
   /// No description provided for @reasonInterrupted.
   ///

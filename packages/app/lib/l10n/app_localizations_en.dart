@@ -479,7 +479,17 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get resumeProfiling => 'Resume profiling';
+  String resumeProfilingTo(int chapter) {
+    return 'Resume profiling to chapter $chapter';
+  }
+
+  @override
+  String profilingSkipped(String chapters) {
+    return 'Chapters skipped ($chapters): the provider couldn’t process them';
+  }
+
+  @override
+  String get chapterListSeparator => ', ';
 
   @override
   String get profilingActionFailed =>
@@ -521,7 +531,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reasonConsentDeclined => 'You cancelled sending';
 
   @override
-  String get reasonInvalidResponse => 'The provider’s reply couldn’t be used';
+  String get reasonInvalidResponse =>
+      'The model’s reply wasn’t in the expected format. Try again later or switch models';
+
+  @override
+  String get reasonRequestRejected =>
+      'The provider refused the request. Check the model name, or pick a model that supports structured output';
+
+  @override
+  String get reasonContentRejected =>
+      'The provider refused to process this chapter';
+
+  @override
+  String get reasonTruncated =>
+      'The reply for this chapter exceeded the model’s output limit';
 
   @override
   String get reasonInterrupted => 'Interrupted when the app closed';

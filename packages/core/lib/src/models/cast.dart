@@ -116,14 +116,20 @@ class Cast {
     List<Speaker> speakers = const [],
     List<PronunciationEntry> lexicon = const [],
     Map<String, String> redirects = const {},
+    Map<int, String> skippedChapters = const {},
   }) : speakers = List.unmodifiable(speakers),
        lexicon = List.unmodifiable(lexicon),
-       redirects = Map.unmodifiable(redirects);
+       redirects = Map.unmodifiable(redirects),
+       skippedChapters = Map.unmodifiable(skippedChapters);
   final String bookId;
   final int profiledThrough;
   final List<Speaker> speakers;
   final List<PronunciationEntry> lexicon;
   final Map<String, String> redirects;
+
+  /// Chapters inside the profiled range that the provider would not profile,
+  /// with their fixed `LlmFailure` code.
+  final Map<int, String> skippedChapters;
   Speaker speaker(String id) => speakers.firstWhere(
     (s) => s.id == (redirects[id] ?? id),
     orElse: () => throw StateError('Speaker not found.'),
@@ -146,12 +152,14 @@ class Cast {
     List<Speaker>? speakers,
     List<PronunciationEntry>? lexicon,
     Map<String, String>? redirects,
+    Map<int, String>? skippedChapters,
   }) => Cast(
     bookId: bookId,
     profiledThrough: profiledThrough ?? this.profiledThrough,
     speakers: speakers ?? this.speakers,
     lexicon: lexicon ?? this.lexicon,
     redirects: redirects ?? this.redirects,
+    skippedChapters: skippedChapters ?? this.skippedChapters,
   );
   Map<String, Object?> toJson() => {
     'bookId': bookId,
@@ -159,6 +167,11 @@ class Cast {
     'redirects': redirects,
     'speakers': speakers.map((s) => s.toJson()).toList(),
     'lexicon': lexicon.map((e) => e.toJson()).toList(),
+    if (skippedChapters.isNotEmpty)
+      'skippedChapters': {
+        for (final entry in skippedChapters.entries)
+          '${entry.key}': entry.value,
+      },
   };
   factory Cast.fromJson(Map<String, Object?> json) => Cast(
     bookId: json['bookId'] as String,
@@ -173,6 +186,10 @@ class Cast {
               PronunciationEntry.fromJson(Map<String, Object?>.from(e as Map)),
         )
         .toList(),
+    skippedChapters: {
+      for (final entry in (json['skippedChapters'] as Map? ?? const {}).entries)
+        int.parse(entry.key as String): entry.value as String,
+    },
   );
 }
 

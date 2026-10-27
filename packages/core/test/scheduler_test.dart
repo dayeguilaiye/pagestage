@@ -170,7 +170,13 @@ void main() {
         await prepare();
         var s = await open();
         tts.before = (n) {
-          if (n == 2) throw ProviderException(provider: 'minimax', kind: kind);
+          if (n == 2) {
+            throw ProviderException(
+              provider: 'minimax',
+              kind: kind,
+              code: 'fixed_code',
+            );
+          }
         };
         await s.enqueue(book.id, TaskKind.synthesize, first: 1, through: 2);
         await s.idle;
@@ -188,6 +194,10 @@ void main() {
         s = await open();
         await s.idle;
         expect(tts.requests, hasLength(2));
+        expect(
+          s.tasks.singleWhere((t) => t.status == TaskStatus.paused).code,
+          'fixed_code',
+        );
         await s.resume(provider: 'minimax');
         await s.idle;
         expect(

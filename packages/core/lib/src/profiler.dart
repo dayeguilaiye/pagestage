@@ -71,39 +71,51 @@ class Profiler {
       first += batchSize
     ) {
       final last = min(throughChapter, first + batchSize - 1);
-      final response = await llm.complete(
-        LlmRequest(
-          system: _profileInstructions(book.language),
-          user: jsonEncode({
-            'language': book.language,
-            'existingCast': cast
-                .copyWith(
-                  speakers: cast.speakers
-                      .where((speaker) => speaker.kind != SpeakerKind.narrator)
-                      .toList(),
-                )
-                .toJson(),
-            'chapters': [
-              for (var n = first; n <= last; n++) book.chapter(n).toJson(),
-            ],
-          }),
-          schemaName: 'profile',
-          schema: _profileSchema,
-        ),
+      final request = LlmRequest(
+        system: _profileInstructions(book.language),
+        user: jsonEncode({
+          'language': book.language,
+          'existingCast': cast
+              .copyWith(
+                speakers: cast.speakers
+                    .where((speaker) => speaker.kind != SpeakerKind.narrator)
+                    .toList(),
+                skippedChapters: const {},
+              )
+              .toJson(),
+          'chapters': [
+            for (var n = first; n <= last; n++) book.chapter(n).toJson(),
+          ],
+        }),
+        schemaName: 'profile',
+        schema: _profileSchema,
       );
-      try {
-        _validateBatch(response.data, first, last, book.chapters.length);
-        cast = _merge(cast, response.data, last);
-      } catch (error) {
-        // Validation messages are fixed strings, never model output.
-        throw ProviderException(
-          provider: 'llm',
-          kind: ProviderErrorKind.invalidResponse,
-          code: error is FormatException ? error.message : null,
-        );
+      // An unreadable answer is retried once. A chapter the provider will not
+      // profile is skipped so it does not stop the rest of the book.
+      for (var attempt = 1; ; attempt++) {
+        try {
+          final response = await llm.complete(request);
+          usage += response.usage;
+          cast = _accept(cast, response.data, first, last, book);
+          break;
+        } on ProviderException catch (error) {
+          if (error.kind != ProviderErrorKind.invalidResponse) rethrow;
+          if (LlmFailure.inputBound(error.code)) {
+            cast = cast.copyWith(
+              profiledThrough: last,
+              skippedChapters: {
+                ...cast.skippedChapters,
+                for (var n = first; n <= last; n++) n: error.code!,
+              },
+            );
+            break;
+          }
+          if (error.code == LlmFailure.requestRejected || attempt == 2) {
+            rethrow;
+          }
+        }
       }
       await _casts.save(cast);
-      usage += response.usage;
       completed++;
       onProgress?.call(
         ProfileProgress(firstChapter: first, lastChapter: last, cast: cast),
@@ -117,6 +129,26 @@ class Profiler {
       promptVersion: promptVersion,
       completedBatches: completed,
     );
+  }
+
+  Cast _accept(
+    Cast cast,
+    Map<String, Object?> data,
+    int first,
+    int last,
+    Book book,
+  ) {
+    try {
+      _validateBatch(data, first, last, book.chapters.length);
+      return _merge(cast, data, last);
+    } catch (error) {
+      // Validation messages are fixed strings, never model output.
+      throw ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.invalidResponse,
+        code: error is FormatException ? error.message : LlmFailure.malformed,
+      );
+    }
   }
 
   String _profileInstructions(String language) => language == 'zh'

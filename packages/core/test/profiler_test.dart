@@ -317,7 +317,10 @@ void main() {
         ],
       );
       await expectLater(
-        Profiler(store, FakeLlm([malformed])).profile(book, throughChapter: 1),
+        Profiler(
+          store,
+          FakeLlm([malformed, malformed]),
+        ).profile(book, throughChapter: 1),
         throwsA(
           isA<ProviderException>()
               .having((e) => e.kind, 'kind', ProviderErrorKind.invalidResponse)
@@ -372,17 +375,16 @@ void main() {
   test(
     'ambiguous IDs in one model response leave the cast unchanged',
     () async {
+      final ambiguous = batch(
+        characters: [
+          character('same', '林舟', [1]),
+          character('same', '客人', [1]),
+        ],
+      );
       await expectLater(
         Profiler(
           store,
-          FakeLlm([
-            batch(
-              characters: [
-                character('same', '林舟', [1]),
-                character('same', '客人', [1]),
-              ],
-            ),
-          ]),
+          FakeLlm([ambiguous, ambiguous]),
         ).profile(book, throughChapter: 1),
         throwsA(
           isA<ProviderException>().having(
@@ -395,6 +397,76 @@ void main() {
       expect(
         (await Profiler(store, FakeLlm([])).getCast(book.id)).profiledThrough,
         0,
+      );
+    },
+  );
+  test('an unusable reply is retried once with the same request', () async {
+    final llm = FakeLlm([
+      const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.invalidResponse,
+        code: LlmFailure.malformed,
+      ),
+      batch(
+        characters: [
+          character('lin', '林舟', [1]),
+        ],
+      ),
+    ]);
+    final result = await Profiler(store, llm).profile(book, throughChapter: 1);
+    expect(llm.requests, hasLength(2));
+    expect(llm.requests.last.user, llm.requests.first.user);
+    expect(result.cast.profiledThrough, 1);
+    expect(result.cast.findSpeaker('林舟'), isNotNull);
+  });
+  test('a rejected request is not retried', () async {
+    final llm = FakeLlm([
+      const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.invalidResponse,
+        code: LlmFailure.requestRejected,
+      ),
+    ]);
+    await expectLater(
+      Profiler(store, llm).profile(book, throughChapter: 1),
+      throwsA(
+        isA<ProviderException>().having(
+          (e) => e.code,
+          'code',
+          LlmFailure.requestRejected,
+        ),
+      ),
+    );
+    expect(llm.requests, hasLength(1));
+  });
+  test(
+    'a chapter the provider will not profile is skipped and kept on record',
+    () async {
+      final llm = FakeLlm([
+        const ProviderException(
+          provider: 'llm',
+          kind: ProviderErrorKind.invalidResponse,
+          code: LlmFailure.contentFilter,
+        ),
+        batch(
+          characters: [
+            character('guest', '客人', [2]),
+          ],
+        ),
+      ]);
+      final result = await Profiler(
+        store,
+        llm,
+      ).profile(book, throughChapter: 2);
+      expect(llm.requests, hasLength(2));
+      expect(result.cast.profiledThrough, 2);
+      expect(result.cast.findSpeaker('客人'), isNotNull);
+      final saved = await Profiler(store, FakeLlm([])).getCast(book.id);
+      expect(saved.skippedChapters, {1: LlmFailure.contentFilter});
+      final prompt = jsonDecode(llm.requests.last.user) as Map;
+      expect(
+        (prompt['existingCast'] as Map).containsKey('skippedChapters'),
+        false,
       );
     },
   );

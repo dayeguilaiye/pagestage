@@ -67,7 +67,7 @@ class GenerationController extends ValueNotifier<GenerationState>
                     custom?['reason'] as String? ??
                     (task.provider == 'local'
                         ? 'interrupted'
-                        : providerReason(task.reason)),
+                        : providerReason(task.reason, task.code)),
               ),
             );
           }

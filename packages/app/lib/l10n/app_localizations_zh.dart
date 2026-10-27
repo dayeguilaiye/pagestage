@@ -430,7 +430,17 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get resumeProfiling => '继续建档';
+  String resumeProfilingTo(int chapter) {
+    return '继续建档到第 $chapter 章';
+  }
+
+  @override
+  String profilingSkipped(String chapters) {
+    return '已跳过第 $chapters 章：服务商没能处理这些内容';
+  }
+
+  @override
+  String get chapterListSeparator => '、';
 
   @override
   String get profilingActionFailed => '没能开始建档，请稍后再试。';
@@ -470,7 +480,16 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reasonConsentDeclined => '你取消了发送';
 
   @override
-  String get reasonInvalidResponse => '服务商返回的内容无法使用';
+  String get reasonInvalidResponse => '模型的回复格式不对，可以稍后继续或换个模型';
+
+  @override
+  String get reasonRequestRejected => '服务商拒绝了请求，请检查模型名称，或换一个支持结构化输出的模型';
+
+  @override
+  String get reasonContentRejected => '服务商拒绝处理这一章的内容';
+
+  @override
+  String get reasonTruncated => '这一章的回复超出了模型的输出长度上限';
 
   @override
   String get reasonInterrupted => '应用关闭时中断了';

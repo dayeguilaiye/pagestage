@@ -206,18 +206,26 @@ class OpenAiLlmAdapter implements LlmAdapter {
       if (isChat) {
         final choice = (data['choices'] as List).first as Map;
         final message = choice['message'] as Map;
-        if (choice['finish_reason'] != 'stop' || message['refusal'] != null) {
-          throw const ProviderException(
-            provider: 'llm',
-            kind: ProviderErrorKind.invalidResponse,
-          );
+        if (message['refusal'] != null) throw _invalid(LlmFailure.refusal);
+        final finish = choice['finish_reason'];
+        if (finish != 'stop') {
+          throw _invalid(switch (finish) {
+            'length' => LlmFailure.truncated,
+            'content_filter' || 'sensitive' => LlmFailure.contentFilter,
+            _ => LlmFailure.malformed,
+          });
         }
         content = message['content'] as String;
       } else {
         if (data['status'] != 'completed' || data['error'] != null) {
-          throw const ProviderException(
-            provider: 'llm',
-            kind: ProviderErrorKind.invalidResponse,
+          final details = data['incomplete_details'];
+          final reason = details is Map ? details['reason'] : null;
+          throw _invalid(
+            reason == 'max_output_tokens'
+                ? LlmFailure.truncated
+                : reason == 'content_filter' || _moderated(data['error'])
+                ? LlmFailure.contentFilter
+                : LlmFailure.malformed,
           );
         }
         final parts = <String>[];
@@ -225,10 +233,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
           if ((item as Map)['type'] != 'message') continue;
           for (final part in item['content'] as List) {
             if ((part as Map)['type'] == 'refusal') {
-              throw const ProviderException(
-                provider: 'llm',
-                kind: ProviderErrorKind.invalidResponse,
-              );
+              throw _invalid(LlmFailure.refusal);
             }
             if (part['type'] == 'output_text') {
               parts.add(part['text'] as String);
@@ -255,34 +260,21 @@ class OpenAiLlmAdapter implements LlmAdapter {
     } on ProviderException {
       rethrow;
     } on TimeoutException {
-      if (progress.terminal) {
-        throw const ProviderException(
-          provider: 'llm',
-          kind: ProviderErrorKind.invalidResponse,
-        );
-      }
+      if (progress.terminal) throw _invalid(LlmFailure.malformed);
       throw const ProviderException(
         provider: 'llm',
         kind: ProviderErrorKind.unavailable,
         code: 'timeout',
       );
     } on http.ClientException {
-      if (progress.terminal) {
-        throw const ProviderException(
-          provider: 'llm',
-          kind: ProviderErrorKind.invalidResponse,
-        );
-      }
+      if (progress.terminal) throw _invalid(LlmFailure.malformed);
       throw const ProviderException(
         provider: 'llm',
         kind: ProviderErrorKind.unavailable,
         code: 'connection_error',
       );
     } catch (_) {
-      throw const ProviderException(
-        provider: 'llm',
-        kind: ProviderErrorKind.invalidResponse,
-      );
+      throw _invalid(LlmFailure.malformed);
     } finally {
       if (!abort.isCompleted) abort.complete();
       // A partial stream can have incurred cost. Record known fields once,
@@ -355,9 +347,10 @@ class OpenAiLlmAdapter implements LlmAdapter {
       if (payload == '[DONE]') break;
       final event = jsonDecode(payload) as Map;
       if (event['error'] != null || event['type'] == 'error') {
-        throw const ProviderException(
-          provider: 'llm',
-          kind: ProviderErrorKind.invalidResponse,
+        throw _invalid(
+          _moderated(event['error'] ?? event)
+              ? LlmFailure.contentFilter
+              : LlmFailure.malformed,
         );
       }
       if (isChat) {
@@ -395,12 +388,7 @@ class OpenAiLlmAdapter implements LlmAdapter {
       }
     }
     if (isChat) {
-      if (refusal != null) {
-        throw const ProviderException(
-          provider: 'llm',
-          kind: ProviderErrorKind.invalidResponse,
-        );
-      }
+      if (refusal != null) throw _invalid(LlmFailure.refusal);
       if (finishReason == null) {
         throw const ProviderException(
           provider: 'llm',
@@ -419,11 +407,9 @@ class OpenAiLlmAdapter implements LlmAdapter {
         'usage': usage,
       };
     }
+    // Only refusal events mark a Responses stream terminal before completion.
     if (completed == null && progress.terminal) {
-      throw const ProviderException(
-        provider: 'llm',
-        kind: ProviderErrorKind.invalidResponse,
-      );
+      throw _invalid(LlmFailure.refusal);
     }
     if (completed == null) {
       throw const ProviderException(
@@ -439,18 +425,57 @@ class OpenAiLlmAdapter implements LlmAdapter {
     final error = body is Map ? body['error'] : null;
     final code = error is Map ? error['code'] : null;
     final type = error is Map ? error['type'] : null;
-    final kind = status == 401 || code == 'invalid_api_key'
-        ? ProviderErrorKind.invalidKey
-        : code == 'insufficient_quota' ||
-              type == 'insufficient_quota' ||
-              code == 'billing_hard_limit_reached'
-        ? ProviderErrorKind.insufficientBalance
-        : status == 429
-        ? ProviderErrorKind.rateLimited
-        : status >= 500
-        ? ProviderErrorKind.unavailable
-        : ProviderErrorKind.invalidResponse;
-    return ProviderException(provider: 'llm', kind: kind);
+    if (status == 401 || code == 'invalid_api_key') {
+      return const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.invalidKey,
+      );
+    }
+    if (code == 'insufficient_quota' ||
+        type == 'insufficient_quota' ||
+        code == 'billing_hard_limit_reached') {
+      return const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.insufficientBalance,
+      );
+    }
+    if (_moderated(error)) return _invalid(LlmFailure.contentFilter);
+    if (status == 429) {
+      return const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.rateLimited,
+      );
+    }
+    if (status >= 500) {
+      return const ProviderException(
+        provider: 'llm',
+        kind: ProviderErrorKind.unavailable,
+      );
+    }
+    return _invalid(LlmFailure.requestRejected);
+  }
+
+  static ProviderException _invalid(String code) => ProviderException(
+    provider: 'llm',
+    kind: ProviderErrorKind.invalidResponse,
+    code: code,
+  );
+
+  /// Compatible endpoints report moderation with their own codes. Provider
+  /// messages are only compared with known fixed phrases, never kept.
+  static bool _moderated(Object? error) {
+    if (error is! Map) return false;
+    final tags = '${error['code']} ${error['type']}'.toLowerCase();
+    final message = '${error['message']}'.toLowerCase();
+    return const [
+          'content_filter',
+          'data_inspection',
+          'sensitive',
+          'moderation',
+        ].any(tags.contains) ||
+        '${error['code']}' == '1301' ||
+        message.contains('content exists risk') ||
+        message.contains('high risk');
   }
 }
 
