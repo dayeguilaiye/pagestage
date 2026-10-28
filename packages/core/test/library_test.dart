@@ -48,6 +48,19 @@ void main() {
     await expectLater(library.chapterCount(book.id), throwsStateError);
   });
 
+  test('closing lets queries already sent finish', () async {
+    final value = {'text': '长' * 200000};
+    await store.put('settings', 'probe', value);
+    final reads = [
+      for (var i = 0; i < 20; i++) store.get('settings', 'probe'),
+      store.exists('settings', 'probe'),
+    ];
+    await store.close();
+    final results = await Future.wait(reads);
+    expect(results.first, value);
+    expect(results.last, isTrue);
+  });
+
   test('GBK and GB18030 decode to the same chapters as UTF-8', () async {
     const text = '第一章 初见\n你好。\n';
     final utf8File = await File(
