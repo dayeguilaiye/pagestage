@@ -541,6 +541,33 @@ void main() {
       expect(tts.requests.length, requests + 3);
     },
   );
+  test('progress follows chapters generated ahead, then clears', () async {
+    await prepare();
+    ChapterProgress? of(int chapter) =>
+        generation.progress.value.of(book.id, chapter);
+    final directing = Completer<void>();
+    director.before = (_) => directing.future;
+    final voicing = Completer<void>();
+    tts.before = (_) => voicing.future;
+    await generation.prepare(book.id, first: 1, through: 2);
+    await eventually(() => of(1)?.stage == ChapterStage.directing);
+    expect(of(1)!.since, isNotNull);
+    expect(of(1)!.directed, isFalse);
+    expect(of(2)!.stage, ChapterStage.queued);
+
+    directing.complete();
+    // The new script is announced before any line is voiced.
+    await eventually(() => of(1)?.stage == ChapterStage.voicing);
+    expect(of(1)!.directed, isTrue);
+    expect(of(1)!.voiced, 0);
+    expect(of(1)!.total, 3);
+    expect(of(1)!.unvoiced, {0, 1, 2});
+
+    voicing.complete();
+    await casts.idle;
+    await eventually(() => generation.progress.value.chapters.isEmpty);
+    expect((await AudioRepository(store).get(book.id, 2))!.complete, isTrue);
+  });
   test('TTS consent denial prevents synthesis and can be resumed', () async {
     await prepare();
     await automatic();

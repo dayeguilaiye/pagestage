@@ -187,6 +187,19 @@ class FakeGeneration extends ValueNotifier<GenerationState>
   final resumes = <String>[];
   final modes = <String, BookPerformanceMode>{};
   final modeChanges = <(String, BookPerformanceMode)>[];
+  final prepares = <(String, int, int)>[];
+
+  @override
+  final ValueNotifier<GenerationProgress> progress = ValueNotifier(
+    const GenerationProgress(),
+  );
+
+  @override
+  Future<void> prepare(
+    String bookId, {
+    required int first,
+    required int through,
+  }) async => prepares.add((bookId, first, through));
 
   @override
   Future<void> savePreferences(GenerationPreferences preferences) async {

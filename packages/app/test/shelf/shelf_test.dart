@@ -125,8 +125,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('第一章　序'), findsOneWidget);
     expect(find.text('第二章　优胜记略'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('已合成')), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('未建档')), findsOneWidget);
+    // Chapters at rest, voiced or not, carry no mark.
+    expect(find.byType(PsStatusMark), findsNothing);
 
     await tester.tap(find.text('第二章　优胜记略'));
     await tester.pumpAndSettle();

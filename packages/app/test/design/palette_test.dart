@@ -45,6 +45,12 @@ void main() {
         }
       });
 
+      test('text waiting for its voice still reads at 4.5:1 on paper', () {
+        expect(contrast(p.inkWaiting, p.paper), greaterThanOrEqualTo(4.5));
+        // Apart from both ink and non-story ink-2.
+        expect(contrast(p.inkWaiting, p.ink2), greaterThan(1.3));
+      });
+
       test('accents read at 4.5:1 on their grounds', () {
         final pairs = {
           'vermilion on paper': (p.vermilion, p.paper),

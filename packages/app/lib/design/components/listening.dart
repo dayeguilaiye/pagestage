@@ -8,7 +8,7 @@ import '../tokens.dart';
 import '../type.dart';
 import 'controls.dart';
 import 'identity.dart';
-import 'status.dart' show PsTag, PsTagTone;
+import 'status.dart' show PsChapterStatus, PsStatusMark, PsTag, PsTagTone;
 
 /// One line of a script, as the director split it.
 @immutable
@@ -19,6 +19,7 @@ class PsLine {
     this.current = false,
     this.skip = false,
     this.selected = false,
+    this.pending = false,
   });
 
   final String text;
@@ -32,13 +33,27 @@ class PsLine {
 
   /// Tapped, with its menu open.
   final bool selected;
+
+  /// In a chapter being generated, not voiced yet: shown in the waiting
+  /// ink, easing into ink once its voice arrives.
+  final bool pending;
 }
 
 @immutable
 class PsPassageHeading {
-  const PsPassageHeading({required this.title, this.number});
+  const PsPassageHeading({
+    required this.title,
+    this.number,
+    this.status,
+    this.statusLabel,
+  });
   final String title;
   final String? number;
+
+  /// Generation under way for this chapter. It sits in the gap under the
+  /// title, so the text never moves when it comes or goes.
+  final PsChapterStatus? status;
+  final String? statusLabel;
 }
 
 /// Leading relative to the reading tokens, as the reading settings offer it.
@@ -88,8 +103,62 @@ class PsPassage extends StatefulWidget {
   State<PsPassage> createState() => _PsPassageState();
 }
 
-class _PsPassageState extends State<PsPassage> {
+class _PsPassageState extends State<PsPassage>
+    with SingleTickerProviderStateMixin {
   final _recognizers = <TapGestureRecognizer>[];
+
+  /// Lines that just got their voice, by paragraph and line, with the
+  /// ticker time their ink started to deepen.
+  final _fades = <(int, int), Duration>{};
+  late final _ticker = createTicker(_tick);
+  var _now = Duration.zero;
+  static const _fade = PsMotion.slow;
+
+  void _tick(Duration elapsed) {
+    _now = elapsed;
+    _fades.removeWhere((_, start) => elapsed - start >= _fade);
+    if (_fades.isEmpty) _ticker.stop();
+    setState(() {});
+  }
+
+  @override
+  void didUpdateWidget(PsPassage old) {
+    super.didUpdateWidget(old);
+    final before = old.paragraphs;
+    final after = widget.paragraphs;
+    // Only the same segmentation can tell which lines changed.
+    if (MediaQuery.disableAnimationsOf(context) ||
+        before.length != after.length) {
+      return;
+    }
+    final start = _ticker.isActive ? _now : Duration.zero;
+    for (var pi = 0; pi < after.length; pi++) {
+      if (before[pi].length != after[pi].length) continue;
+      for (var li = 0; li < after[pi].length; li++) {
+        if (before[pi][li].pending && !after[pi][li].pending) {
+          _fades[(pi, li)] = start;
+        }
+      }
+    }
+    if (_fades.isNotEmpty && !_ticker.isActive) {
+      _now = Duration.zero;
+      _ticker.start();
+    }
+  }
+
+  /// The waiting ink until a voice arrives, then ink, eased in over [_fade].
+  Color? _ink(int pi, int li, PsLine line, PsPalette p) {
+    if (line.skip) return p.ink2;
+    if (line.pending) return p.inkWaiting;
+    final start = _fades[(pi, li)];
+    if (start == null) return null;
+    final t = (_now - start).inMicroseconds / _fade.inMicroseconds;
+    return Color.lerp(
+      p.inkWaiting,
+      p.ink,
+      PsMotion.standard.transform(t.clamp(0.0, 1.0)),
+    );
+  }
 
   void _clearRecognizers() {
     for (final r in _recognizers) {
@@ -100,6 +169,7 @@ class _PsPassageState extends State<PsPassage> {
 
   @override
   void dispose() {
+    _ticker.dispose();
     _clearRecognizers();
     super.dispose();
   }
@@ -129,35 +199,50 @@ class _PsPassageState extends State<PsPassage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           if (heading != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: PsSpace.s8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: PsSpace.s2,
-                children: [
-                  if (heading.number != null)
-                    Text(
-                      heading.number!,
-                      style: PsType.caption.copyWith(
-                        color: p.ink2,
-                        letterSpacing: 3.6,
-                      ),
-                    ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: PsSpace.s2,
+              children: [
+                if (heading.number != null)
                   Text(
-                    heading.title,
-                    style:
-                        (widget.english
-                                ? PsType.style(
-                                    PsFonts.serifEn,
-                                    22,
-                                    30,
-                                    FontWeight.w600,
-                                  )
-                                : PsType.title2)
-                            .copyWith(color: p.ink),
+                    heading.number!,
+                    style: PsType.caption.copyWith(
+                      color: p.ink2,
+                      letterSpacing: 3.6,
+                    ),
                   ),
-                ],
-              ),
+                Text(
+                  heading.title,
+                  style:
+                      (widget.english
+                              ? PsType.style(
+                                  PsFonts.serifEn,
+                                  22,
+                                  30,
+                                  FontWeight.w600,
+                                )
+                              : PsType.title2)
+                          .copyWith(color: p.ink),
+                ),
+                // Fixed height, so the text below stays put.
+                SizedBox(
+                  height: PsSpace.s8 - PsSpace.s2,
+                  child: Align(
+                    alignment: Alignment.topLeft,
+                    child: AnimatedSwitcher(
+                      duration: PsMotion.base,
+                      child: heading.status == null
+                          ? const SizedBox.shrink()
+                          : PsStatusMark(
+                              heading.status!,
+                              key: ValueKey(heading.status),
+                              showLabel: true,
+                              label: heading.statusLabel,
+                            ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           for (var i = 0; i < widget.paragraphs.length; i++)
             Padding(
@@ -221,19 +306,21 @@ class _PsPassageState extends State<PsPassage> {
           ..onTapUp = (d) => onLineTap(pi, li, d.globalPosition);
         _recognizers.add(tap);
       }
+      final ink = _ink(pi, li, line, p);
       spans.add(
         TextSpan(
           text: line.text,
           recognizer: tap,
-          style: line.skip
-              ? TextStyle(color: p.ink2)
-              : line.selected
+          style: line.selected && !line.skip
               ? TextStyle(
+                  color: ink,
                   decoration: TextDecoration.underline,
                   decorationColor: p.vermilion,
                   decorationThickness: 1.5,
                 )
-              : null,
+              : ink == null
+              ? null
+              : TextStyle(color: ink),
         ),
       );
       offset += line.text.length;

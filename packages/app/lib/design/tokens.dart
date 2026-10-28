@@ -13,6 +13,7 @@ class PsPalette extends ThemeExtension<PsPalette> {
     required this.ink,
     required this.ink2,
     required this.inkFaint,
+    required this.inkWaiting,
     required this.vermilion,
     required this.vermilionSoft,
     required this.onVermilion,
@@ -40,6 +41,10 @@ class PsPalette extends ThemeExtension<PsPalette> {
   final Color ink;
   final Color ink2;
   final Color inkFaint;
+
+  /// Text of a chapter being generated that has no voice yet: lighter than
+  /// [ink2], so it reads apart from non-story text, still 4.5:1 on paper.
+  final Color inkWaiting;
   final Color vermilion;
   final Color vermilionSoft;
   final Color onVermilion;
@@ -78,6 +83,7 @@ class PsPalette extends ThemeExtension<PsPalette> {
     ink: Color(0xFF1C1814),
     ink2: Color(0xFF5C5246),
     inkFaint: Color(0xFFA89D8D),
+    inkWaiting: Color(0xFF73685B),
     vermilion: Color(0xFFB4361C),
     vermilionSoft: Color(0xFFF6DED3),
     onVermilion: Color(0xFFFFF9F4),
@@ -126,6 +132,7 @@ class PsPalette extends ThemeExtension<PsPalette> {
     ink: Color(0xFFEEE7DA),
     ink2: Color(0xFFACA292),
     inkFaint: Color(0xFF5F574D),
+    inkWaiting: Color(0xFF898073),
     vermilion: Color(0xFFF07C5E),
     vermilionSoft: Color(0xFF3C2019),
     onVermilion: Color(0xFF1A0E0A),
@@ -180,6 +187,7 @@ class PsPalette extends ThemeExtension<PsPalette> {
       ink: c(ink, other.ink),
       ink2: c(ink2, other.ink2),
       inkFaint: c(inkFaint, other.inkFaint),
+      inkWaiting: c(inkWaiting, other.inkWaiting),
       vermilion: c(vermilion, other.vermilion),
       vermilionSoft: c(vermilionSoft, other.vermilionSoft),
       onVermilion: c(onVermilion, other.onVermilion),

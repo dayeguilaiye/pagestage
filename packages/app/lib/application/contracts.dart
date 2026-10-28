@@ -100,6 +100,7 @@ class ListeningLine {
     required this.end,
     this.speakerName,
     this.nonStory = false,
+    this.directed = false,
   });
   final int index;
   final String text;
@@ -107,6 +108,10 @@ class ListeningLine {
   final int end;
   final String? speakerName;
   final bool nonStory;
+
+  /// A line of the chapter's script, so [index] is a script line index;
+  /// false for sentences split for the system voice.
+  final bool directed;
 }
 
 class ListeningBookmark {
@@ -307,13 +312,74 @@ class GenerationState {
   final List<GenerationFailure> failures;
 }
 
+/// Where a chapter stands while its generation is under way.
+enum ChapterStage { queued, directing, voicing, paused }
+
+/// A chapter with directing or voicing still ahead, in its book's mode.
+class ChapterProgress {
+  const ChapterProgress({
+    required this.bookId,
+    required this.chapter,
+    required this.stage,
+    this.directed = false,
+    this.voiced = 0,
+    this.total = 0,
+    this.unvoiced = const {},
+    this.since,
+  });
+  final String bookId;
+  final int chapter;
+  final ChapterStage stage;
+
+  /// Whether the script exists, so [unvoiced] indexes its lines. Until then
+  /// none of the chapter has a voice.
+  final bool directed;
+
+  /// Script lines voiced so far, out of [total] that will have a voice.
+  final int voiced;
+  final int total;
+
+  /// Script line indices still waiting for their voice.
+  final Set<int> unvoiced;
+
+  /// When directing started, for showing the time it has taken.
+  final DateTime? since;
+}
+
+/// Every chapter with generation under way. Chapters not listed are either
+/// untouched or finished, and look the same as each other.
+class GenerationProgress {
+  const GenerationProgress([this.chapters = const []]);
+  final List<ChapterProgress> chapters;
+
+  ChapterProgress? of(String bookId, int chapter) {
+    for (final progress in chapters) {
+      if (progress.bookId == bookId && progress.chapter == chapter) {
+        return progress;
+      }
+    }
+    return null;
+  }
+}
+
 abstract interface class Generation
     implements ValueListenable<GenerationState> {
+  /// Kept apart from [value] because it changes with every voiced line.
+  ValueListenable<GenerationProgress> get progress;
   Future<void> savePreferences(GenerationPreferences preferences);
   void respond(int requestId, GenerationChoice choice);
   Future<BookPerformanceMode> mode(String bookId);
   Future<void> setMode(String bookId, BookPerformanceMode mode);
   Future<void> resume(String bookId);
+
+  /// Directs and voices chapters [first]..[through] ahead of listening, in
+  /// the book's mode. Finished chapters are skipped; the range must already
+  /// be profiled.
+  Future<void> prepare(
+    String bookId, {
+    required int first,
+    required int through,
+  });
 }
 
 class VoiceOption {

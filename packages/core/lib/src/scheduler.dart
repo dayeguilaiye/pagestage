@@ -185,6 +185,22 @@ class Scheduler {
   List<ScheduledTask> get tasks => List.unmodifiable(
     _tasks.values.toList()..sort((a, b) => a.order.compareTo(b.order)),
   );
+
+  /// Tasks still ahead of their chapter: running, paused, or queued and
+  /// due to run. Queued lookahead for a book no longer listened to is idle
+  /// until listening comes back, so it is left out.
+  List<ScheduledTask> get outstanding => [
+    for (final task in tasks)
+      if (switch (task.status) {
+        TaskStatus.completed => false,
+        TaskStatus.queued =>
+          task.origin == TaskOrigin.user ||
+              (task.bookId == _listeningBook &&
+                  _lookaheadIds.contains(task.id)),
+        TaskStatus.running || TaskStatus.paused => true,
+      })
+        task,
+  ];
   var _order = 0;
   var _closing = false;
   Future<void>? _worker;
@@ -549,6 +565,8 @@ class Scheduler {
         directorLlm,
         runtime: runtime,
       ).direct(book, task.chapter)).script;
+      // Announces the new script before the first line is voiced.
+      if (!await _save(_tasks[task.id]!)) throw const _BookDeleted();
     }
     if (task.kind == TaskKind.direct ||
         await _audio.isComplete(script, mode: task.mode)) {

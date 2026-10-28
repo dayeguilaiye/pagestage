@@ -57,22 +57,58 @@ class AppLocalizationsEn extends AppLocalizations {
   String get retry => 'Try again';
 
   @override
-  String get chapterUnprofiled => 'Not profiled';
-
-  @override
-  String get chapterUndirected => 'Not directed';
-
-  @override
-  String get chapterDirected => 'Directed';
-
-  @override
-  String get chapterSynthesized => 'Synthesized';
+  String get chapterQueued => 'Queued';
 
   @override
   String get chapterWorking => 'Generating';
 
   @override
-  String get chapterFailed => 'Failed';
+  String get chapterPaused => 'Paused';
+
+  @override
+  String chapterDirecting(String elapsed) {
+    return 'Directing $elapsed';
+  }
+
+  @override
+  String chapterVoicing(int voiced, int total) {
+    return 'Voicing $voiced/$total';
+  }
+
+  @override
+  String chapterPausedBecause(String reason) {
+    return 'Paused: $reason';
+  }
+
+  @override
+  String get prepareChapters => 'Generate ahead';
+
+  @override
+  String get prepareFrom => 'From';
+
+  @override
+  String get prepareThrough => 'Through';
+
+  @override
+  String get prepareNote =>
+      'Direct and voice these chapters now, so they play straight away when you listen. Their text goes to your language model and voice provider; chapters already done are skipped.';
+
+  @override
+  String prepareRange(int first, int through) {
+    return 'Generate chapters $first–$through';
+  }
+
+  @override
+  String prepareOne(int chapter) {
+    return 'Generate chapter $chapter';
+  }
+
+  @override
+  String get prepareNeedsProfile =>
+      'Only profiled chapters can be generated. Profile them in the cast first.';
+
+  @override
+  String get prepareFailed => 'Couldn’t start generating. Try again later.';
 
   @override
   String get shelfTitle => 'Bookshelf';

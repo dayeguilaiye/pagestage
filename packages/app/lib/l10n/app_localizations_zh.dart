@@ -57,22 +57,57 @@ class AppLocalizationsZh extends AppLocalizations {
   String get retry => '重试';
 
   @override
-  String get chapterUnprofiled => '未建档';
-
-  @override
-  String get chapterUndirected => '未导演';
-
-  @override
-  String get chapterDirected => '已导演';
-
-  @override
-  String get chapterSynthesized => '已合成';
+  String get chapterQueued => '排队中';
 
   @override
   String get chapterWorking => '生成中';
 
   @override
-  String get chapterFailed => '出错';
+  String get chapterPaused => '已暂停';
+
+  @override
+  String chapterDirecting(String elapsed) {
+    return '导演中 $elapsed';
+  }
+
+  @override
+  String chapterVoicing(int voiced, int total) {
+    return '配音中 $voiced/$total';
+  }
+
+  @override
+  String chapterPausedBecause(String reason) {
+    return '已暂停：$reason';
+  }
+
+  @override
+  String get prepareChapters => '提前生成';
+
+  @override
+  String get prepareFrom => '从';
+
+  @override
+  String get prepareThrough => '到';
+
+  @override
+  String get prepareNote =>
+      '先为这些章节导演、配音，听的时候直接播放。正文会发给你设置的大模型和配音服务；已经生成好的章节会跳过。';
+
+  @override
+  String prepareRange(int first, int through) {
+    return '生成第 $first–$through 章';
+  }
+
+  @override
+  String prepareOne(int chapter) {
+    return '生成第 $chapter 章';
+  }
+
+  @override
+  String get prepareNeedsProfile => '建档范围内的章节才能生成。先在演员表里建档。';
+
+  @override
+  String get prepareFailed => '没能开始生成，请稍后再试。';
 
   @override
   String get shelfTitle => '书架';

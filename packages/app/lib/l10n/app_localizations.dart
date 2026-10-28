@@ -194,29 +194,11 @@ abstract class AppLocalizations {
   /// **'重试'**
   String get retry;
 
-  /// No description provided for @chapterUnprofiled.
+  /// No description provided for @chapterQueued.
   ///
   /// In zh, this message translates to:
-  /// **'未建档'**
-  String get chapterUnprofiled;
-
-  /// No description provided for @chapterUndirected.
-  ///
-  /// In zh, this message translates to:
-  /// **'未导演'**
-  String get chapterUndirected;
-
-  /// No description provided for @chapterDirected.
-  ///
-  /// In zh, this message translates to:
-  /// **'已导演'**
-  String get chapterDirected;
-
-  /// No description provided for @chapterSynthesized.
-  ///
-  /// In zh, this message translates to:
-  /// **'已合成'**
-  String get chapterSynthesized;
+  /// **'排队中'**
+  String get chapterQueued;
 
   /// No description provided for @chapterWorking.
   ///
@@ -224,11 +206,77 @@ abstract class AppLocalizations {
   /// **'生成中'**
   String get chapterWorking;
 
-  /// No description provided for @chapterFailed.
+  /// No description provided for @chapterPaused.
   ///
   /// In zh, this message translates to:
-  /// **'出错'**
-  String get chapterFailed;
+  /// **'已暂停'**
+  String get chapterPaused;
+
+  /// No description provided for @chapterDirecting.
+  ///
+  /// In zh, this message translates to:
+  /// **'导演中 {elapsed}'**
+  String chapterDirecting(String elapsed);
+
+  /// No description provided for @chapterVoicing.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音中 {voiced}/{total}'**
+  String chapterVoicing(int voiced, int total);
+
+  /// No description provided for @chapterPausedBecause.
+  ///
+  /// In zh, this message translates to:
+  /// **'已暂停：{reason}'**
+  String chapterPausedBecause(String reason);
+
+  /// No description provided for @prepareChapters.
+  ///
+  /// In zh, this message translates to:
+  /// **'提前生成'**
+  String get prepareChapters;
+
+  /// No description provided for @prepareFrom.
+  ///
+  /// In zh, this message translates to:
+  /// **'从'**
+  String get prepareFrom;
+
+  /// No description provided for @prepareThrough.
+  ///
+  /// In zh, this message translates to:
+  /// **'到'**
+  String get prepareThrough;
+
+  /// No description provided for @prepareNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'先为这些章节导演、配音，听的时候直接播放。正文会发给你设置的大模型和配音服务；已经生成好的章节会跳过。'**
+  String get prepareNote;
+
+  /// No description provided for @prepareRange.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成第 {first}–{through} 章'**
+  String prepareRange(int first, int through);
+
+  /// No description provided for @prepareOne.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成第 {chapter} 章'**
+  String prepareOne(int chapter);
+
+  /// No description provided for @prepareNeedsProfile.
+  ///
+  /// In zh, this message translates to:
+  /// **'建档范围内的章节才能生成。先在演员表里建档。'**
+  String get prepareNeedsProfile;
+
+  /// No description provided for @prepareFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能开始生成，请稍后再试。'**
+  String get prepareFailed;
 
   /// No description provided for @shelfTitle.
   ///

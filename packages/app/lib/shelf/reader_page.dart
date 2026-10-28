@@ -9,6 +9,7 @@ import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import '../listening/app_scope.dart';
 import '../listening/chapter_lines.dart';
+import '../listening/labels.dart';
 import '../listening/player.dart';
 import 'bookshelf.dart';
 import 'contents.dart';
@@ -92,6 +93,15 @@ class _ReaderPageState extends State<ReaderPage> {
   Listening? _listening;
   final _spoken = ValueNotifier<_Spoken?>(null);
 
+  Generation? _generation;
+
+  /// This book's chapters being generated, by chapter number.
+  final _progress = ValueNotifier<Map<int, ChapterProgress>>(const {});
+
+  /// Chapter indices whose loaded lines come from the script, so a line's
+  /// index can be matched with the voiced ones.
+  final _scripted = <int>{};
+
   /// Keeps the spoken line on screen until the reader scrolls away.
   var _following = true;
   (int, int)? _followed;
@@ -103,21 +113,50 @@ class _ReaderPageState extends State<ReaderPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    final listening = AppScope.servicesOf(context)?.listening;
+    final services = AppScope.servicesOf(context);
+    final listening = services?.listening;
     if (listening != _listening) {
       _listening?.removeListener(_onListening);
       _listening = listening;
       listening?.addListener(_onListening);
       _onListening();
     }
+    final generation = services?.generation;
+    if (generation != _generation) {
+      _generation?.progress.removeListener(_onProgress);
+      _generation = generation;
+      generation?.progress.addListener(_onProgress);
+      _onProgress();
+    }
   }
 
   @override
   void dispose() {
     _listening?.removeListener(_onListening);
+    _generation?.progress.removeListener(_onProgress);
     _spoken.dispose();
+    _progress.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  void _onProgress() {
+    final generation = _generation;
+    final next = generation == null
+        ? const <int, ChapterProgress>{}
+        : bookProgress(generation.progress.value, widget.book.id);
+    final previous = _progress.value;
+    _progress.value = next;
+    // A chapter read before its script existed takes on the script's lines
+    // once directing is done, or once its generation ends.
+    for (final number in previous.keys) {
+      final before = previous[number]!;
+      final after = next[number];
+      if (!before.directed && (after == null || after.directed)) {
+        final index = widget.chapters.indexWhere((c) => c.number == number);
+        if (index >= 0 && !_scripted.contains(index)) _refresh(number);
+      }
+    }
   }
 
   void _onListening() {
@@ -164,10 +203,14 @@ class _ReaderPageState extends State<ReaderPage> {
     final number = widget.chapters[index].number;
     final listening = _listening;
     List<List<LineSegment>>? segments;
+    var scripted = false;
     if (listening != null) {
       try {
         final lines = await listening.lines(widget.book.id, number);
-        if (lines.isNotEmpty) segments = layoutLines(lines);
+        if (lines.isNotEmpty) {
+          segments = layoutLines(lines);
+          scripted = lines.first.directed;
+        }
       } catch (_) {
         // Read the plain text instead; listening reports its own errors.
       }
@@ -178,6 +221,11 @@ class _ReaderPageState extends State<ReaderPage> {
     // A newer fetch was started meanwhile; never let this one win.
     if (!mounted || generation != (_generations[index] ?? 0)) return segments;
     _loaded[index] = segments;
+    if (scripted) {
+      _scripted.add(index);
+    } else {
+      _scripted.remove(index);
+    }
     if (_stale.remove(index)) setState(() {});
     if (_pendingReveal?.$1 == index) _revealLater();
     return segments;
@@ -305,6 +353,7 @@ class _ReaderPageState extends State<ReaderPage> {
         book: widget.book,
         contents: TableOfContents(widget.chapters),
         current: _current,
+        progress: _progress,
       ),
     );
     if (index != null && mounted) {
@@ -513,41 +562,76 @@ class _ReaderPageState extends State<ReaderPage> {
             }
             final paragraphKeys = keys;
             return ValueListenableBuilder(
-              valueListenable: _spoken,
-              builder: (context, spoken, _) {
-                final stale = _stale.contains(index);
-                final active = !stale && spoken?.chapter == chapter.number
-                    ? spoken!.lines
-                    : const <int>{};
-                return PsPassage(
-                  heading: PsPassageHeading(title: chapter.title),
-                  paragraphKeys: paragraphKeys,
-                  paragraphs: [
-                    for (final paragraph in segments)
-                      [
-                        for (final s in paragraph)
-                          PsLine(
-                            s.text,
-                            speaker: s.spoken ? s.speaker : null,
-                            current: s.spoken && active.contains(s.line),
-                            skip: s.nonStory,
-                            selected: s.spoken && _selected == (index, s.line),
-                          ),
+              valueListenable: _progress,
+              builder: (context, marks, _) => ProgressClock(
+                progress: marks[chapter.number],
+                pausedReason: _pausedReason(chapter.number),
+                builder: (context, status) => ValueListenableBuilder(
+                  valueListenable: _spoken,
+                  builder: (context, spoken, _) {
+                    final stale = _stale.contains(index);
+                    final active = !stale && spoken?.chapter == chapter.number
+                        ? spoken!.lines
+                        : const <int>{};
+                    final progress = marks[chapter.number];
+                    final scripted =
+                        _scripted.contains(index) && progress?.directed == true;
+                    // Under way, a line waits for its voice; until the script
+                    // exists, the whole chapter does.
+                    bool pending(LineSegment s) =>
+                        progress != null &&
+                        !s.nonStory &&
+                        (!scripted || progress.unvoiced.contains(s.line));
+                    return PsPassage(
+                      heading: PsPassageHeading(
+                        title: chapter.title,
+                        status: status?.status,
+                        statusLabel: status?.label,
+                      ),
+                      paragraphKeys: paragraphKeys,
+                      paragraphs: [
+                        for (final paragraph in segments)
+                          [
+                            for (final s in paragraph)
+                              PsLine(
+                                s.text,
+                                speaker: s.spoken ? s.speaker : null,
+                                current: s.spoken && active.contains(s.line),
+                                skip: s.nonStory,
+                                selected:
+                                    s.spoken && _selected == (index, s.line),
+                                pending: pending(s),
+                              ),
+                          ],
                       ],
-                  ],
-                  fontSize: preferences.fontSize,
-                  lineSpacing: preferences.lineSpacing,
-                  english: widget.book.language == BookLanguage.english,
-                  onLineTap: _listening == null || stale
-                      ? null
-                      : (pi, li, at) => _tapLine(index, segments[pi][li], at),
-                );
-              },
+                      fontSize: preferences.fontSize,
+                      lineSpacing: preferences.lineSpacing,
+                      english: widget.book.language == BookLanguage.english,
+                      onLineTap: _listening == null || stale
+                          ? null
+                          : (pi, li, at) =>
+                                _tapLine(index, segments[pi][li], at),
+                    );
+                  },
+                ),
+              ),
             );
           },
         ),
       ),
     );
+  }
+
+  /// Why chapter [number] stopped, when its generation is paused.
+  String? _pausedReason(int number) {
+    final generation = _generation;
+    if (generation == null) return null;
+    for (final failure in generation.value.failures) {
+      if (failure.bookId == widget.book.id && failure.chapter == number) {
+        return Labels.pauseReason(AppLocalizations.of(context), failure.reason);
+      }
+    }
+    return null;
   }
 }
 
@@ -584,11 +668,13 @@ class _ContentsSheet extends StatefulWidget {
     required this.book,
     required this.contents,
     required this.current,
+    required this.progress,
   });
 
   final ShelfBook book;
   final TableOfContents contents;
   final int current;
+  final ValueListenable<Map<int, ChapterProgress>> progress;
 
   @override
   State<_ContentsSheet> createState() => _ContentsSheetState();
@@ -620,17 +706,21 @@ class _ContentsSheetState extends State<_ContentsSheet> {
         subtitle: widget.book.title,
         onClose: () => Navigator.pop(context),
         fill: true,
-        child: ListView.builder(
-          controller: _scroll,
-          padding: EdgeInsets.only(
-            bottom: PsSpace.s4 + MediaQuery.paddingOf(context).bottom,
-          ),
-          itemCount: contents.length,
-          itemBuilder: (context, i) => contents.build(
-            context,
-            i,
-            current: widget.current,
-            onChapter: (index) => Navigator.pop(context, index),
+        child: ValueListenableBuilder(
+          valueListenable: widget.progress,
+          builder: (context, progress, _) => ListView.builder(
+            controller: _scroll,
+            padding: EdgeInsets.only(
+              bottom: PsSpace.s4 + MediaQuery.paddingOf(context).bottom,
+            ),
+            itemCount: contents.length,
+            itemBuilder: (context, i) => contents.build(
+              context,
+              i,
+              current: widget.current,
+              progress: progress,
+              onChapter: (index) => Navigator.pop(context, index),
+            ),
           ),
         ),
       ),

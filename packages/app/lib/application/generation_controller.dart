@@ -28,6 +28,12 @@ class GenerationController extends ValueNotifier<GenerationState>
   int? _listeningChapter;
   PerformanceMode _listeningMode = PerformanceMode.audiobook;
   Future<void> Function(String bookId)? onModeChanged;
+  final _progress = ValueNotifier(const GenerationProgress());
+  @override
+  ValueListenable<GenerationProgress> get progress => _progress;
+
+  /// When each chapter being directed started, by `bookId:chapter`.
+  final _directing = <String, DateTime>{};
 
   static Future<GenerationController> open(
     LocalStore store,
@@ -71,16 +77,89 @@ class GenerationController extends ValueNotifier<GenerationState>
               ),
             );
           }
+          final progress = await _measure();
           if (!_closed) {
             value = GenerationState(
               preferences: value.preferences,
               request: value.request,
               failures: List.unmodifiable(failures),
             );
+            _progress.value = progress;
             _changes.add(null);
           }
         })
         .catchError((Object _) {});
+  }
+
+  /// Reads where each chapter with outstanding work stands. Lookahead that
+  /// will not run while nobody listens is not under way.
+  Future<GenerationProgress> _measure() async {
+    final chapters = <(String, int), List<ScheduledTask>>{};
+    for (final task in scheduler.outstanding) {
+      if (task.kind == TaskKind.profile) continue;
+      (chapters[(task.bookId, task.chapter)] ??= []).add(task);
+    }
+    final result = <ChapterProgress>[];
+    final directing = <String>{};
+    for (final MapEntry(key: (bookId, chapter), value: tasks)
+        in chapters.entries) {
+      final running = tasks.any((t) => t.status == TaskStatus.running);
+      final paused = tasks.any((t) => t.status == TaskStatus.paused);
+      final script = await ScriptRepository(store).get(bookId, chapter);
+      if (script == null) {
+        final key = '$bookId:$chapter';
+        if (running) directing.add(key);
+        result.add(
+          ChapterProgress(
+            bookId: bookId,
+            chapter: chapter,
+            stage: running
+                ? ChapterStage.directing
+                : paused
+                ? ChapterStage.paused
+                : ChapterStage.queued,
+            since: running ? _directing.putIfAbsent(key, DateTime.now) : null,
+          ),
+        );
+        continue;
+      }
+      final synthesis = tasks
+          .where((t) => t.kind == TaskKind.synthesize)
+          .firstOrNull;
+      final mode = synthesis?.mode ?? await coreMode(bookId);
+      final audio = await AudioRepository(
+        store,
+      ).get(bookId, chapter, mode: mode);
+      final voiced = {
+        if (audio != null &&
+            audio.scriptHash == AudioRepository.hashScript(script))
+          for (final utterance in audio.utterances) ...utterance.lineIndices,
+      };
+      final voiceable = [
+        for (final (i, line) in script.lines.indexed)
+          if (!line.isNonStory &&
+              !(mode == PerformanceMode.drama && line.isDialogueTag) &&
+              line.end > line.start)
+            i,
+      ];
+      result.add(
+        ChapterProgress(
+          bookId: bookId,
+          chapter: chapter,
+          stage: running
+              ? ChapterStage.voicing
+              : paused
+              ? ChapterStage.paused
+              : ChapterStage.queued,
+          directed: true,
+          voiced: voiceable.where(voiced.contains).length,
+          total: voiceable.length,
+          unvoiced: {...voiceable.where((i) => !voiced.contains(i))},
+        ),
+      );
+    }
+    _directing.removeWhere((key, _) => !directing.contains(key));
+    return GenerationProgress(List.unmodifiable(result));
   }
 
   @override
@@ -227,6 +306,22 @@ class GenerationController extends ValueNotifier<GenerationState>
       .where((f) => f.bookId == bookId && f.chapter == chapter)
       .firstOrNull;
   @override
+  Future<void> prepare(
+    String bookId, {
+    required int first,
+    required int through,
+  }) async {
+    await scheduler.enqueue(
+      bookId,
+      TaskKind.synthesize,
+      first: first,
+      through: through,
+      mode: await coreMode(bookId),
+    );
+    _refresh();
+  }
+
+  @override
   Future<void> resume(String bookId) async {
     gateway?.resetRecovery(bookId);
     await store.delete('generationFailure', bookId);
@@ -251,15 +346,19 @@ class GenerationController extends ValueNotifier<GenerationState>
     await _report();
   }
 
-  Future<void> _report() => scheduler.reportListening(
-    _listeningBook,
-    chapter: _listeningChapter,
-    mode: _listeningMode,
-    lookahead: Lookahead(
-      directing: value.preferences.directing,
-      synthesis: value.preferences.synthesis,
-    ),
-  );
+  Future<void> _report() async {
+    await scheduler.reportListening(
+      _listeningBook,
+      chapter: _listeningChapter,
+      mode: _listeningMode,
+      lookahead: Lookahead(
+        directing: value.preferences.directing,
+        synthesis: value.preferences.synthesis,
+      ),
+    );
+    // Which lookahead is under way changed with it.
+    _refresh();
+  }
 
   Future<void> firstSound(
     String bookId,
@@ -285,6 +384,7 @@ class GenerationController extends ValueNotifier<GenerationState>
     await _events.cancel();
     await _refreshing;
     await _changes.close();
+    _progress.dispose();
     dispose();
   }
 }

@@ -166,13 +166,61 @@ class PsListRow extends StatelessWidget {
   }
 }
 
+/// A bordered row that opens a picker: its label, then the chosen value.
+class PsPickerRow extends StatelessWidget {
+  const PsPickerRow({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String label;
+  final String value;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.ps;
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(PsRadius.sm),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: PsSize.touch),
+          padding: const EdgeInsets.symmetric(horizontal: PsSpace.s3),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(PsRadius.sm),
+            border: Border.all(color: p.ruleStrong),
+          ),
+          child: Row(
+            spacing: PsSpace.s2,
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: PsType.rowTitle.copyWith(color: p.ink),
+                ),
+              ),
+              Text(value, style: PsType.body.copyWith(color: p.ink2)),
+              PsIcon(PsIcons.chevronDown, size: 18, color: p.ruleStrong),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A chapter in the table of contents.
 class PsChapterRow extends StatelessWidget {
   const PsChapterRow({
     super.key,
     required this.index,
     required this.title,
-    this.status = PsChapterStatus.none,
+    this.status,
+    this.statusLabel,
     this.duration,
     this.current = false,
     this.playing = false,
@@ -181,7 +229,12 @@ class PsChapterRow extends StatelessWidget {
 
   final int index;
   final String title;
-  final PsChapterStatus status;
+
+  /// Null for a chapter at rest, which carries no mark.
+  final PsChapterStatus? status;
+
+  /// Replaces the status's generic word, e.g. 配音中 18/40.
+  final String? statusLabel;
 
   /// Only known once synthesized, e.g. 18:42.
   final String? duration;
@@ -239,7 +292,7 @@ class PsChapterRow extends StatelessWidget {
                         FontWeight.w400,
                       ).copyWith(color: p.ink2),
                     ),
-                  PsStatusMark(status),
+                  if (status != null) PsStatusMark(status!, label: statusLabel),
                 ],
               ),
             ),

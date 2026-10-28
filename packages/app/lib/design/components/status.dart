@@ -66,32 +66,34 @@ class PsTag extends StatelessWidget {
   }
 }
 
+/// Generation under way for a chapter. Chapters at rest, whether untouched
+/// or ready to hear, carry no status at all: only the few in motion or
+/// waiting on the reader are marked.
 enum PsChapterStatus {
-  /// Outside the profiled range, so it cannot be directed yet. Drawn like
-  /// [none]: to a reader both simply have no voice yet.
-  unprofiled,
-  none,
-  directed,
-  synthesized,
+  queued,
   working,
-  failed;
+  paused;
 
   String label(AppLocalizations l) => switch (this) {
-    unprofiled => l.chapterUnprofiled,
-    none => l.chapterUndirected,
-    directed => l.chapterDirected,
-    synthesized => l.chapterSynthesized,
+    queued => l.chapterQueued,
     working => l.chapterWorking,
-    failed => l.chapterFailed,
+    paused => l.chapterPaused,
   };
 }
 
-/// A chapter's generation state, told apart by shape: ○ ◐ ● spinner ▲.
+/// A chapter's generation state, told apart by shape: dashed ring, spinner,
+/// ▲. [label] replaces the generic word, e.g. with the voiced line count.
 class PsStatusMark extends StatefulWidget {
-  const PsStatusMark(this.status, {super.key, this.showLabel = false});
+  const PsStatusMark(
+    this.status, {
+    super.key,
+    this.showLabel = false,
+    this.label,
+  });
 
   final PsChapterStatus status;
   final bool showLabel;
+  final String? label;
 
   @override
   State<PsStatusMark> createState() => _PsStatusMarkState();
@@ -135,11 +137,11 @@ class _PsStatusMarkState extends State<PsStatusMark>
     final p = context.ps;
     final status = widget.status;
     final labelColor = switch (status) {
-      PsChapterStatus.failed => p.danger,
+      PsChapterStatus.paused => p.danger,
       PsChapterStatus.working => p.amber,
-      _ => p.ink2,
+      PsChapterStatus.queued => p.ink2,
     };
-    final label = status.label(AppLocalizations.of(context));
+    final label = widget.label ?? status.label(AppLocalizations.of(context));
     return Semantics(
       label: label,
       excludeSemantics: true,
@@ -151,8 +153,15 @@ class _PsStatusMarkState extends State<PsStatusMark>
             size: const Size.square(14),
             painter: _StatusPainter(status, p, _spin),
           ),
-          if (widget.showLabel)
-            Text(label, style: PsType.caption.copyWith(color: labelColor)),
+          if (widget.showLabel || widget.label != null)
+            Text(
+              label,
+              style: PsType.caption.copyWith(
+                color: labelColor,
+                // Counts and timers tick without the label jittering.
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
         ],
       ),
     );
@@ -173,19 +182,21 @@ class _StatusPainter extends CustomPainter {
       ..strokeWidth = 1.5;
     final fill = Paint();
     switch (status) {
-      case PsChapterStatus.unprofiled || PsChapterStatus.none:
-        canvas.drawCircle(c, 5.25, stroke..color = p.ruleStrong);
-      case PsChapterStatus.directed:
-        canvas.drawCircle(c, 5.25, stroke..color = p.ink2);
-        canvas.drawArc(
-          Rect.fromCircle(center: c, radius: 5.25),
-          math.pi / 2,
-          math.pi,
-          true,
-          fill..color = p.ink2,
-        );
-      case PsChapterStatus.synthesized:
-        canvas.drawCircle(c, 6, fill..color = p.jade);
+      case PsChapterStatus.queued:
+        // A dashed ring: a place held, nothing moving yet.
+        for (var i = 0; i < 8; i++) {
+          canvas.drawArc(
+            Rect.fromCircle(center: c, radius: 5.25),
+            -math.pi / 2 + i * math.pi / 4 + math.pi / 16,
+            math.pi / 8,
+            false,
+            Paint()
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.5
+              ..strokeCap = StrokeCap.round
+              ..color = p.ruleStrong,
+          );
+        }
       case PsChapterStatus.working:
         canvas.drawCircle(c, 5.25, stroke..color = p.rule);
         canvas.drawArc(
@@ -199,7 +210,7 @@ class _StatusPainter extends CustomPainter {
             ..strokeCap = StrokeCap.round
             ..color = p.amber,
         );
-      case PsChapterStatus.failed:
+      case PsChapterStatus.paused:
         final path = Path()
           ..moveTo(7, 1.2)
           ..lineTo(13, 12.4)

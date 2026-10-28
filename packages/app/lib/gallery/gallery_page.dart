@@ -38,6 +38,9 @@ class _GalleryPageState extends State<GalleryPage> {
   var _mode = 'audiobook';
   var _autoGenerate = true;
   var _fontSize = 18.0;
+
+  /// How many of the scene's lines the chapter being generated has voiced.
+  var _voiced = 2;
   var _speed = '1.25';
 
   Future<void> _openLineMenu(int paragraph, int line, Offset at) async {
@@ -290,6 +293,8 @@ class _GalleryPageState extends State<GalleryPage> {
           },
         ),
         const SizedBox(height: PsSpace.s6),
+        _generating(),
+        const SizedBox(height: PsSpace.s6),
         const PsPassage(
           english: true,
           paragraphs: [
@@ -304,6 +309,40 @@ class _GalleryPageState extends State<GalleryPage> {
             ],
             [PsLine('Mr. Bennet replied that he had not.')],
           ],
+        ),
+      ],
+    );
+  }
+
+  /// A chapter being generated: lines without a voice yet wait in ink-2.
+  Widget _generating() {
+    final total = _scene.fold(0, (n, paragraph) => n + paragraph.length);
+    var line = 0;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        PsPassage(
+          heading: PsPassageHeading(
+            number: '第二章',
+            title: '优胜记略',
+            status: _voiced < total ? PsChapterStatus.working : null,
+            statusLabel: '配音中 $_voiced/$total',
+          ),
+          fontSize: _fontSize,
+          paragraphs: [
+            for (final paragraph in _scene)
+              [
+                for (final text in paragraph)
+                  PsLine(text, pending: line++ >= _voiced),
+              ],
+          ],
+        ),
+        PsButton(
+          label: _voiced < total ? '配好下一句' : '重来',
+          small: true,
+          variant: PsButtonVariant.ghost,
+          onPressed: () =>
+              setState(() => _voiced = _voiced < total ? _voiced + 1 : 0),
         ),
       ],
     );
@@ -338,18 +377,20 @@ class _GalleryPageState extends State<GalleryPage> {
   Widget _chapters() {
     return Column(
       children: [
+        // Only chapters under way carry a mark.
         for (final c in const [
-          (1, '第一章　序', PsChapterStatus.synthesized, '18:42'),
-          (2, '第二章　优胜记略', PsChapterStatus.synthesized, '21:05'),
-          (3, '第三章　续优胜记略', PsChapterStatus.directed, null),
-          (4, '第四章　恋爱的悲剧', PsChapterStatus.working, null),
-          (5, '第五章　生计问题', PsChapterStatus.none, null),
+          (1, '第一章　序', null, null),
+          (2, '第二章　优胜记略', null, null),
+          (3, '第三章　续优胜记略', PsChapterStatus.working, '配音中 18/40'),
+          (4, '第四章　恋爱的悲剧', PsChapterStatus.queued, '排队中'),
+          (5, '第五章　生计问题', PsChapterStatus.paused, '已暂停'),
+          (6, '第六章　从中兴到末路', null, null),
         ])
           PsChapterRow(
             index: c.$1,
             title: c.$2,
             status: c.$3,
-            duration: c.$4,
+            statusLabel: c.$4,
             current: c.$1 == 2,
             playing: _playing,
             onTap: () {},

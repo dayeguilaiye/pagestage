@@ -428,7 +428,7 @@ class _CastPageState extends State<CastPage> {
                 style: PsType.subhead.copyWith(color: p.ink2),
               )
             else ...[
-              _ThroughRow(
+              PsPickerRow(
                 label: l.profileThrough,
                 value: through > 0 ? l.chapterNumber(through) : '—',
                 onTap: _chapters.isEmpty ? null : () => _pickThrough(cast),
@@ -603,51 +603,6 @@ class _ProfileBar extends StatelessWidget {
               fit: StackFit.expand,
               children: [fill(target, p.ruleStrong), fill(done, p.ink)],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ThroughRow extends StatelessWidget {
-  const _ThroughRow({
-    required this.label,
-    required this.value,
-    required this.onTap,
-  });
-
-  final String label;
-  final String value;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.ps;
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(PsRadius.sm),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: PsSize.touch),
-          padding: const EdgeInsets.symmetric(horizontal: PsSpace.s3),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(PsRadius.sm),
-            border: Border.all(color: p.ruleStrong),
-          ),
-          child: Row(
-            spacing: PsSpace.s2,
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: PsType.rowTitle.copyWith(color: p.ink),
-                ),
-              ),
-              Text(value, style: PsType.body.copyWith(color: p.ink2)),
-              PsIcon(PsIcons.chevronDown, size: 18, color: p.ruleStrong),
-            ],
           ),
         ),
       ),

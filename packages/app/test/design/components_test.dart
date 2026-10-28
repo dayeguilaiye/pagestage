@@ -92,14 +92,18 @@ void main() {
             PsChapterRow(
               index: 3,
               title: '第三章　续优胜记略',
-              status: PsChapterStatus.directed,
+              status: PsChapterStatus.working,
+              statusLabel: '配音中 18/40',
             ),
+            PsChapterRow(index: 4, title: '第四章　恋爱的悲剧'),
           ],
         ),
       ),
     );
     expect(find.text('003'), findsOneWidget);
-    expect(find.bySemanticsLabel(RegExp('已导演')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('配音中 18/40')), findsOneWidget);
+    // A chapter at rest carries no mark at all.
+    expect(find.byType(PsStatusMark), findsOneWidget);
     semantics.dispose();
   });
 

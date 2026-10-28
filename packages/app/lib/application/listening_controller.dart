@@ -202,6 +202,7 @@ class ListeningController extends ValueNotifier<ListeningState>
                 .findSpeaker(script.lines[i].direction.speakerId)
                 ?.name,
             nonStory: script.lines[i].isNonStory,
+            directed: true,
           ),
       ];
     }

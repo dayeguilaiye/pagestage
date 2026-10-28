@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../application/app_services.dart';
@@ -10,6 +11,7 @@ import '../listening/player.dart';
 import 'bookshelf.dart';
 import 'contents.dart';
 import 'delete_book.dart';
+import 'prepare_sheet.dart';
 import 'reader_page.dart';
 import 'reading_settings.dart';
 
@@ -158,6 +160,13 @@ class _BookPageState extends State<BookPage> {
     );
   }
 
+  void _prepare() => showPrepareSheet(
+    context,
+    book: widget.book,
+    chapters: _contents!.chapters,
+    generation: _services!.generation!,
+  );
+
   Future<void> _menu(BuildContext button) async {
     final l = AppLocalizations.of(context);
     final box = button.findRenderObject()! as RenderBox;
@@ -263,23 +272,41 @@ class _BookPageState extends State<BookPage> {
                     padding: const EdgeInsets.fromLTRB(
                       PsSpace.s5,
                       0,
-                      PsSpace.s5,
+                      PsSpace.s3,
                       PsSpace.s1,
                     ),
-                    child: Text(
-                      l.contents,
-                      style: PsType.subhead.copyWith(
-                        color: p.ink2,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            l.contents,
+                            style: PsType.subhead.copyWith(
+                              color: p.ink2,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        if (_services?.generation != null)
+                          PsButton(
+                            label: l.prepareChapters,
+                            icon: PsIcons.voice,
+                            small: true,
+                            variant: PsButtonVariant.ghost,
+                            onPressed: contents == null ? null : _prepare,
+                          )
+                        else
+                          // Keeps the heading's height without the button.
+                          const SizedBox(height: PsSize.touch),
+                      ],
                     ),
                   ),
                 ),
                 if (contents != null)
-                  SliverList.builder(
-                    itemCount: contents.length,
-                    itemBuilder: (context, i) =>
-                        contents.build(context, i, onChapter: _read),
+                  _ContentsList(
+                    contents: contents,
+                    bookId: book.id,
+                    progress: _services?.generation?.progress,
+                    onChapter: _read,
                   )
                 else if (_loadFailed)
                   SliverToBoxAdapter(
@@ -415,5 +442,37 @@ class _BookPageState extends State<BookPage> {
         });
       }
     }
+  }
+}
+
+/// The chapters, marked while any of them is being generated.
+class _ContentsList extends StatelessWidget {
+  const _ContentsList({
+    required this.contents,
+    required this.bookId,
+    required this.progress,
+    required this.onChapter,
+  });
+
+  final TableOfContents contents;
+  final String bookId;
+
+  /// Null without generation, as in the gallery.
+  final ValueListenable<GenerationProgress>? progress;
+  final ValueChanged<int> onChapter;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = this.progress;
+    Widget list(Map<int, ChapterProgress> chapters) => SliverList.builder(
+      itemCount: contents.length,
+      itemBuilder: (context, i) =>
+          contents.build(context, i, onChapter: onChapter, progress: chapters),
+    );
+    if (progress == null) return list(const {});
+    return ValueListenableBuilder(
+      valueListenable: progress,
+      builder: (context, value, _) => list(bookProgress(value, bookId)),
+    );
   }
 }
