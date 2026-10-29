@@ -1,0 +1,591 @@
+{
+  "model": "edge-read-aloud",
+  "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+  "checkedAt": "2026-10-29",
+  "voices": [
+    {
+      "id": "zh-CN-XiaoxiaoNeural",
+      "providerLabel": "Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "Warm",
+      "useCases": "News, Novel",
+      "locale": "zh-CN",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Warm"
+        ]
+      }
+    },
+    {
+      "id": "zh-CN-XiaoyiNeural",
+      "providerLabel": "Microsoft Xiaoyi Online (Natural) - Chinese (Mainland)",
+      "languages": [
+        "zh"
+      ],
+      "gender": "female",
+      "description": "Lively",
+      "useCases": "Cartoon, Novel",
+      "locale": "zh-CN",
+      "voiceTag": {
+        "ContentCategories": [
+          "Cartoon",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Lively"
+        ]
+      }
+    },
+    {
+      "id": "zh-CN-YunjianNeural",
+      "providerLabel": "Microsoft Yunjian Online (Natural) - Chinese (Mainland)",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "Passion",
+      "useCases": "Sports, Novel",
+      "locale": "zh-CN",
+      "voiceTag": {
+        "ContentCategories": [
+          "Sports",
+          " Novel"
+        ],
+        "VoicePersonalities": [
+          "Passion"
+        ]
+      }
+    },
+    {
+      "id": "zh-CN-YunxiNeural",
+      "providerLabel": "Microsoft Yunxi Online (Natural) - Chinese (Mainland)",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "Lively, Sunshine",
+      "useCases": "Novel",
+      "locale": "zh-CN",
+      "voiceTag": {
+        "ContentCategories": [
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Lively",
+          "Sunshine"
+        ]
+      }
+    },
+    {
+      "id": "zh-CN-YunxiaNeural",
+      "providerLabel": "Microsoft Yunxia Online (Natural) - Chinese (Mainland)",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "Cute",
+      "useCases": "Cartoon, Novel",
+      "locale": "zh-CN",
+      "voiceTag": {
+        "ContentCategories": [
+          "Cartoon",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Cute"
+        ]
+      }
+    },
+    {
+      "id": "zh-CN-YunyangNeural",
+      "providerLabel": "Microsoft Yunyang Online (Natural) - Chinese (Mainland)",
+      "languages": [
+        "zh"
+      ],
+      "gender": "male",
+      "description": "Professional, Reliable",
+      "useCases": "News",
+      "locale": "zh-CN",
+      "voiceTag": {
+        "ContentCategories": [
+          "News"
+        ],
+        "VoicePersonalities": [
+          "Professional",
+          "Reliable"
+        ]
+      }
+    },
+    {
+      "id": "en-US-AvaNeural",
+      "providerLabel": "Microsoft Ava Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Expressive, Caring, Pleasant, Friendly",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Expressive",
+          "Caring",
+          "Pleasant",
+          "Friendly"
+        ]
+      }
+    },
+    {
+      "id": "en-US-AndrewNeural",
+      "providerLabel": "Microsoft Andrew Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Warm, Confident, Authentic, Honest",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Warm",
+          "Confident",
+          "Authentic",
+          "Honest"
+        ]
+      }
+    },
+    {
+      "id": "en-US-EmmaNeural",
+      "providerLabel": "Microsoft Emma Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Cheerful, Clear, Conversational",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Cheerful",
+          "Clear",
+          "Conversational"
+        ]
+      }
+    },
+    {
+      "id": "en-US-BrianNeural",
+      "providerLabel": "Microsoft Brian Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Approachable, Casual, Sincere",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Approachable",
+          "Casual",
+          "Sincere"
+        ]
+      }
+    },
+    {
+      "id": "en-GB-LibbyNeural",
+      "providerLabel": "Microsoft Libby Online (Natural) - English (United Kingdom)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Friendly, Positive",
+      "useCases": "General",
+      "locale": "en-GB",
+      "voiceTag": {
+        "ContentCategories": [
+          "General"
+        ],
+        "VoicePersonalities": [
+          "Friendly",
+          "Positive"
+        ]
+      }
+    },
+    {
+      "id": "en-GB-MaisieNeural",
+      "providerLabel": "Microsoft Maisie Online (Natural) - English (United Kingdom)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Friendly, Positive",
+      "useCases": "General",
+      "locale": "en-GB",
+      "voiceTag": {
+        "ContentCategories": [
+          "General"
+        ],
+        "VoicePersonalities": [
+          "Friendly",
+          "Positive"
+        ]
+      }
+    },
+    {
+      "id": "en-GB-RyanNeural",
+      "providerLabel": "Microsoft Ryan Online (Natural) - English (United Kingdom)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Friendly, Positive",
+      "useCases": "General",
+      "locale": "en-GB",
+      "voiceTag": {
+        "ContentCategories": [
+          "General"
+        ],
+        "VoicePersonalities": [
+          "Friendly",
+          "Positive"
+        ]
+      }
+    },
+    {
+      "id": "en-GB-SoniaNeural",
+      "providerLabel": "Microsoft Sonia Online (Natural) - English (United Kingdom)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Friendly, Positive",
+      "useCases": "General",
+      "locale": "en-GB",
+      "voiceTag": {
+        "ContentCategories": [
+          "General"
+        ],
+        "VoicePersonalities": [
+          "Friendly",
+          "Positive"
+        ]
+      }
+    },
+    {
+      "id": "en-GB-ThomasNeural",
+      "providerLabel": "Microsoft Thomas Online (Natural) - English (United Kingdom)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Friendly, Positive",
+      "useCases": "General",
+      "locale": "en-GB",
+      "voiceTag": {
+        "ContentCategories": [
+          "General"
+        ],
+        "VoicePersonalities": [
+          "Friendly",
+          "Positive"
+        ]
+      }
+    },
+    {
+      "id": "en-US-AnaNeural",
+      "providerLabel": "Microsoft Ana Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Cute",
+      "useCases": "Cartoon, Conversation",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Cartoon",
+          "Conversation"
+        ],
+        "VoicePersonalities": [
+          "Cute"
+        ]
+      }
+    },
+    {
+      "id": "en-US-AndrewMultilingualNeural",
+      "providerLabel": "Microsoft AndrewMultilingual Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Warm, Confident, Authentic, Honest",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Warm",
+          "Confident",
+          "Authentic",
+          "Honest"
+        ]
+      }
+    },
+    {
+      "id": "en-US-AriaNeural",
+      "providerLabel": "Microsoft Aria Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Positive, Confident",
+      "useCases": "News, Novel",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Positive",
+          "Confident"
+        ]
+      }
+    },
+    {
+      "id": "en-US-AvaMultilingualNeural",
+      "providerLabel": "Microsoft AvaMultilingual Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Expressive, Caring, Pleasant, Friendly",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Expressive",
+          "Caring",
+          "Pleasant",
+          "Friendly"
+        ]
+      }
+    },
+    {
+      "id": "en-US-BrianMultilingualNeural",
+      "providerLabel": "Microsoft BrianMultilingual Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Approachable, Casual, Sincere",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Approachable",
+          "Casual",
+          "Sincere"
+        ]
+      }
+    },
+    {
+      "id": "en-US-ChristopherNeural",
+      "providerLabel": "Microsoft Christopher Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Reliable, Authority",
+      "useCases": "News, Novel",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Reliable",
+          "Authority"
+        ]
+      }
+    },
+    {
+      "id": "en-US-EmmaMultilingualNeural",
+      "providerLabel": "Microsoft EmmaMultilingual Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Cheerful, Clear, Conversational",
+      "useCases": "Conversation, Copilot",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "Conversation",
+          "Copilot"
+        ],
+        "VoicePersonalities": [
+          "Cheerful",
+          "Clear",
+          "Conversational"
+        ]
+      }
+    },
+    {
+      "id": "en-US-EricNeural",
+      "providerLabel": "Microsoft Eric Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Rational",
+      "useCases": "News, Novel",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Rational"
+        ]
+      }
+    },
+    {
+      "id": "en-US-GuyNeural",
+      "providerLabel": "Microsoft Guy Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Passion",
+      "useCases": "News, Novel",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Passion"
+        ]
+      }
+    },
+    {
+      "id": "en-US-JennyNeural",
+      "providerLabel": "Microsoft Jenny Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Friendly, Considerate, Comfort",
+      "useCases": "General",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "General"
+        ],
+        "VoicePersonalities": [
+          "Friendly",
+          "Considerate",
+          "Comfort"
+        ]
+      }
+    },
+    {
+      "id": "en-US-MichelleNeural",
+      "providerLabel": "Microsoft Michelle Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "female",
+      "description": "Friendly, Pleasant",
+      "useCases": "News, Novel",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Friendly",
+          "Pleasant"
+        ]
+      }
+    },
+    {
+      "id": "en-US-RogerNeural",
+      "providerLabel": "Microsoft Roger Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Lively",
+      "useCases": "News, Novel",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Lively"
+        ]
+      }
+    },
+    {
+      "id": "en-US-SteffanNeural",
+      "providerLabel": "Microsoft Steffan Online (Natural) - English (United States)",
+      "languages": [
+        "en"
+      ],
+      "gender": "male",
+      "description": "Rational",
+      "useCases": "News, Novel",
+      "locale": "en-US",
+      "voiceTag": {
+        "ContentCategories": [
+          "News",
+          "Novel"
+        ],
+        "VoicePersonalities": [
+          "Rational"
+        ]
+      }
+    }
+  ]
+}

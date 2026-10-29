@@ -37,7 +37,9 @@ dart run packages/core/bin/pagestage.dart direct <book-id> 1 --config .pagestage
 dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --config .pagestage/providers.json
 ```
 
-`profile` 建立本书演员表；`cast recommend` 选择音色；`direct` 保存与原文对齐的剧本；`synthesize` 按角色和情绪生成 WAV。示例选角限定 MiniMax，同章也可以分别绑定两家服务商。使用 `cast catalog --language zh` 查看预设、`cast set <book-id> <speaker-id> <provider:voice-id>` 换声。再次合成复用未改变台词的音频缓存。
+`profile` 建立本书演员表；`cast recommend` 选择音色；`direct` 保存与原文对齐的剧本；`synthesize` 按角色和情绪生成 WAV。示例选角限定 MiniMax，同章可以混用 MiniMax、百炼和 Edge。使用 `cast catalog --language zh` 查看预设、`cast set <book-id> <speaker-id> <provider:voice-id>` 换声。再次合成复用未改变台词的音频缓存。
+
+Edge 可免 key 朗读已导入章节：`dart run packages/core/bin/pagestage.dart narrate <book-id> 1 --provider edge`。使用 `cast recommend <book-id> --provider edge` 可为已建档的书选择 Edge 音色；支持语速、音高和音量，情绪与发音词典不生效。MP3 解码依赖随 Dart/Flutter 构建的原生库，构建环境需要 C 工具链。
 
 广播剧模式使用 `synthesize ... --mode drama`，旁白合并试听使用 `--merge-narrator`。命令输出 JSON，包含已保存状态、用量和音频路径；本地 SQLite、剧本和音频均位于 `--data-dir` 选定的目录。
 
@@ -57,7 +59,7 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --config .pages
 | [产品规格](docs/spec.md) | 原型目标与产品设计 |
 | [领域词汇](GLOSSARY.md) | Script、Speaker、VoiceBinding 等术语 |
 
-当前验证使用假 LLM/TTS 和依据官方文档构造的离线 HTTP 契约。真实 key 的整章合成、音色区分与人工试听验收待补验。
+当前验证使用假 LLM/TTS 和离线 HTTP/WebSocket 契约及 MP3 解码夹具。真实 key 的整章合成、音色区分与人工试听验收待补验。
 
 ## 安装包与版本发布
 

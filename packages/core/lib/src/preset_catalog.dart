@@ -53,7 +53,7 @@ class VoicePreset {
   };
 }
 
-/// Documented MiniMax and Bailian presets, checked 2026-10-24.
+/// Documented presets built from dated provider metadata snapshots.
 /// Demographic tags include their source/inference provenance.
 final List<VoicePreset> defaultVoiceCatalog = List.unmodifiable(
   (jsonDecode(presetCatalogJson) as List).map((item) {

@@ -23,6 +23,7 @@ abstract final class Labels {
         null || '' => l.providerUnknown,
         'llm' => l.providerLlm,
         'minimax' => 'MiniMax',
+        'edge' => 'Microsoft Edge',
         'bailian' => l.providerBailian,
         'system' => l.systemVoice,
         _ => provider!,

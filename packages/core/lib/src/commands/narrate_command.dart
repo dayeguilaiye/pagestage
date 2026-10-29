@@ -7,6 +7,7 @@ import '../models/cast.dart';
 import '../models/voice.dart';
 import '../provider_configuration.dart';
 import '../providers/tts_settings.dart';
+import '../providers/edge_tts_adapter.dart';
 import '../synthesizer.dart';
 
 class NarrateCommand extends Command<void> {
@@ -14,13 +15,16 @@ class NarrateCommand extends Command<void> {
     argParser
       ..addOption(
         'provider',
-        allowed: ['minimax', 'bailian'],
+        allowed: ['minimax', 'bailian', 'edge'],
         defaultsTo: 'minimax',
         help: 'TTS provider.',
       )
       ..addOption('config', help: 'Local provider JSON configuration file.')
       ..addOption('model', help: 'Provider speech model.')
       ..addOption('voice', help: 'Provider preset voice parameter.')
+      ..addOption('rate', help: 'Edge rate, e.g. +10% (default +0%).')
+      ..addOption('volume', help: 'Edge volume, e.g. -10% (default +0%).')
+      ..addOption('pitch', help: 'Edge pitch, e.g. +5Hz (default +0Hz).')
       ..addOption('output', help: 'Destination WAV path.');
   }
   final CliContext context;
@@ -49,7 +53,13 @@ class NarrateCommand extends Command<void> {
     );
     final provider = argResults!['provider'] as String;
     final envPrefix = provider.toUpperCase();
-    final defaults = provider == 'minimax'
+    final defaults = provider == 'edge'
+        ? (
+            model: EdgeTtsAdapter.model,
+            zhVoice: 'zh-CN-XiaoxiaoNeural',
+            enVoice: 'en-US-AriaNeural',
+          )
+        : provider == 'minimax'
         ? (
             model: 'speech-2.8-hd',
             zhVoice: 'Chinese (Mandarin)_Male_Announcer',
@@ -76,6 +86,22 @@ class NarrateCommand extends Command<void> {
           environmentVariable: '${envPrefix}_VOICE',
         ) ??
         (book.language == 'zh' ? defaults.zhVoice : defaults.enVoice);
+    if (provider != 'edge' &&
+        ['rate', 'volume', 'pitch'].any((name) => argResults![name] != null)) {
+      usageException('Rate, volume and pitch options require --provider edge.');
+    }
+    final parameters = <String, Object?>{
+      if (provider == 'edge')
+        for (final name in ['rate', 'volume', 'pitch'])
+          name:
+              argResults![name] as String? ??
+              config.value(
+                'edge',
+                name,
+                environmentVariable: 'EDGE_${name.toUpperCase()}',
+              ) ??
+              (name == 'pitch' ? '+0Hz' : '+0%'),
+    };
     final session = TtsProviderSession.open(
       config,
       providers: [provider],
@@ -96,6 +122,7 @@ class NarrateCommand extends Command<void> {
             provider: provider,
             model: model,
             voiceId: voice,
+            parameters: parameters,
           ),
         },
         outputPath:

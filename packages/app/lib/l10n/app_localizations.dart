@@ -1130,6 +1130,12 @@ abstract class AppLocalizations {
   /// **'生成角色的配音。'**
   String get minimaxSectionNote;
 
+  /// No description provided for @edgeSectionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'在线音色，无需密钥，可在演员表中选择。未配置付费语音服务时用于自动选角。支持普通文本朗读；情绪和多音字指令不生效。'**
+  String get edgeSectionNote;
+
   /// No description provided for @minimaxKey.
   ///
   /// In zh, this message translates to:

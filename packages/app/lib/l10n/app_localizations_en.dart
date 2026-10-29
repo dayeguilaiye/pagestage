@@ -644,6 +644,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minimaxSectionNote => 'Generates the characters’ voices.';
 
   @override
+  String get edgeSectionNote =>
+      'Online voices, ready without an API key. Choose an Edge voice in the cast. Used for automatic casting when no paid voice provider is configured. Supports plain-text reading; emotion and pronunciation instructions are not applied.';
+
+  @override
   String get minimaxKey => 'MiniMax key';
 
   @override

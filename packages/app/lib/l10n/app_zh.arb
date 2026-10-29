@@ -214,6 +214,7 @@
   "sameAsProfileModel": "与建档模型相同",
   "llmKey": "大模型密钥",
   "minimaxSectionNote": "生成角色的配音。",
+  "edgeSectionNote": "在线音色，无需密钥，可在演员表中选择。未配置付费语音服务时用于自动选角。支持普通文本朗读；情绪和多音字指令不生效。",
   "minimaxKey": "MiniMax 密钥",
   "bailianSection": "阿里云百炼",
   "bailianSectionNote": "生成角色的配音，按地域选择接入点。",

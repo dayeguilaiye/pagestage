@@ -76,6 +76,30 @@ void main() {
   });
 
   test(
+    'no TTS key selects Edge and auditions through Microsoft consent',
+    () async {
+      await providers.save(providers.value, minimaxKey: '');
+      final destinations = <ConsentRequest>[];
+      consents.addListener(() {
+        if (consents.value case final request?) destinations.add(request);
+      });
+      await casts.profile(book.id, through: 1);
+      await casts.idle;
+      expect((await casts.load(book.id)).members.single.provider, 'edge');
+      await casts.audition(book.id, 'narrator');
+      expect(tts.requests.single.binding.provider, 'edge');
+      expect(
+        destinations.any(
+          (r) =>
+              r.provider == 'edge' &&
+              r.endpoint == EdgeTtsAdapter.defaultEndpoint,
+        ),
+        isTrue,
+      );
+    },
+  );
+
+  test(
     'profiles selected range, casts, extends preserving voices and caches auditions',
     () async {
       await casts.profile(book.id, through: 1);

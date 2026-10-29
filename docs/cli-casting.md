@@ -8,7 +8,7 @@ dart run packages/core/bin/pagestage.dart cast list <book-id>
 dart run packages/core/bin/pagestage.dart cast catalog --language zh
 ```
 
-`recommend` 默认将台词量前 20 个正式角色列为优先独立配音对象，用 `--exclusive-count 5` 调整数量。旁白按书的语言选择，身份在揭晓前单独参与选角。`--provider minimax` 或 `--provider bailian` 限定推荐目录；默认 `all` 使用两家目录。百炼目录可用 `--region beijing|singapore` 指定区域，默认北京。
+`recommend` 默认将台词量前 20 个正式角色列为优先独立配音对象，用 `--exclusive-count 5` 调整数量。旁白按书的语言选择，身份在揭晓前单独参与选角。`--provider minimax`、`--provider bailian` 或 `--provider edge` 限定推荐目录；默认 `all` 使用完整目录。`cast catalog` 同样支持 `--provider` 筛选。百炼目录可用 `--region beijing|singapore` 指定区域，默认北京。
 
 推荐先比较性别、年龄段，再以说话风格和资料完整度细分匹配程度。同等匹配时，优先角色尽量使用独立音色，群演尽量避开优先角色及同章群演已用的音色。候选不足时自动使用相近年龄、未知标签或其他性别的候选，也允许复用最匹配的音色。只要当前语言、服务商和区域存在可用预设，就为全部说话人完成分配；偏差和复用作为非阻断提示输出，用户可用 `cast set` 调整。当前配置完全没有兼容预设时，返回错误并保留已保存的选角。
 
@@ -24,16 +24,18 @@ dart run packages/core/bin/pagestage.dart cast audition <book-id> --speaker <spe
 
 从 `catalog` 输出复制完整的 `provider:voice-id`；其中空格也属于 ID。`audition` 使用已选择的音色生成 WAV 样音，默认保存到数据目录的 `samples/<book-id>`。每个说话人的音色记录保存声音描述、样音路径和服务商绑定，演员表引用稳定的本地音色 ID。换音色后会使用新的绑定和样音记录。
 
-试音需要相应服务商的 key。通过 `MINIMAX_API_KEY`、`BAILIAN_API_KEY` 配置，或传入 `--config <本地 JSON 文件>`；环境变量优先。`MINIMAX_BASE_URL`、`BAILIAN_BASE_URL` 和 `BAILIAN_REGION` 的格式见 [TTS CLI](cli-tts.md)。百炼试音的 key、接口地址和区域应与选角时指定的区域一致。推荐目录本身可离线使用。
+MiniMax 和百炼试音需要相应服务商的 key，Edge 试音无需 key。通过 `MINIMAX_API_KEY`、`BAILIAN_API_KEY` 配置，或传入 `--config <本地 JSON 文件>`；环境变量优先。`MINIMAX_BASE_URL`、`BAILIAN_BASE_URL` 和 `BAILIAN_REGION` 的格式见 [TTS CLI](cli-tts.md)。百炼试音的 key、接口地址和区域应与选角时指定的区域一致。推荐目录本身可离线使用。
 
 身份揭晓后的台词使用所属角色的音色。所属角色在揭晓前没有出场时，首次解析揭晓后的章节会保存一份独立的继承音色；随后调整身份的音色只影响揭晓前的台词。手动为所属角色选音色会成为揭晓后使用的音色。`cast list` 显示名字、音色和样音，不输出身份关系或角色档案。
 
 ## 目录来源
 
-内置目录含 184 个官方预设绑定：中文 113 个、英文 71 个，官方表检索日期为 2026-10-24。MiniMax 默认模型为 `speech-2.8-hd`，百炼为 `qwen-audio-3.1-tts-flash`。百炼收录该模型普通话和英文条目，保留区域约束及完整 `_v3.1` ID；文档只声明其他语言或方言的条目按其支持范围单独核对后再纳入。当前目录的百炼普通话预设在北京区可用，英文预设在北京和新加坡区可用。
+内置目录含 212 个预设绑定：中文 119 个、英文 93 个。MiniMax 和百炼资料核对于 2026-10-24，Edge 音色列表查询于 2026-10-29。MiniMax 默认模型为 `speech-2.8-hd`，百炼为 `qwen-audio-3.1-tts-flash`。百炼收录该模型普通话和英文条目，保留区域约束及完整 `_v3.1` ID；文档只声明其他语言或方言的条目按其支持范围单独核对后再纳入。当前目录的百炼普通话预设在北京区可用，英文预设在北京和新加坡区可用。
 
 - MiniMax 的[中文音色表](https://platform.minimax.cn/docs/faq/system-voice-id)和[英文音色表](https://platform.minimax.io/docs/faq/system-voice-id)提供名称和语言，合并收录 120 个中英文预设；[Get Voice API](https://platform.minimax.cn/docs/api-reference/voice-management-get)提供系统音色名称和描述。
 - [百炼 Qwen-Audio 音色表](https://help.aliyun.com/zh/model-studio/qwen-audio-tts-voice-list)提供性别、声线特质、适用场景及口音。
+
+- Edge 的[音色列表](https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list?trustedclienttoken=6A5AA1D4EAFF4E9FB37E23D68491D6F4)提供性别、地区、声音特点和内容类型。本目录收录普通话 6 个、美式及英式英语 22 个，模型标识为 `edge-read-aloud`；年龄统一保留未知，`Novel` 内容标签可作为旁白候选依据，试听状态仍为未核对。其他语言和方言可在 `narrate --voice` 中显式指定服务端音色 ID。
 
 原始资料保存在 `packages/core/tool/voice_sources/`。`tagProvenance` 记录标签来源和推断依据，`metadataGaps` 记录资料缺口；`styles` 使用中英文说话风格词表。明确的人生阶段词映射到儿童、少年、青年、中年、老年；“甜美”“沉稳”等风格词和单独的 girl、lady 等名称保留未知年龄。每项旁白候选记录 `narratorReview`；当前资料未经过人工试听。
 

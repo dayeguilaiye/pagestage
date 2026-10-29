@@ -9,7 +9,7 @@ typedef LlmFactory = LlmAdapter Function(ProviderConfiguration configuration);
 typedef TtsFactory =
     TtsAdapter Function(ProviderConfiguration configuration, String provider);
 
-/// One credential/consent and request-queue boundary for every paid operation.
+/// One credential/consent and request-queue boundary for cloud operations.
 class ProviderGateway {
   ProviderGateway({
     required this.store,
@@ -75,7 +75,7 @@ class ProviderGateway {
     String Function() bookId, {
     String content = 'chapterTextAndCast',
   }) => {
-    for (final provider in ['minimax', 'bailian'])
+    for (final provider in ['minimax', 'bailian', 'edge'])
       provider: _GatewayTts(this, bookId, provider, content),
   };
 
@@ -98,7 +98,9 @@ class ProviderGateway {
           )
         : null;
     try {
-      final endpoint = provider == 'minimax'
+      final endpoint = provider == 'edge'
+          ? EdgeTtsAdapter.defaultEndpoint
+          : provider == 'minimax'
           ? 'https://api.minimax.io/v1'
           : config.value('bailian', 'region') == 'singapore'
           ? 'https://dashscope-intl.aliyuncs.com/api/v1'
@@ -191,6 +193,14 @@ class _GatewayTts implements TtsAdapter, VoiceDesignAdapter {
   final String content;
   @override
   TtsCapabilities capabilitiesFor(VoiceBinding binding) {
+    if (provider == 'edge') {
+      final adapter = EdgeTtsAdapter();
+      try {
+        return adapter.capabilitiesFor(binding);
+      } finally {
+        adapter.close();
+      }
+    }
     // Capabilities are local; constructing an adapter with a sentinel credential
     // opens no request. The real credential is read only at the paid boundary.
     if (provider == 'minimax') {

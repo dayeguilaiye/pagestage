@@ -9,7 +9,7 @@ Future<void> main(List<String> arguments) async {
   final args = (ArgParser()..addOption('minimax-metadata')).parse(arguments);
   final directory = File.fromUri(Platform.script).parent;
   final presets = <Map<String, Object?>>[];
-  for (final provider in ['minimax', 'bailian']) {
+  for (final provider in ['minimax', 'bailian', 'edge']) {
     final file = File('${directory.path}/voice_sources/$provider.json');
     final source =
         jsonDecode(await file.readAsString()) as Map<String, dynamic>;
@@ -78,16 +78,23 @@ Map<String, Object?> buildPreset(
               (row['id'] as String).replaceAll(RegExp(r'[_-]'), ' '),
             ));
   final descriptionAge = inferAge(description);
-  final age = descriptionAge != 'unknown' ? descriptionAge : inferAge(label);
+  final age = provider == 'edge'
+      ? 'unknown'
+      : descriptionAge != 'unknown'
+      ? descriptionAge
+      : inferAge(label);
   final useCases = row['useCases'] as String? ?? '';
   final review = row['narratorReview'] as String? ?? 'notReviewed';
   final narrator =
       review == 'approved' ||
+      (provider == 'edge' && useCases.contains('Novel')) ||
       RegExp(
         r'narrat|storyteller|audiobook|旁白|有声书|讲故事|讲述故事|故事讲述',
         caseSensitive: false,
       ).hasMatch('$text $useCases');
-  final origin = apiDescription != null
+  final origin = provider == 'edge'
+      ? 'provider VoiceTag metadata'
+      : apiDescription != null
       ? 'provider API description/name'
       : provider == 'bailian'
       ? 'provider voice table'
@@ -127,7 +134,9 @@ Map<String, Object?> buildPreset(
       'narratorCandidate': review == 'approved'
           ? 'manual listening review: ${row['reviewNotes']}'
           : narrator
-          ? '$origin: narration or audiobook wording; not auditioned'
+          ? provider == 'edge'
+                ? '$origin: Novel content category; not auditioned'
+                : '$origin: narration or audiobook wording; not auditioned'
           : 'unknown: no narration use documented',
     },
     'metadataGaps': [

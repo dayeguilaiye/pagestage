@@ -10,9 +10,30 @@ import '../tool/build_preset_catalog.dart';
 import '../tool/sync_minimax_voices.dart';
 
 void main() {
+  test('Edge presets retain explicit gender and unknown ages', () {
+    final voices = defaultVoiceCatalog
+        .where((p) => p.binding.provider == 'edge')
+        .toList();
+    expect(voices, hasLength(28));
+    expect(voices.where((p) => p.languages.contains('zh')), hasLength(6));
+    for (final voice in voices) {
+      expect(voice.ageGroup, 'unknown');
+      expect(voice.gender, anyOf('male', 'female'));
+      expect(voice.narratorReview, 'notReviewed');
+      expect(voice.binding.model, EdgeTtsAdapter.model);
+    }
+    final xiaoxiao = voices.singleWhere(
+      (p) => p.binding.voiceId == 'zh-CN-XiaoxiaoNeural',
+    );
+    expect(xiaoxiao.description, contains('Warm'));
+    expect(xiaoxiao.narratorCandidate, isTrue);
+  });
   test('catalog documents every preset and exposes honest metadata gaps', () {
-    expect(defaultVoiceCatalog, hasLength(184));
-    expect(defaultVoiceCatalog.map((p) => p.id).toSet(), hasLength(184));
+    expect(defaultVoiceCatalog.length, greaterThan(184));
+    expect(
+      defaultVoiceCatalog.map((p) => p.id).toSet(),
+      hasLength(defaultVoiceCatalog.length),
+    );
     for (final preset in defaultVoiceCatalog) {
       expect(preset.sourceUrl, startsWith('https://'));
       expect(preset.description, isNotEmpty);
@@ -79,7 +100,7 @@ void main() {
     'bundled catalog includes every reviewed source and all API descriptions',
     () async {
       final expectedIds = <String>{};
-      for (final provider in ['minimax', 'bailian']) {
+      for (final provider in ['minimax', 'bailian', 'edge']) {
         final source =
             jsonDecode(
                   await File(

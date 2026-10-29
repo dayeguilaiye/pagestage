@@ -13,11 +13,12 @@ dart run packages/core/bin/pagestage.dart books
 ```sh
 dart run packages/core/bin/pagestage.dart narrate <book-id> 1 --provider minimax
 dart run packages/core/bin/pagestage.dart narrate <book-id> 1 --provider bailian
+dart run packages/core/bin/pagestage.dart narrate <book-id> 1 --provider edge
 ```
 
 `narrate` 为每个自然段创建一条旁白台词，按照原文区间合成，段落之间插入 300 毫秒静音。超长台词按适配器声明的请求字符预算拆分，优先在句末、其次在空白处分开，必要时按 Unicode 码点拆分；拆出的原文按顺序拼回后与输入完全一致。一个段落内的音频块直接拼接，段落间保留停顿。
 
-输出为 24 kHz、单声道、16 位 PCM WAV。JSON 结果包括文件路径、音频时长、字符用量、请求数、耗时和服务商报告的 token 用量。未提供的用量字段为 `null`。默认文件放在 `.pagestage/audio/<book-id>/chapter-1.wav`，用 `--output` 指定路径；对比两家音频时分别选择输出文件。`--data-dir` 选择书库与音频目录。
+输出为 24 kHz、单声道、16 位 PCM WAV。JSON 结果包括文件路径、音频时长、字符用量、请求数、耗时和服务商报告的 token 用量。未提供的用量字段为 `null`。默认文件放在 `.pagestage/audio/<book-id>/chapter-1.wav`，用 `--output` 指定路径；对比不同服务商音频时分别选择输出文件。`--data-dir` 选择书库与音频目录。
 
 ## 多角色整章合成
 
@@ -29,7 +30,7 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --mode drama --
 dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --merge-narrator --config .pagestage/providers.json
 ```
 
-`synthesize` 读取每个说话人的 VoiceBinding，支持同一章混用 MiniMax 和百炼。导演新增的临时说话人按已保存的选角策略补齐音色。只有本次实际朗读涉及的服务商需要配置 key。模型、音色和参数来自选角结果；`MINIMAX_MODEL`、`BAILIAN_MODEL` 等旁白默认值不改写已选绑定。
+`synthesize` 读取每个说话人的 VoiceBinding，支持同一章混用 MiniMax、百炼和 Edge。导演新增的临时说话人按已保存的选角策略补齐音色。MiniMax 和百炼需要相应 key；Edge 无需 key。模型、音色和参数来自选角结果；`MINIMAX_MODEL`、`BAILIAN_MODEL` 等旁白默认值不改写已选绑定。
 
 | 选项或规则 | 行为 |
 | --- | --- |
@@ -51,6 +52,40 @@ MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中
 `.pagestage/audio/<book-id>/cache/` 按书保存每个 utterance 的原始 PCM WAV，已经拼好服务商分块。缓存身份包含实际分块原文、语言、服务商、模型、音色绑定参数、完整表演指令、映射后的请求说明以及规范化的匹配发音词典。相同内容跨 CLI 调用复用；换掉一个说话人的音色，仅他的台词重新请求。修改原文、模型或表演指令会产生新缓存。缓存文件丢失或损坏时自动重新合成。已有 `.pagestage/audio/cache/` 中的命中项会复制到所属书的目录，继续复用。
 
 缓存保留原始 utterance 音频。每次组装先从原始音频统一响度，再添加章节停顿。`rawAudioPath` 指向原始缓存，`audioPath` 指向 `normalized/` 下处理后的台词音频，详见 [发音词典与响度](cli-pronunciation-loudness.md)。开关演播模式可复用保留台词的缓存；合并旁白改变 utterance 的原文组合，因此第一次会生成对应缓存。`requests`、`characters` 和 token 字段只统计本次新请求；全部命中时请求数、字符用量为 0，未报告的 token 用量为 `null`。程序调用方可通过 `Synthesizer(cacheDirectory: ...)` 选定缓存目录；默认在输出目录下的 `.utterances/`。
+
+## Edge 在线朗读
+
+Edge 适配器直接连接微软 Read Aloud WebSocket 服务，无需启动浏览器或另行部署 Go 服务。显式选择 `--provider edge` 即可联网合成，无需 key 或配置文件：
+
+```sh
+dart run packages/core/bin/pagestage.dart narrate <book-id> 1 --provider edge --voice zh-CN-XiaoxiaoNeural --rate=+10% --pitch=-2Hz --volume=+0%
+dart run packages/core/bin/pagestage.dart cast catalog --provider edge --language zh
+dart run packages/core/bin/pagestage.dart cast recommend <book-id> --provider edge
+dart run packages/core/bin/pagestage.dart cast audition <book-id>
+dart run packages/core/bin/pagestage.dart synthesize <book-id> 1
+```
+
+多角色命令仍需要已保存的演员表和剧本；建档与导演使用各自配置的 LLM。Edge 支持预设音色及整次请求的语速、音高、音量；发音词典保持原文朗读并输出现有的能力提示，情绪、强度和表演说明不发送给服务端。段间停顿由合成器插入。
+
+| 环境变量 | JSON 字段 | 默认值 |
+| --- | --- | --- |
+| `EDGE_MODEL` | `edge.model` | `edge-read-aloud`，固定协议标识 |
+| `EDGE_VOICE` | `edge.voice` | 中文 `zh-CN-XiaoxiaoNeural`，英文 `en-US-AriaNeural` |
+| `EDGE_RATE` | `edge.rate` | `+0%` |
+| `EDGE_VOLUME` | `edge.volume` | `+0%` |
+| `EDGE_PITCH` | `edge.pitch` | `+0Hz` |
+| `EDGE_REQUESTS_PER_MINUTE` | `edge.requestsPerMinute` | `60` |
+| `EDGE_BASE_URL` | `edge.baseUrl` | `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1` |
+
+`rate`、`volume` 使用带正负号的整数百分比，`pitch` 使用带正负号的整数 Hz；这些 CLI 选项仅适用于 Edge。旁白选项优先于环境变量及配置。多角色、试音使用持久化 `VoiceBinding.parameters` 中的 `rate`、`volume`、`pitch`，缺省为零，绑定参数参与缓存身份。
+
+每次请求预算为 600 个 Unicode 码点，给 XML 转义保留空间。服务返回 24 kHz 单声道 MP3，经 `audio_decode` 的原生 minimp3 解码器转换成 PCM，再走统一响度、缓存和 WAV 输出。解码在后台 isolate 执行。Dart/Flutter 构建钩子从源码编译解码器，开发与构建环境需具备目标平台的 C 工具链；运行时无需 FFmpeg。
+
+收到 `turn.end` 且音频可解码后才接受结果；提前断开、超时、空音频和畸形帧均作为失败返回。Edge 未返回计费用量，账本保存空 `usage`，结果中的字符与 token 用量为 `null`。协议属于微软私有接口，可能需要随服务调整维护。
+
+App 的音色列表可直接选择 Edge；未配置付费 TTS key 时，自动选角使用 Edge。首次将文本发送到微软仍经过现有服务商授权弹窗。预设目录取自公开元数据，年龄保留未知，详见 [选角目录](cli-casting.md)。
+
+实现参考：[Go 客户端](https://github.com/dayeguilaiye/tts-api/blob/main/internal/edge/client.go)。离线 WebSocket 契约测试覆盖鉴权参数、SSML 转义、MP3 解码、错误处理、长文本拆分、缓存和 CLI 配置；真实语音合成及人工试听待验证。
 
 ## 配置
 
@@ -92,7 +127,7 @@ MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中
 
 ## 请求节奏与恢复
 
-合成、试音和音色设计通过 `TtsProviderSession` 按服务商排队，发起请求的间隔至少为 `60 / requestsPerMinute` 秒。配置取 1–60000 的整数字符串；默认值是客户端的保守节奏，可按账号实际额度调整。MiniMax 默认每 5 秒发起一次，百炼默认每秒一次；不同服务商各自排队。
+合成、试音和音色设计通过 `TtsProviderSession` 按服务商排队，发起请求的间隔至少为 `60 / requestsPerMinute` 秒。配置取 1–60000 的整数字符串；默认值是客户端的保守节奏，可按账号实际额度调整。MiniMax 默认每 5 秒发起一次，百炼和 Edge 默认每秒一次；不同服务商各自排队。
 
 服务商返回限流时，同一请求等待至少 60 秒后继续，最多补试 2 次，共 3 次尝试；持续限流达到上限后结束命令。无效 key、余额不足、合成回复或音频无效，以及计费状态不明的 TTS 网络错误直接结束任务。已经完成的台词保留在缓存中。CLI 将排队、重试和耗尽额度的信息写入 stderr；用量账本只记录服务商接受的请求，限流失败不计入。
 

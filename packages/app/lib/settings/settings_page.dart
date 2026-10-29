@@ -282,6 +282,11 @@ class _SettingsPageState extends State<SettingsPage> {
                   ],
                 ),
                 _Section(
+                  title: 'Microsoft Edge',
+                  note: l.edgeSectionNote,
+                  children: const [],
+                ),
+                _Section(
                   title: l.bailianSection,
                   note: l.bailianSectionNote,
                   children: [

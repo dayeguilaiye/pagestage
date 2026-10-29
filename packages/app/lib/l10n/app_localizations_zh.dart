@@ -585,6 +585,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get minimaxSectionNote => '生成角色的配音。';
 
   @override
+  String get edgeSectionNote =>
+      '在线音色，无需密钥，可在演员表中选择。未配置付费语音服务时用于自动选角。支持普通文本朗读；情绪和多音字指令不生效。';
+
+  @override
   String get minimaxKey => 'MiniMax 密钥';
 
   @override

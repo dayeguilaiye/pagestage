@@ -183,6 +183,7 @@
   "sameAsProfileModel": "Same as profiling model",
   "llmKey": "Language model key",
   "minimaxSectionNote": "Generates the characters’ voices.",
+  "edgeSectionNote": "Online voices, ready without an API key. Choose an Edge voice in the cast. Used for automatic casting when no paid voice provider is configured. Supports plain-text reading; emotion and pronunciation instructions are not applied.",
   "minimaxKey": "MiniMax key",
   "bailianSection": "Alibaba Cloud Bailian",
   "bailianSectionNote": "Generates the characters’ voices from the region you choose.",

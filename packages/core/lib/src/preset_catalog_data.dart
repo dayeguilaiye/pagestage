@@ -6258,6 +6258,969 @@ const presetCatalogJson = r'''
       "styles",
       "narratorListeningReview"
     ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "zh-CN-XiaoxiaoNeural",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)",
+    "description": "Warm",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "zh-CN-XiaoyiNeural",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Xiaoyi Online (Natural) - Chinese (Mainland)",
+    "description": "Lively",
+    "useCases": "Cartoon, Novel",
+    "styles": [
+      "gentle",
+      "bright"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "zh-CN-YunjianNeural",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Yunjian Online (Natural) - Chinese (Mainland)",
+    "description": "Passion",
+    "useCases": "Sports, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "zh-CN-YunxiNeural",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Yunxi Online (Natural) - Chinese (Mainland)",
+    "description": "Lively, Sunshine",
+    "useCases": "Novel",
+    "styles": [
+      "gentle",
+      "bright"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "zh-CN-YunxiaNeural",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Yunxia Online (Natural) - Chinese (Mainland)",
+    "description": "Cute",
+    "useCases": "Cartoon, Novel",
+    "styles": [
+      "gentle",
+      "sweet"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "zh-CN-YunyangNeural",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Yunyang Online (Natural) - Chinese (Mainland)",
+    "description": "Professional, Reliable",
+    "useCases": "News",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-AvaNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Ava Online (Natural) - English (United States)",
+    "description": "Expressive, Caring, Pleasant, Friendly",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle",
+      "expressive"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-AndrewNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Andrew Online (Natural) - English (United States)",
+    "description": "Warm, Confident, Authentic, Honest",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-EmmaNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Emma Online (Natural) - English (United States)",
+    "description": "Cheerful, Clear, Conversational",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle",
+      "bright",
+      "clear"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-BrianNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Brian Online (Natural) - English (United States)",
+    "description": "Approachable, Casual, Sincere",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-GB-LibbyNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Libby Online (Natural) - English (United Kingdom)",
+    "description": "Friendly, Positive",
+    "useCases": "General",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-GB-MaisieNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Maisie Online (Natural) - English (United Kingdom)",
+    "description": "Friendly, Positive",
+    "useCases": "General",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-GB-RyanNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Ryan Online (Natural) - English (United Kingdom)",
+    "description": "Friendly, Positive",
+    "useCases": "General",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-GB-SoniaNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Sonia Online (Natural) - English (United Kingdom)",
+    "description": "Friendly, Positive",
+    "useCases": "General",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-GB-ThomasNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Thomas Online (Natural) - English (United Kingdom)",
+    "description": "Friendly, Positive",
+    "useCases": "General",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-AnaNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Ana Online (Natural) - English (United States)",
+    "description": "Cute",
+    "useCases": "Cartoon, Conversation",
+    "styles": [
+      "gentle",
+      "sweet"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-AndrewMultilingualNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft AndrewMultilingual Online (Natural) - English (United States)",
+    "description": "Warm, Confident, Authentic, Honest",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-AriaNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Aria Online (Natural) - English (United States)",
+    "description": "Positive, Confident",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-AvaMultilingualNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft AvaMultilingual Online (Natural) - English (United States)",
+    "description": "Expressive, Caring, Pleasant, Friendly",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle",
+      "expressive"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-BrianMultilingualNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft BrianMultilingual Online (Natural) - English (United States)",
+    "description": "Approachable, Casual, Sincere",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-ChristopherNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Christopher Online (Natural) - English (United States)",
+    "description": "Reliable, Authority",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-EmmaMultilingualNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft EmmaMultilingual Online (Natural) - English (United States)",
+    "description": "Cheerful, Clear, Conversational",
+    "useCases": "Conversation, Copilot",
+    "styles": [
+      "gentle",
+      "bright",
+      "clear"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-EricNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Eric Online (Natural) - English (United States)",
+    "description": "Rational",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-GuyNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Guy Online (Natural) - English (United States)",
+    "description": "Passion",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-JennyNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Jenny Online (Natural) - English (United States)",
+    "description": "Friendly, Considerate, Comfort",
+    "useCases": "General",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "unknown: no narration use documented"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-MichelleNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "female",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Michelle Online (Natural) - English (United States)",
+    "description": "Friendly, Pleasant",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-RogerNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Roger Online (Natural) - English (United States)",
+    "description": "Lively",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle",
+      "bright"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
+  },
+  {
+    "provider": "edge",
+    "model": "edge-read-aloud",
+    "id": "en-US-SteffanNeural",
+    "languages": [
+      "en"
+    ],
+    "gender": "male",
+    "ageGroup": "unknown",
+    "providerLabel": "Microsoft Steffan Online (Natural) - English (United States)",
+    "description": "Rational",
+    "useCases": "News, Novel",
+    "styles": [
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "narratorReview": "notReviewed",
+    "regions": [
+      "provider-configured"
+    ],
+    "sourceUrl": "https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+    "checkedAt": "2026-10-29",
+    "tagProvenance": {
+      "languages": "provider voice table: https://speech.platform.bing.com/consumer/speech/synthesize/readaloud/voices/list",
+      "gender": "provider voice table: explicit gender",
+      "ageGroup": "unknown: not specified in official metadata",
+      "styles": "provider VoiceTag metadata: bilingual delivery terms; not auditioned",
+      "narratorCandidate": "provider VoiceTag metadata: Novel content category; not auditioned"
+    },
+    "metadataGaps": [
+      "ageGroup",
+      "narratorListeningReview"
+    ]
   }
 ]
 ''';

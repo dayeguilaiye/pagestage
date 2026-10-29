@@ -1,5 +1,6 @@
 import '../provider_configuration.dart';
 import 'bailian_tts_adapter.dart';
+import 'edge_tts_adapter.dart';
 import 'minimax_tts_adapter.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
@@ -51,6 +52,20 @@ class TtsProviderSession {
         final injected = overrides[provider];
         if (injected != null) {
           adapters[provider] = ScheduledTtsAdapter(injected, queue);
+          continue;
+        }
+        if (provider == 'edge') {
+          final endpoint = config.value(
+            'edge',
+            'baseUrl',
+            environmentVariable: 'EDGE_BASE_URL',
+          );
+          final adapter = EdgeTtsAdapter(
+            endpoint: endpoint == null ? null : Uri.parse(endpoint),
+            usageLedger: usageLedger,
+          );
+          adapters[provider] = ScheduledTtsAdapter(adapter, queue);
+          closers.add(adapter.close);
           continue;
         }
         final key = config.value(

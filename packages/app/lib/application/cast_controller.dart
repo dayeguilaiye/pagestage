@@ -163,8 +163,8 @@ class CastController extends ChangeNotifier implements Casts {
       if (providers.value.hasMinimaxKey) 'minimax',
       if (providers.value.hasBailianKey) 'bailian',
     };
-    // Assigning a preset is local. Users may configure its provider before audition.
-    return selected.isEmpty ? {'minimax'} : selected;
+    // Edge is available without credentials; paid providers retain precedence.
+    return selected.isEmpty ? {'edge'} : selected;
   }
 
   Future<void> get idleAuditions => _auditions;

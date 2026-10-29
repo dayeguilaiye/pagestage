@@ -28,7 +28,7 @@ class _Recommend extends Command<void> {
       ..addOption('exclusive-count', defaultsTo: '20')
       ..addOption(
         'provider',
-        allowed: ['all', 'minimax', 'bailian'],
+        allowed: ['all', 'minimax', 'bailian', 'edge'],
         defaultsTo: 'all',
       )
       ..addOption(
@@ -102,6 +102,7 @@ Map<String, Object?> _castSummary(CastingResult result) => {
 class _Catalog extends Command<void> {
   _Catalog(this.context) {
     argParser.addOption('language', allowed: ['zh', 'en']);
+    argParser.addOption('provider', allowed: ['minimax', 'bailian', 'edge']);
   }
   final CliContext context;
   @override
@@ -115,10 +116,14 @@ class _Catalog extends Command<void> {
       usageException('No positional arguments expected.');
     }
     final language = argResults!['language'] as String?;
+    final provider = argResults!['provider'] as String?;
     context.writeJson(
       defaultVoiceCatalog
           .where(
             (preset) => language == null || preset.languages.contains(language),
+          )
+          .where(
+            (preset) => provider == null || preset.binding.provider == provider,
           )
           .map((preset) => preset.toJson())
           .toList(),

@@ -102,7 +102,7 @@ class DiagnosticLog implements Diagnostics {
   /// Provider names, task kinds and error codes are fixed program values;
   /// anything else is dropped rather than journaled.
   static final _pauseFields = {
-    'provider': RegExp(r'^(?:llm|minimax|bailian|local|system)$'),
+    'provider': RegExp(r'^(?:llm|minimax|bailian|edge|local|system)$'),
     'task': RegExp(r'^(?:profile|direct|synthesize)$'),
     'reason': RegExp(r'^[A-Za-z]{1,40}$'),
     'code': RegExp(r'^[A-Za-z0-9_. -]{1,64}$'),
