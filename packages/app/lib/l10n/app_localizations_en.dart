@@ -593,146 +593,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reasonUnknown => 'The service is unavailable for now';
 
   @override
-  String get settings => 'Settings';
-
-  @override
-  String get settingsSubtitle => 'Use your own provider accounts';
-
-  @override
-  String get llmSection => 'Language model';
-
-  @override
-  String get llmSectionNote =>
-      'Profiles and directs: finds the speakers and gives each line a voice and a delivery.';
-
-  @override
-  String get baseUrl => 'Base URL';
-
-  @override
-  String get baseUrlInvalid =>
-      'Enter an address starting with https:// or http://';
-
-  @override
-  String get protocol => 'API';
-
-  @override
-  String get protocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get protocolResponses => 'Responses';
-
-  @override
-  String get profileModel => 'Profiling model';
-
-  @override
-  String get profileModelHelp => 'Analyses characters and chooses voices.';
-
-  @override
-  String get directorModel => 'Directing model';
-
-  @override
-  String get directorModelHelp =>
-      'Directs line by line. Leave blank to use the profiling model.';
-
-  @override
-  String get sameAsProfileModel => 'Same as profiling model';
-
-  @override
-  String get llmKey => 'Language model key';
-
-  @override
-  String get minimaxSectionNote => 'Generates the characters’ voices.';
-
-  @override
-  String get edgeSectionNote =>
-      'Online voices, ready without an API key. Choose an Edge voice in the cast. Used for automatic casting when no paid voice provider is configured. Supports plain-text reading; emotion and pronunciation instructions are not applied.';
-
-  @override
-  String get minimaxKey => 'MiniMax key';
-
-  @override
-  String get bailianSection => 'Alibaba Cloud Bailian';
-
-  @override
-  String get bailianSectionNote =>
-      'Generates the characters’ voices from the region you choose.';
-
-  @override
-  String get bailianKey => 'Bailian key';
-
-  @override
-  String get region => 'Region';
-
-  @override
-  String get regionBeijing => 'Beijing';
-
-  @override
-  String get regionSingapore => 'Singapore';
-
-  @override
-  String get keyStored => 'Saved';
-
-  @override
-  String get keyNotSet => 'Not set';
-
-  @override
-  String get keyWillBeRemoved => 'Will be removed';
-
-  @override
-  String get keyHint => 'Paste a key';
-
-  @override
-  String get keyStoredHint => 'Leave blank to keep, or enter a new key';
-
-  @override
-  String get keyRemovedHint => 'This key is removed when you save';
-
-  @override
-  String get showKey => 'Show';
-
-  @override
-  String get hideKey => 'Hide';
-
-  @override
-  String get removeKey => 'Remove key';
-
-  @override
-  String get undoRemoveKey => 'Keep key';
-
-  @override
-  String get saveSettings => 'Save';
-
-  @override
-  String get settingsSaved => 'Settings saved';
-
-  @override
-  String get settingsSaveFailed => 'Couldn’t save settings';
-
-  @override
-  String get settingsSaveFailedBody =>
-      'Nothing has changed. Check what you entered and save again.';
-
-  @override
-  String get castSection => 'Cast';
-
-  @override
-  String get exclusiveVoices => 'Exclusive voices';
-
-  @override
-  String get exclusiveVoicesNote =>
-      'The characters with the most lines each get a voice of their own; everyone else shares the extras’ voices.';
-
-  @override
-  String get exclusiveVoicesFailed =>
-      'Couldn’t change the number of exclusive voices';
-
-  @override
-  String get fewerVoices => 'Fewer';
-
-  @override
-  String get moreVoices => 'More';
-
-  @override
   String consentTitle(String title) {
     return 'Send text from “$title”?';
   }
@@ -850,116 +710,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modeSaveFailed => 'Couldn’t save the performance style. Try again';
 
   @override
-  String get generationSection => 'Generate while listening';
-
-  @override
-  String get generationSectionNote =>
-      'How many chapters ahead of you are prepared. Synthesis can’t run further ahead than directing; 0 turns it off.';
-
-  @override
-  String get autoGenerate => 'Generate voices automatically';
-
-  @override
-  String get autoGenerateNote =>
-      'Chapters without voices are generated without asking';
-
-  @override
-  String get directingAhead => 'Direct ahead';
-
-  @override
-  String get synthesisAhead => 'Synthesize ahead';
-
-  @override
-  String get aheadOff => 'Off';
-
-  @override
-  String aheadChapters(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: '$count chapters ahead',
-      one: '1 chapter ahead',
-    );
-    return '$_temp0';
-  }
-
-  @override
-  String get fewerDirectingAhead => 'Direct fewer chapters ahead';
-
-  @override
-  String get moreDirectingAhead => 'Direct more chapters ahead';
-
-  @override
-  String get fewerSynthesisAhead => 'Synthesize fewer chapters ahead';
-
-  @override
-  String get moreSynthesisAhead => 'Synthesize more chapters ahead';
-
-  @override
-  String get generationSettingsFailed => 'Couldn’t save generation settings';
-
-  @override
-  String get storageSection => 'Storage';
-
-  @override
-  String get storage => 'Storage';
-
-  @override
-  String get storageRowNote => 'See the space each book uses and clear audio';
-
-  @override
-  String get storageNote =>
-      'Counted per book: its text, scripts, cast and other records plus its audio files. The database file is shared by all books; its index and log overhead isn’t included.';
-
-  @override
-  String get storageLoadFailed => 'Couldn’t read storage use';
-
-  @override
-  String get storageEmpty => 'No books are using space yet';
-
-  @override
-  String get storageTotal => 'Total';
-
-  @override
-  String get storageAudio => 'Clearable audio';
-
-  @override
-  String get storageBooks => 'Books';
-
-  @override
-  String storageBookLine(String total, String audio) {
-    return '$total in all · $audio audio';
-  }
-
-  @override
-  String get clearAudio => 'Clear audio';
-
-  @override
-  String get clearAudioNote =>
-      'Clearing removes only generated audio, samples and the synthesis cache. Text, scripts and cast stay; audio is made again when you next listen.';
-
-  @override
-  String clearAudioTitle(String title) {
-    return 'Clear the audio for “$title”?';
-  }
-
-  @override
-  String clearAudioBody(String size) {
-    return 'This frees $size. The text, scripts and cast stay; audio is synthesized again when you next listen.';
-  }
-
-  @override
-  String get clearAudioConfirm => 'Clear audio';
-
-  @override
-  String get clearAudioFailed => 'Couldn’t clear the audio. Try again';
-
-  @override
-  String audioCleared(String title) {
-    return 'Cleared the audio for “$title”';
-  }
-
-  @override
   String get changeVoice => 'Change voice';
 
   @override
@@ -998,7 +748,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get presetsEmpty =>
-      'No preset voices suit this book’s language with your current setup.';
+      'No preset voices from the providers that are on suit this book’s language.';
 
   @override
   String get designProvider => 'Design with';
@@ -1048,14 +798,207 @@ class AppLocalizationsEn extends AppLocalizations {
   String get listenAgain => 'Play again';
 
   @override
-  String get diagnosticsSection => 'Diagnostics and feedback';
+  String get settings => 'Settings';
+
+  @override
+  String get llm => 'Language model';
+
+  @override
+  String get voiceRole => 'Voices and voice design';
+
+  @override
+  String get voiceRoleNoDesign => 'Voices';
+
+  @override
+  String get providerReady => 'Set up';
+
+  @override
+  String get providerNotSet => 'Not set up';
+
+  @override
+  String get llmNoModel => 'No model';
+
+  @override
+  String get llmNoKey => 'No key';
+
+  @override
+  String get setupTitle => 'Set up a language model first';
+
+  @override
+  String get setupBody =>
+      'Profiling and directing run on your own language model account.';
+
+  @override
+  String get setupAction => 'Set up the language model';
+
+  @override
+  String get generationSection => 'Generate while listening';
+
+  @override
+  String get generationSectionNote =>
+      'Applies only while you listen; reading silently never triggers it. Synthesis never runs further ahead than directing; 0 turns it off.';
+
+  @override
+  String get autoGenerate => 'Generate voices automatically';
+
+  @override
+  String get autoGenerateNote =>
+      'Chapters without voices are generated without asking';
+
+  @override
+  String get directingAhead => 'Direct ahead';
+
+  @override
+  String get directingAheadNote => 'Writes the scripts of the next chapters';
+
+  @override
+  String get synthesisAhead => 'Synthesize ahead';
+
+  @override
+  String get synthesisAheadNote => 'Voices the next chapters';
+
+  @override
+  String get aheadUnit => 'ch';
+
+  @override
+  String get fewerDirectingAhead => 'Direct fewer chapters ahead';
+
+  @override
+  String get moreDirectingAhead => 'Direct more chapters ahead';
+
+  @override
+  String get fewerSynthesisAhead => 'Synthesize fewer chapters ahead';
+
+  @override
+  String get moreSynthesisAhead => 'Synthesize more chapters ahead';
+
+  @override
+  String get generationSettingsFailed =>
+      'Couldn’t save generation settings. Try again';
+
+  @override
+  String get castingSection => 'Casting';
+
+  @override
+  String get exclusiveVoices => 'Exclusive voices';
+
+  @override
+  String exclusiveVoicesValue(int count) {
+    return '$count';
+  }
+
+  @override
+  String get exclusiveVoicesNote =>
+      'The characters with the most lines each get a voice of their own; everyone else shares the extras’ voices.';
+
+  @override
+  String get exclusiveVoicesRecastNote =>
+      'Books already profiled are recast. Voices you changed or designed stay.';
+
+  @override
+  String get fewerVoices => 'Fewer exclusive voices';
+
+  @override
+  String get moreVoices => 'More exclusive voices';
+
+  @override
+  String get recast => 'Recast';
+
+  @override
+  String recastDone(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count exclusive voices',
+      one: '1 exclusive voice',
+    );
+    return 'Recast with $_temp0';
+  }
+
+  @override
+  String get recastFailed => 'Couldn’t recast. Try again';
+
+  @override
+  String get appearanceSection => 'Appearance';
+
+  @override
+  String get storageSection => 'Storage';
+
+  @override
+  String get storage => 'Storage';
+
+  @override
+  String get storageTotal => 'In use';
+
+  @override
+  String storageAudioPart(String size) {
+    return 'Audio $size';
+  }
+
+  @override
+  String storageOtherPart(String size) {
+    return 'Text, scripts and more $size';
+  }
+
+  @override
+  String get storageBooks => 'By book';
+
+  @override
+  String storageBookLine(String total, String audio) {
+    return '$total in all · $audio audio';
+  }
+
+  @override
+  String storageBookNoAudio(String total) {
+    return '$total in all · no audio';
+  }
+
+  @override
+  String get storageLoadFailed => 'Couldn’t read storage use';
+
+  @override
+  String get storageEmpty => 'No books are using space yet';
+
+  @override
+  String get storageCountNote =>
+      'Counted per book: its text, scripts, cast and audio files. The database’s index and log are shared by all books and aren’t counted.';
+
+  @override
+  String get clearAudio => 'Clear audio';
+
+  @override
+  String get clearAudioNote =>
+      'Clearing removes only generated audio, samples and the synthesis cache. Text, scripts and cast stay; audio is made again when you next listen.';
+
+  @override
+  String clearAudioTitle(String title) {
+    return 'Clear the audio for “$title”?';
+  }
+
+  @override
+  String clearAudioBody(String size) {
+    return 'This frees $size. The text, scripts and cast stay; audio is synthesized again when you next listen.';
+  }
+
+  @override
+  String get clearAudioConfirm => 'Clear audio';
+
+  @override
+  String get clearAudioFailed => 'Couldn’t clear the audio. Try again';
+
+  @override
+  String audioCleared(String title) {
+    return 'Cleared the audio for “$title”';
+  }
+
+  @override
+  String get feedbackSection => 'Feedback';
 
   @override
   String get exportDiagnostics => 'Export a diagnostic report';
 
   @override
-  String get exportDiagnosticsNote =>
-      'Creates a report and opens the share sheet so you choose where it goes';
+  String get exportDiagnosticsNote => 'Never includes keys or book text';
 
   @override
   String get exportingDiagnostics => 'Preparing the report…';
@@ -1064,8 +1007,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reportProblem => 'Report a problem';
 
   @override
-  String get reportProblemNote =>
-      'Opens a new issue on the project’s GitHub in your browser';
+  String get reportProblemNote => 'Opens a new issue on GitHub';
 
   @override
   String get openingBrowser => 'Opening the browser…';
@@ -1085,17 +1027,224 @@ class AppLocalizationsEn extends AppLocalizations {
       'The browser didn’t open. Check your connection or default browser and try again.';
 
   @override
-  String get diagnosticsPrivacyTitle => 'What the report contains';
+  String get feedbackNote =>
+      'The report holds the app version, device details and recent errors. Nothing is uploaded: it leaves your phone only if you send it from the share sheet.';
 
   @override
-  String get diagnosticsIncludes =>
-      'Included: app version, system and device details, recent errors and crashes.';
+  String get aboutSection => 'About';
 
   @override
-  String get diagnosticsExcludes =>
-      'Never included: your keys or the text of your books.';
+  String get licenses => 'Open-source licenses';
 
   @override
-  String get diagnosticsNoUpload =>
-      'Nothing is uploaded automatically: the report leaves your phone only if you send it from the share sheet.';
+  String get llmPageNote =>
+      'It profiles and directs: finds the speakers and decides who reads each line, and how.';
+
+  @override
+  String get connectionSection => 'Connection';
+
+  @override
+  String get baseUrl => 'Base URL';
+
+  @override
+  String get baseUrlInvalid =>
+      'Enter an address starting with https:// or http://';
+
+  @override
+  String get protocol => 'API';
+
+  @override
+  String get protocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get protocolResponses => 'Responses';
+
+  @override
+  String get apiKey => 'Key';
+
+  @override
+  String get llmConnectionNote =>
+      'Any OpenAI-compatible service works if its model supports structured output (JSON Schema).';
+
+  @override
+  String get modelsSection => 'Models';
+
+  @override
+  String get profileModel => 'Profiling model';
+
+  @override
+  String get directorModel => 'Directing model';
+
+  @override
+  String get modelHint => 'Model name';
+
+  @override
+  String get sameAsProfileModel => 'Same as profiling model';
+
+  @override
+  String get modelsNote =>
+      'The profiling model studies the characters and picks voices; the directing model assigns each line and its delivery. Leave it blank to use the profiling model.';
+
+  @override
+  String get minimaxPageNote =>
+      'Voices your characters and designs new voices from a description.';
+
+  @override
+  String get minimaxKeyNote =>
+      'Use a key from MiniMax’s international platform (minimax.io).';
+
+  @override
+  String get bailianPageNote =>
+      'Voices your characters. The Beijing region can also design new voices from a description.';
+
+  @override
+  String get region => 'Region';
+
+  @override
+  String get regionBeijing => 'Beijing';
+
+  @override
+  String get regionSingapore => 'Singapore';
+
+  @override
+  String get bailianRegionNote =>
+      'Beijing and Singapore keys aren’t interchangeable; use a key for the region you choose.';
+
+  @override
+  String get keyHint => 'Paste or type a key';
+
+  @override
+  String get newKeyHint => 'Paste or type a new key';
+
+  @override
+  String get keySaved => 'Saved';
+
+  @override
+  String get pasteKey => 'Paste';
+
+  @override
+  String get showKey => 'Show';
+
+  @override
+  String get hideKey => 'Hide';
+
+  @override
+  String get replaceKey => 'Replace';
+
+  @override
+  String get deleteKey => 'Delete key';
+
+  @override
+  String get deleteKeyTitle => 'Delete this key?';
+
+  @override
+  String get deleteLlmKeyBody =>
+      'Profiling and directing pause until you add a key again.';
+
+  @override
+  String get deleteVoiceKeyBody =>
+      'Characters with this provider’s voices can’t be voiced until you add a key again or change their voices.';
+
+  @override
+  String get keyDeleted => 'Key deleted';
+
+  @override
+  String get keyDeleteFailed => 'Couldn’t delete the key. Try again';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get saved => 'Saved';
+
+  @override
+  String get saveFailed => 'Couldn’t save';
+
+  @override
+  String get saveFailedBody =>
+      'Nothing changed. Check what you entered and try again.';
+
+  @override
+  String get discardTitle => 'Discard unsaved changes?';
+
+  @override
+  String get discardConfirm => 'Discard changes';
+
+  @override
+  String get keepEditing => 'Keep editing';
+
+  @override
+  String get llmSection => 'Profiling and directing';
+
+  @override
+  String get voiceSection => 'Voices';
+
+  @override
+  String get voiceSectionNote =>
+      'Voices are generated only by providers that are on. Edge doesn’t follow emotion or pronunciation instructions. Keys are stored encrypted on this device and only sent to their own provider.';
+
+  @override
+  String get edgeRole => 'Free, no key needed';
+
+  @override
+  String get voiceNeedsKey => 'Add a key to turn it on';
+
+  @override
+  String get noVoiceTitle => 'No voice provider is on';
+
+  @override
+  String get noVoiceBody =>
+      'Turn one on to generate voices. Microsoft Edge is free and needs no key.';
+
+  @override
+  String get turnOnEdge => 'Turn on Microsoft Edge';
+
+  @override
+  String get reasonProviderDisabled =>
+      'This voice provider is switched off in Settings';
+
+  @override
+  String get reasonNoVoiceProvider =>
+      'No voice provider is on. Turn one on in Settings';
+
+  @override
+  String offProviderTitle(String provider) {
+    return '$provider is switched off';
+  }
+
+  @override
+  String offProviderNoKeyTitle(String provider) {
+    return '$provider has no key';
+  }
+
+  @override
+  String offProviderBody(String provider) {
+    return 'Some voices come from $provider. Turn it on, or rematch those characters with providers that are on.';
+  }
+
+  @override
+  String offProviderSpeakers(String names, String provider) {
+    return '$names use $provider voices. Turn it on, or rematch them with providers that are on.';
+  }
+
+  @override
+  String speakersAndMore(String names, int total, int more) {
+    return '$names and $more more';
+  }
+
+  @override
+  String turnOnProvider(String provider) {
+    return 'Turn on $provider';
+  }
+
+  @override
+  String addProviderKey(String provider) {
+    return 'Add a $provider key';
+  }
+
+  @override
+  String get rematchVoices => 'Rematch voices';
+
+  @override
+  String get rematchFailed => 'Couldn’t rematch the voices. Try again';
 }

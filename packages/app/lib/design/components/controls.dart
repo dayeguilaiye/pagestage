@@ -234,6 +234,90 @@ class PsIconButton extends StatelessWidget {
   }
 }
 
+/// A small whole number between − and +, such as a lookahead. Each button
+/// turns off at its end of the range.
+class PsStepper extends StatelessWidget {
+  const PsStepper({
+    super.key,
+    required this.value,
+    required this.onChanged,
+    required this.decreaseLabel,
+    required this.increaseLabel,
+    this.min = 0,
+    this.max = 99,
+    this.unit,
+  });
+
+  final int value;
+
+  /// Null turns both buttons off.
+  final ValueChanged<int>? onChanged;
+
+  /// Read by screen readers and shown on long press.
+  final String decreaseLabel;
+  final String increaseLabel;
+  final int min;
+  final int max;
+
+  /// Follows the number in smaller type, such as 章.
+  final String? unit;
+
+  @override
+  Widget build(BuildContext context) {
+    final p = context.ps;
+    final change = onChanged;
+    final unit = this.unit;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        PsIconButton(
+          icon: PsIcons.minus,
+          label: decreaseLabel,
+          variant: PsIconButtonVariant.outline,
+          size: PsControlSize.sm,
+          iconSize: 16,
+          onPressed: change != null && value > min
+              ? () => change(value - 1)
+              : null,
+        ),
+        ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 56),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: PsSpace.s2),
+            child: Text.rich(
+              TextSpan(
+                text: '$value',
+                children: [
+                  if (unit != null)
+                    TextSpan(
+                      text: ' $unit',
+                      style: PsType.subhead.copyWith(color: p.ink2),
+                    ),
+                ],
+              ),
+              textAlign: TextAlign.center,
+              style: PsType.numeralLg.copyWith(
+                color: p.ink,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+          ),
+        ),
+        PsIconButton(
+          icon: PsIcons.plus,
+          label: increaseLabel,
+          variant: PsIconButtonVariant.outline,
+          size: PsControlSize.sm,
+          iconSize: 16,
+          onPressed: change != null && value < max
+              ? () => change(value + 1)
+              : null,
+        ),
+      ],
+    );
+  }
+}
+
 enum PsPlaySize {
   sm(PsSize.controlSm, 16, 5),
   md(PsSize.touch, 20, 5),

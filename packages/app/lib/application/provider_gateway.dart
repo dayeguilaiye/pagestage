@@ -85,6 +85,24 @@ class ProviderGateway {
     String content,
     Future<T> Function(TtsAdapter adapter) operation,
   ) async {
+    // A provider switched off, or a paid one without its key, is never
+    // called; the reason names which, so the reader knows what to change.
+    final preferences = providers.value;
+    if (!preferences.voiceProviders.contains(provider)) {
+      final reason = preferences.canSwitchOn(provider)
+          ? 'providerDisabled'
+          : 'missingKey';
+      await store.put('generationFailure', bookId, {
+        'bookId': bookId,
+        'provider': provider,
+        'reason': reason,
+      });
+      throw ProviderException(
+        provider: provider,
+        kind: ProviderErrorKind.invalidConfiguration,
+        code: reason,
+      );
+    }
     final config = await providers.configuration();
     final book = await Library(store).getBook(bookId);
     final injected = ttsFactory?.call(config, provider);
@@ -262,7 +280,8 @@ String providerReason(ProviderErrorKind? reason, [String? code]) =>
       ProviderErrorKind.unavailable => 'network',
       ProviderErrorKind.invalidResponse => invalidResponseReason(code),
       ProviderErrorKind.invalidVoice => 'voiceUnavailable',
-      ProviderErrorKind.invalidConfiguration => 'missingKey',
+      ProviderErrorKind.invalidConfiguration =>
+        code == 'providerDisabled' ? code! : 'missingKey',
       null => 'interrupted',
     };
 

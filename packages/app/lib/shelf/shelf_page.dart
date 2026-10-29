@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-import '../application/contracts.dart';
+import '../application/app_services.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import '../listening/app_scope.dart';
@@ -129,9 +129,12 @@ class _ShelfPageState extends State<ShelfPage> {
     }
   }
 
-  void _openSettings() => Navigator.of(context).push(
+  void _openSettings(AppServices services) => Navigator.of(context).push(
     MaterialPageRoute<void>(
-      builder: (_) => SettingsPage(services: AppScope.servicesOf(context)!),
+      builder: (_) => SettingsPage(
+        services: services,
+        readingSettings: widget.readingSettings,
+      ),
     ),
   );
 
@@ -221,11 +224,11 @@ class _ShelfPageState extends State<ShelfPage> {
             showTitle: _scrolled,
             divider: _scrolled,
             actions: [
-              if (_listening != null)
+              if (AppScope.servicesOf(context) case final services?)
                 PsIconButton(
                   icon: PsIcons.settings,
                   label: l.settings,
-                  onPressed: _openSettings,
+                  onPressed: () => _openSettings(services),
                 ),
               if (_importing)
                 SizedBox.square(

@@ -41,6 +41,7 @@ class CastController extends ChangeNotifier implements Casts {
   Future<void> _reconciled = Future.value();
   Future<void> _auditions = Future.value();
   int _exclusiveCount = 20;
+  Set<String> _lastVoiceProviders = const {};
   bool _closed = false;
   Future<void> Function()? beforeAudition;
   Future<void> Function(String bookId)? onCastingChanged;
@@ -100,6 +101,8 @@ class CastController extends ChangeNotifier implements Casts {
       service._notify();
     });
     store.addListener(service._notify);
+    service._lastVoiceProviders = service._voiceProviders;
+    providers.addListener(service._onProviders);
     service._auditionEvents = auditionEngine.states.listen((state) {
       if ((state.completed || state.error != null) &&
           service._auditioning != null) {
@@ -118,53 +121,72 @@ class CastController extends ChangeNotifier implements Casts {
   }
 
   void _queueReconcile(String bookId) {
-    _reconciled = _reconciled.then((_) async {
-      if (!await store.exists('books', bookId)) return;
-      try {
-        final cast = await CastRepository(store).get(bookId);
-        if (cast.profiledThrough == 0 ||
-            cast.speakers.every((s) => s.voiceId != null)) {
-          return;
-        }
-        final book = await Library(store).getBook(bookId);
-        final casting = Casting(store);
-        if (await store.get('casting', bookId) == null) {
-          await casting.recommend(
-            book,
-            exclusiveCount: exclusiveCount,
-            providers: _configuredTts,
-            bailianRegion: providers.value.region.name,
-          );
-        } else {
-          // Adds voices for newly discovered speakers while retaining existing
-          // bindings and the previous exclusive-speaker allocation.
-          await casting.recommend(
-            book,
-            exclusiveCount: exclusiveCount,
-            providers: _configuredTts,
-            bailianRegion: providers.value.region.name,
-            preserveExisting: true,
-          );
-        }
-        await store.delete('castingFailure', bookId);
-      } catch (_) {
-        if (!await store.exists('books', bookId)) return;
-        await store.put('castingFailure', bookId, {
-          'bookId': bookId,
-          'reason': 'interrupted',
-        });
-      }
-      _notify();
-    });
+    _reconciled = _reconciled.then((_) => _reconcile(bookId));
   }
 
-  Set<String>? get _configuredTts {
-    final selected = {
-      if (providers.value.hasMinimaxKey) 'minimax',
-      if (providers.value.hasBailianKey) 'bailian',
-    };
-    // Edge is available without credentials; paid providers retain precedence.
-    return selected.isEmpty ? {'edge'} : selected;
+  Future<void> _reconcile(String bookId) async {
+    if (!await store.exists('books', bookId)) return;
+    try {
+      final cast = await CastRepository(store).get(bookId);
+      if (cast.profiledThrough == 0 ||
+          cast.speakers.every((s) => s.voiceId != null)) {
+        return;
+      }
+      final book = await Library(store).getBook(bookId);
+      final casting = Casting(store);
+      if (_voiceProviders.isEmpty) {
+        // Waits for a switch; turning one on reconciles again.
+        await store.put('castingFailure', bookId, {
+          'bookId': bookId,
+          'provider': '',
+          'reason': 'noVoiceProvider',
+        });
+        return;
+      }
+      if (await store.get('casting', bookId) == null) {
+        await casting.recommend(
+          book,
+          exclusiveCount: exclusiveCount,
+          providers: _voiceProviders,
+          bailianRegion: providers.value.region.name,
+        );
+      } else {
+        // Adds voices for newly discovered speakers while retaining existing
+        // bindings and the previous exclusive-speaker allocation.
+        await casting.recommend(
+          book,
+          exclusiveCount: exclusiveCount,
+          providers: _voiceProviders,
+          bailianRegion: providers.value.region.name,
+          preserveExisting: true,
+        );
+      }
+      await store.delete('castingFailure', bookId);
+    } catch (_) {
+      if (!await store.exists('books', bookId)) return;
+      await store.put('castingFailure', bookId, {
+        'bookId': bookId,
+        'reason': 'interrupted',
+      });
+    }
+    _notify();
+  }
+
+  Set<String> get _voiceProviders => providers.value.voiceProviders;
+
+  /// Casting waiting for a voice provider goes on once one is switched on.
+  void _onProviders() {
+    final now = _voiceProviders;
+    if (now.length == _lastVoiceProviders.length &&
+        now.containsAll(_lastVoiceProviders)) {
+      return;
+    }
+    _lastVoiceProviders = now;
+    _reconciled = _reconciled.then((_) async {
+      for (final book in await Library(store).listBooks()) {
+        await _reconcile(book.id);
+      }
+    });
   }
 
   Future<void> get idleAuditions => _auditions;
@@ -215,7 +237,10 @@ class CastController extends ChangeNotifier implements Casts {
       status: status,
       provider: paused?.provider == 'local'
           ? 'system'
-          : paused?.provider ?? (failure == null ? null : 'system'),
+          : paused?.provider ??
+                (failure == null
+                    ? null
+                    : failure['provider'] as String? ?? 'system'),
       skippedChapters: cast.cast.skippedChapters.keys.toList()..sort(),
       reason:
           failure?['reason'] as String? ??
@@ -301,6 +326,33 @@ class CastController extends ChangeNotifier implements Casts {
   }
 
   @override
+  Future<void> rematch(String bookId) {
+    final operation = _reconciled.then((_) async {
+      final allowed = _voiceProviders;
+      if (allowed.isEmpty) throw StateError('No voice provider is on.');
+      final book = await Library(store).getBook(bookId);
+      await scheduler.withBookPaused(bookId, () async {
+        await onCastingChanged?.call(bookId);
+        await Casting(store).recommend(
+          book,
+          exclusiveCount: exclusiveCount,
+          providers: allowed,
+          bailianRegion: providers.value.region.name,
+          preserveExisting: true,
+          replaceOutsideProviders: true,
+        );
+      });
+      await store.delete('castingFailure', bookId);
+      _notify();
+    });
+    _reconciled = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
+  }
+
+  @override
   Future<void> setExclusiveCount(int count) {
     if (count < 0) throw ArgumentError.value(count, 'count');
     final operation = _reconciled.then((_) async {
@@ -308,13 +360,13 @@ class CastController extends ChangeNotifier implements Casts {
       _exclusiveCount = count;
       for (final book in await Library(store).listBooks()) {
         final cast = await CastRepository(store).get(book.id);
-        if (cast.profiledThrough > 0) {
+        if (cast.profiledThrough > 0 && _voiceProviders.isNotEmpty) {
           await scheduler.withBookPaused(book.id, () async {
             await onCastingChanged?.call(book.id);
             await Casting(store).recommend(
               book,
               exclusiveCount: count,
-              providers: _configuredTts,
+              providers: _voiceProviders,
               bailianRegion: providers.value.region.name,
             );
           });
@@ -426,6 +478,7 @@ class CastController extends ChangeNotifier implements Casts {
   Future<void> close() async {
     _closed = true;
     store.removeListener(_notify);
+    providers.removeListener(_onProviders);
     await scheduler.close();
     await _events.cancel();
     await _auditionEvents.cancel();

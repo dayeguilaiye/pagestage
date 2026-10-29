@@ -8,6 +8,7 @@ import '../l10n/app_localizations.dart';
 import '../listening/app_scope.dart';
 import '../listening/chapter_picker.dart';
 import '../listening/labels.dart';
+import '../listening/off_provider_banner.dart';
 import '../shelf/bookshelf.dart';
 import 'voice_page.dart';
 
@@ -228,6 +229,48 @@ class _CastPageState extends State<CastPage> {
     }
   }
 
+  /// Speakers whose voices come from a provider now off, by provider.
+  Widget _offProviders(CastState cast) {
+    final providers = AppScope.servicesOf(context)?.providers;
+    if (providers == null) return const SizedBox.shrink();
+    return ValueListenableBuilder(
+      valueListenable: providers,
+      builder: (context, preferences, _) {
+        final off = offVoiceProviders(preferences, [
+          for (final m in cast.members) m.provider,
+        ]);
+        if (off.isEmpty) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(
+            PsSpace.s5,
+            0,
+            PsSpace.s5,
+            PsSpace.s6,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: PsSpace.s3,
+            children: [
+              for (final provider in off)
+                OffProviderBanner(
+                  key: ValueKey('off-$provider'),
+                  bookId: widget.book.id,
+                  provider: provider,
+                  speakers: [
+                    for (final m in cast.members)
+                      if (m.provider == provider)
+                        m.kind == CastMemberKind.narrator
+                            ? AppLocalizations.of(context).narrator
+                            : m.name,
+                  ],
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -275,6 +318,7 @@ class _CastPageState extends State<CastPage> {
                   )
                 else ...[
                   SliverToBoxAdapter(child: _profiling(cast, l)),
+                  SliverToBoxAdapter(child: _offProviders(cast)),
                   SliverToBoxAdapter(child: _castHeader(cast, l)),
                   if (cast.members.isEmpty)
                     SliverToBoxAdapter(child: _empty(cast, l))

@@ -6,18 +6,18 @@ import '../l10n/app_localizations.dart';
 
 enum _Action { export, feedback }
 
-/// Exporting a diagnostic report and reporting a problem. Each action runs
-/// once at a time; a failure says so in fixed words and can be retried.
-class DiagnosticsSection extends StatefulWidget {
-  const DiagnosticsSection({super.key, required this.diagnostics});
+/// Exporting a diagnostic report and reporting a problem. Each runs once at
+/// a time; a failure says so in fixed words and can be retried.
+class FeedbackGroup extends StatefulWidget {
+  const FeedbackGroup({super.key, required this.diagnostics});
 
   final Diagnostics diagnostics;
 
   @override
-  State<DiagnosticsSection> createState() => _DiagnosticsSectionState();
+  State<FeedbackGroup> createState() => _FeedbackGroupState();
 }
 
-class _DiagnosticsSectionState extends State<DiagnosticsSection> {
+class _FeedbackGroupState extends State<FeedbackGroup> {
   final _running = <_Action>{};
   _Action? _failed;
 
@@ -44,40 +44,37 @@ class _DiagnosticsSectionState extends State<DiagnosticsSection> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final p = context.ps;
-    Widget spinner() => const SizedBox.square(
+    const spinner = SizedBox.square(
       dimension: 18,
       child: CircularProgressIndicator(strokeWidth: 2),
     );
+    final exporting = _running.contains(_Action.export);
+    final opening = _running.contains(_Action.feedback);
     final failed = _failed;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: PsSpace.s3,
       children: [
         PsListGroup(
-          header: l.diagnosticsSection,
-          iconInset: true,
+          header: l.feedbackSection,
+          footer: l.feedbackNote,
           children: [
             PsListRow(
               key: const ValueKey('exportDiagnostics'),
-              icon: PsIcons.import,
               title: l.exportDiagnostics,
-              subtitle: _running.contains(_Action.export)
+              subtitle: exporting
                   ? l.exportingDiagnostics
                   : l.exportDiagnosticsNote,
-              trailing: _running.contains(_Action.export) ? spinner() : null,
-              chevron: !_running.contains(_Action.export),
+              trailing: exporting ? spinner : null,
+              chevron: !exporting,
               onTap: () => _run(_Action.export),
             ),
             PsListRow(
               key: const ValueKey('reportProblem'),
-              icon: PsIcons.pen,
               title: l.reportProblem,
-              subtitle: _running.contains(_Action.feedback)
-                  ? l.openingBrowser
-                  : l.reportProblemNote,
-              trailing: _running.contains(_Action.feedback) ? spinner() : null,
-              chevron: !_running.contains(_Action.feedback),
+              subtitle: opening ? l.openingBrowser : l.reportProblemNote,
+              trailing: opening ? spinner : null,
+              external: !opening,
               onTap: () => _run(_Action.feedback),
             ),
           ],
@@ -95,32 +92,6 @@ class _DiagnosticsSectionState extends State<DiagnosticsSection> {
             onAction: () => _run(failed),
             onClose: () => setState(() => _failed = null),
           ),
-        Container(
-          padding: const EdgeInsets.all(PsSpace.s4),
-          decoration: BoxDecoration(
-            color: p.paperSunken,
-            borderRadius: BorderRadius.circular(PsRadius.md),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: PsSpace.s2,
-            children: [
-              Text(
-                l.diagnosticsPrivacyTitle,
-                style: PsType.subhead.copyWith(
-                  color: p.ink,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              for (final line in [
-                l.diagnosticsIncludes,
-                l.diagnosticsExcludes,
-                l.diagnosticsNoUpload,
-              ])
-                Text(line, style: PsType.subhead.copyWith(color: p.ink2)),
-            ],
-          ),
-        ),
       ],
     );
   }

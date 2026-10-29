@@ -85,25 +85,37 @@ class PsListRow extends StatelessWidget {
   const PsListRow({
     super.key,
     required this.title,
+    this.badge,
     this.subtitle,
+    this.subtitleMaxLines,
     this.detail,
     this.icon,
     this.trailing,
     this.chevron = false,
+    this.external = false,
     this.destructive = false,
     this.onTap,
   });
 
   final String title;
+
+  /// A [PsTag] of state beside the title.
+  final Widget? badge;
   final String? subtitle;
+
+  /// Ends a longer subtitle with an ellipsis, for a summary of values.
+  final int? subtitleMaxLines;
 
   /// The current value, in grey on the right.
   final String? detail;
   final PsIcons? icon;
 
-  /// A [Switch], a stepper or a [PsTag].
+  /// A [Switch], a [PsStepper] or a [PsTag].
   final Widget? trailing;
   final bool chevron;
+
+  /// Tapping leaves the app, such as for a web page.
+  final bool external;
   final bool destructive;
   final VoidCallback? onTap;
 
@@ -129,31 +141,48 @@ class PsListRow extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   spacing: 1,
                   children: [
-                    Text(
-                      title,
-                      style: PsType.rowTitle.copyWith(
-                        color: destructive ? p.danger : p.ink,
-                      ),
+                    Row(
+                      spacing: PsSpace.s2,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            style: PsType.rowTitle.copyWith(
+                              color: destructive ? p.danger : p.ink,
+                            ),
+                          ),
+                        ),
+                        ?badge,
+                      ],
                     ),
                     if (subtitle != null)
                       Text(
                         subtitle!,
+                        maxLines: subtitleMaxLines,
+                        overflow: subtitleMaxLines == null
+                            ? null
+                            : TextOverflow.ellipsis,
                         style: PsType.subhead.copyWith(color: p.ink2),
                       ),
                   ],
                 ),
               ),
               if (detail != null)
-                Text(
-                  detail!,
-                  style: PsType.body.copyWith(color: p.ink2, height: 20 / 15),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 160),
+                  child: Text(
+                    detail!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: PsType.body.copyWith(color: p.ink2, height: 20 / 15),
+                  ),
                 ),
               ?trailing,
-              if (chevron)
+              if (chevron || external)
                 Transform.translate(
                   offset: const Offset(6, 0),
                   child: PsIcon(
-                    PsIcons.chevronRight,
+                    external ? PsIcons.external : PsIcons.chevronRight,
                     size: 20,
                     color: p.ruleStrong,
                   ),

@@ -568,6 +568,48 @@ void main() {
     await eventually(() => generation.progress.value.chapters.isEmpty);
     expect((await AudioRepository(store).get(book.id, 2))!.complete, isTrue);
   });
+  test(
+    'a switched-off provider is never called and resumes once back on',
+    () async {
+      await prepare();
+      await automatic();
+      await providers.save(providers.value.switched('minimax', false));
+      await listening.open(book.id);
+      await casts.idle;
+      await eventually(() => generation.value.failures.isNotEmpty);
+      expect(tts.requests, isEmpty);
+      final failure = generation.value.failures.single;
+      expect(failure.provider, 'minimax');
+      expect(failure.reason, 'providerDisabled');
+
+      await providers.save(providers.value.switched('minimax', true));
+      await generation.resume(book.id);
+      await casts.idle;
+      await eventually(() => listening.value.playing);
+      expect(tts.requests, hasLength(3));
+    },
+  );
+  test('voice presets and design offer only providers that are on', () async {
+    await prepare();
+    expect(
+      (await voices.presets(
+        book.id,
+        'narrator',
+      )).map((v) => v.provider).toSet(),
+      {'minimax'},
+    );
+    await providers.save(
+      providers.value.switched('minimax', false).switched('edge', true),
+    );
+    expect(
+      (await voices.presets(
+        book.id,
+        'narrator',
+      )).map((v) => v.provider).toSet(),
+      {'edge'},
+    );
+    expect(await voices.designProviders(book.id), isEmpty);
+  });
   test('TTS consent denial prevents synthesis and can be resumed', () async {
     await prepare();
     await automatic();

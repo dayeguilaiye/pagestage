@@ -48,6 +48,9 @@ enum PsIcons {
   chevronLeft(r'<path d="M14.5 5.5 8 12l6.5 6.5"/>'),
   chevronRight(r'<path d="M9.5 5.5 16 12l-6.5 6.5"/>'),
   chevronDown(r'<path d="M5.5 9.5 12 16l6.5-6.5"/>'),
+
+  /// Leaves the app, such as for a web page.
+  external(r'<path d="M7.5 16.5 16.5 7.5"/><path d="M9.5 7.5h7v7"/>'),
   check(r'<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
   close(r'<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>'),
   plus(r'<path d="M12 5v14M5 12h14"/>'),

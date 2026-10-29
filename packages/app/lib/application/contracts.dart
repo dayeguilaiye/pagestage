@@ -143,6 +143,9 @@ class ProviderPreferences {
     this.hasLlmKey = false,
     this.hasMinimaxKey = false,
     this.hasBailianKey = false,
+    this.minimaxOn = true,
+    this.bailianOn = true,
+    this.edgeOn = false,
   });
   final String baseUrl;
   final LlmProtocol protocol;
@@ -154,12 +157,66 @@ class ProviderPreferences {
   final bool hasLlmKey;
   final bool hasMinimaxKey;
   final bool hasBailianKey;
+
+  /// The reader's switch for each voice provider. A paid provider is used
+  /// only with its key as well; saving a new key turns its switch on.
+  final bool minimaxOn;
+  final bool bailianOn;
+  final bool edgeOn;
+
+  /// Whether profiling and directing can run: a key and a profiling model.
+  bool get llmReady => hasLlmKey && profileModel.isNotEmpty;
+
+  /// The voice providers casting, voices and synthesis may use.
+  Set<String> get voiceProviders => {
+    if (hasMinimaxKey && minimaxOn) 'minimax',
+    if (hasBailianKey && bailianOn) 'bailian',
+    if (edgeOn) 'edge',
+  };
+
+  /// Whether [provider]'s switch can be turned on: it needs no key or has one.
+  bool canSwitchOn(String provider) => switch (provider) {
+    'minimax' => hasMinimaxKey,
+    'bailian' => hasBailianKey,
+    _ => true,
+  };
+
+  ProviderPreferences copyWith({
+    String? baseUrl,
+    LlmProtocol? protocol,
+    String? profileModel,
+    String? directorModel,
+    ProviderRegion? region,
+    bool? minimaxOn,
+    bool? bailianOn,
+    bool? edgeOn,
+  }) => ProviderPreferences(
+    baseUrl: baseUrl ?? this.baseUrl,
+    protocol: protocol ?? this.protocol,
+    profileModel: profileModel ?? this.profileModel,
+    directorModel: directorModel ?? this.directorModel,
+    region: region ?? this.region,
+    hasLlmKey: hasLlmKey,
+    hasMinimaxKey: hasMinimaxKey,
+    hasBailianKey: hasBailianKey,
+    minimaxOn: minimaxOn ?? this.minimaxOn,
+    bailianOn: bailianOn ?? this.bailianOn,
+    edgeOn: edgeOn ?? this.edgeOn,
+  );
+
+  /// [provider]'s switch set to [on].
+  ProviderPreferences switched(String provider, bool on) => copyWith(
+    minimaxOn: provider == 'minimax' ? on : null,
+    bailianOn: provider == 'bailian' ? on : null,
+    edgeOn: provider == 'edge' ? on : null,
+  );
 }
 
 abstract interface class Providers
     implements ValueListenable<ProviderPreferences> {
   /// Null retains a stored key; an empty string removes it. Keys are never
-  /// returned by this interface or included in preferences.
+  /// returned by this interface or included in preferences. A new key turns
+  /// its provider's switch on.
   Future<void> save(
     ProviderPreferences preferences, {
     String? llmKey,
@@ -254,6 +311,11 @@ abstract interface class Casts implements Listenable {
   Future<void> audition(String bookId, String speakerId);
   Future<void> stopAudition();
   Future<void> setExclusiveCount(int count);
+
+  /// Recasts the speakers whose voices belong to providers now switched off
+  /// or without a key, choosing among the providers still on. Voices chosen
+  /// by hand or designed are replaced too; every other voice stays.
+  Future<void> rematch(String bookId);
 }
 
 enum BookPerformanceMode { audiobook, drama }

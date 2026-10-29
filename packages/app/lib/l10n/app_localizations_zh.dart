@@ -537,139 +537,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reasonUnknown => '服务暂时不可用';
 
   @override
-  String get settings => '设置';
-
-  @override
-  String get settingsSubtitle => '使用你自己的服务商账户';
-
-  @override
-  String get llmSection => '大模型';
-
-  @override
-  String get llmSectionNote => '用来建档和导演：找出说话人，为每句台词分配声音和语气。';
-
-  @override
-  String get baseUrl => '接口地址';
-
-  @override
-  String get baseUrlInvalid => '请输入以 https:// 或 http:// 开头的地址';
-
-  @override
-  String get protocol => '接口协议';
-
-  @override
-  String get protocolChatCompletions => 'Chat Completions';
-
-  @override
-  String get protocolResponses => 'Responses';
-
-  @override
-  String get profileModel => '建档模型';
-
-  @override
-  String get profileModelHelp => '用来分析人物和挑选声音。';
-
-  @override
-  String get directorModel => '导演模型';
-
-  @override
-  String get directorModelHelp => '用来逐句导演。留空则使用建档模型。';
-
-  @override
-  String get sameAsProfileModel => '与建档模型相同';
-
-  @override
-  String get llmKey => '大模型密钥';
-
-  @override
-  String get minimaxSectionNote => '生成角色的配音。';
-
-  @override
-  String get edgeSectionNote =>
-      '在线音色，无需密钥，可在演员表中选择。未配置付费语音服务时用于自动选角。支持普通文本朗读；情绪和多音字指令不生效。';
-
-  @override
-  String get minimaxKey => 'MiniMax 密钥';
-
-  @override
-  String get bailianSection => '阿里云百炼';
-
-  @override
-  String get bailianSectionNote => '生成角色的配音，按地域选择接入点。';
-
-  @override
-  String get bailianKey => '百炼密钥';
-
-  @override
-  String get region => '地域';
-
-  @override
-  String get regionBeijing => '北京';
-
-  @override
-  String get regionSingapore => '新加坡';
-
-  @override
-  String get keyStored => '已保存';
-
-  @override
-  String get keyNotSet => '未设置';
-
-  @override
-  String get keyWillBeRemoved => '将删除';
-
-  @override
-  String get keyHint => '粘贴密钥';
-
-  @override
-  String get keyStoredHint => '留空保持不变，输入则替换';
-
-  @override
-  String get keyRemovedHint => '保存后删除这个密钥';
-
-  @override
-  String get showKey => '显示';
-
-  @override
-  String get hideKey => '隐藏';
-
-  @override
-  String get removeKey => '删除密钥';
-
-  @override
-  String get undoRemoveKey => '撤销删除';
-
-  @override
-  String get saveSettings => '保存';
-
-  @override
-  String get settingsSaved => '设置已保存';
-
-  @override
-  String get settingsSaveFailed => '没能保存设置';
-
-  @override
-  String get settingsSaveFailedBody => '设置没有改变。检查一下填写的内容，再保存一次。';
-
-  @override
-  String get castSection => '演员';
-
-  @override
-  String get exclusiveVoices => '独占声音数';
-
-  @override
-  String get exclusiveVoicesNote => '戏份最多的角色各用一个专属声音，其余角色共用群演声音。';
-
-  @override
-  String get exclusiveVoicesFailed => '没能修改独占声音数';
-
-  @override
-  String get fewerVoices => '减少';
-
-  @override
-  String get moreVoices => '增加';
-
-  @override
   String consentTitle(String title) {
     return '把《$title》的内容发出去？';
   }
@@ -776,108 +643,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get modeSaveFailed => '没能保存演绎方式，请再试一次';
 
   @override
-  String get generationSection => '边听边生成';
-
-  @override
-  String get generationSectionNote =>
-      '提前量是在你听到之前预先处理的章数；合成提前量不能超过导演提前量，设为 0 表示关闭。';
-
-  @override
-  String get autoGenerate => '自动生成配音';
-
-  @override
-  String get autoGenerateNote => '播放没有配音的章节时直接生成，不再询问';
-
-  @override
-  String get directingAhead => '导演提前量';
-
-  @override
-  String get synthesisAhead => '合成提前量';
-
-  @override
-  String get aheadOff => '关闭';
-
-  @override
-  String aheadChapters(int count) {
-    return '提前 $count 章';
-  }
-
-  @override
-  String get fewerDirectingAhead => '减少导演提前量';
-
-  @override
-  String get moreDirectingAhead => '增加导演提前量';
-
-  @override
-  String get fewerSynthesisAhead => '减少合成提前量';
-
-  @override
-  String get moreSynthesisAhead => '增加合成提前量';
-
-  @override
-  String get generationSettingsFailed => '没能保存生成设置';
-
-  @override
-  String get storageSection => '存储';
-
-  @override
-  String get storage => '存储空间';
-
-  @override
-  String get storageRowNote => '查看每本书占用的空间，清理音频';
-
-  @override
-  String get storageNote =>
-      '按书统计：书的正文、剧本、演员表等记录加上它的音频文件。数据库文件由所有书共用，其中的索引和日志开销不计入。';
-
-  @override
-  String get storageLoadFailed => '没能读取存储空间';
-
-  @override
-  String get storageEmpty => '还没有占用空间的书';
-
-  @override
-  String get storageTotal => '总占用';
-
-  @override
-  String get storageAudio => '可清理的音频';
-
-  @override
-  String get storageBooks => '书';
-
-  @override
-  String storageBookLine(String total, String audio) {
-    return '共 $total · 音频 $audio';
-  }
-
-  @override
-  String get clearAudio => '清理音频';
-
-  @override
-  String get clearAudioNote => '清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。';
-
-  @override
-  String clearAudioTitle(String title) {
-    return '清理《$title》的音频？';
-  }
-
-  @override
-  String clearAudioBody(String size) {
-    return '将释放 $size。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。';
-  }
-
-  @override
-  String get clearAudioConfirm => '清理音频';
-
-  @override
-  String get clearAudioFailed => '没能清理音频，请再试一次';
-
-  @override
-  String audioCleared(String title) {
-    return '已清理《$title》的音频';
-  }
-
-  @override
   String get changeVoice => '换音色';
 
   @override
@@ -915,7 +680,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetsLoadFailed => '没能读取预设音色';
 
   @override
-  String get presetsEmpty => '当前配置下没有适合这本书语言的预设音色。';
+  String get presetsEmpty => '开启的配音服务商里没有适合这本书语言的预设音色。';
 
   @override
   String get designProvider => '设计服务商';
@@ -963,13 +728,194 @@ class AppLocalizationsZh extends AppLocalizations {
   String get listenAgain => '重新试听';
 
   @override
-  String get diagnosticsSection => '诊断与反馈';
+  String get settings => '设置';
+
+  @override
+  String get llm => '大模型';
+
+  @override
+  String get voiceRole => '配音和音色设计';
+
+  @override
+  String get voiceRoleNoDesign => '配音';
+
+  @override
+  String get providerReady => '已配置';
+
+  @override
+  String get providerNotSet => '未配置';
+
+  @override
+  String get llmNoModel => '缺少模型';
+
+  @override
+  String get llmNoKey => '缺少密钥';
+
+  @override
+  String get setupTitle => '先配置大模型';
+
+  @override
+  String get setupBody => '建档和导演要用你自己的大模型账户。';
+
+  @override
+  String get setupAction => '配置大模型';
+
+  @override
+  String get generationSection => '边听边生成';
+
+  @override
+  String get generationSectionNote =>
+      '只在收听时生效，静默阅读不会触发。合成提前量不会超过导演提前量，设为 0 即关闭。';
+
+  @override
+  String get autoGenerate => '自动生成配音';
+
+  @override
+  String get autoGenerateNote => '没有配音的章节直接生成，不再询问';
+
+  @override
+  String get directingAhead => '导演提前量';
+
+  @override
+  String get directingAheadNote => '先写好后面几章的剧本';
+
+  @override
+  String get synthesisAhead => '合成提前量';
+
+  @override
+  String get synthesisAheadNote => '先生成后面几章的配音';
+
+  @override
+  String get aheadUnit => '章';
+
+  @override
+  String get fewerDirectingAhead => '减少导演提前量';
+
+  @override
+  String get moreDirectingAhead => '增加导演提前量';
+
+  @override
+  String get fewerSynthesisAhead => '减少合成提前量';
+
+  @override
+  String get moreSynthesisAhead => '增加合成提前量';
+
+  @override
+  String get generationSettingsFailed => '没能保存生成设置，请再试一次';
+
+  @override
+  String get castingSection => '选角';
+
+  @override
+  String get exclusiveVoices => '专属音色';
+
+  @override
+  String exclusiveVoicesValue(int count) {
+    return '$count 个';
+  }
+
+  @override
+  String get exclusiveVoicesNote => '台词最多的角色各有专属音色，其余共用群演音色。';
+
+  @override
+  String get exclusiveVoicesRecastNote => '修改后为已建档的书重新选角，换过或设计的音色不变。';
+
+  @override
+  String get fewerVoices => '减少专属音色';
+
+  @override
+  String get moreVoices => '增加专属音色';
+
+  @override
+  String get recast => '重新选角';
+
+  @override
+  String recastDone(int count) {
+    return '已按 $count 个专属音色重新选角';
+  }
+
+  @override
+  String get recastFailed => '没能重新选角，请再试一次';
+
+  @override
+  String get appearanceSection => '外观';
+
+  @override
+  String get storageSection => '存储';
+
+  @override
+  String get storage => '存储空间';
+
+  @override
+  String get storageTotal => '共占用';
+
+  @override
+  String storageAudioPart(String size) {
+    return '音频 $size';
+  }
+
+  @override
+  String storageOtherPart(String size) {
+    return '正文、剧本等 $size';
+  }
+
+  @override
+  String get storageBooks => '每本书';
+
+  @override
+  String storageBookLine(String total, String audio) {
+    return '共 $total · 音频 $audio';
+  }
+
+  @override
+  String storageBookNoAudio(String total) {
+    return '共 $total · 没有音频';
+  }
+
+  @override
+  String get storageLoadFailed => '没能读取存储空间';
+
+  @override
+  String get storageEmpty => '还没有占用空间的书';
+
+  @override
+  String get storageCountNote => '按书统计正文、剧本、演员表和音频文件；数据库的索引和日志由所有书共用，不计入。';
+
+  @override
+  String get clearAudio => '清理音频';
+
+  @override
+  String get clearAudioNote => '清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。';
+
+  @override
+  String clearAudioTitle(String title) {
+    return '清理《$title》的音频？';
+  }
+
+  @override
+  String clearAudioBody(String size) {
+    return '将释放 $size。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。';
+  }
+
+  @override
+  String get clearAudioConfirm => '清理音频';
+
+  @override
+  String get clearAudioFailed => '没能清理音频，请再试一次';
+
+  @override
+  String audioCleared(String title) {
+    return '已清理《$title》的音频';
+  }
+
+  @override
+  String get feedbackSection => '反馈';
 
   @override
   String get exportDiagnostics => '导出诊断报告';
 
   @override
-  String get exportDiagnosticsNote => '生成报告，通过系统分享发给你选择的人或应用';
+  String get exportDiagnosticsNote => '不含密钥和书的正文';
 
   @override
   String get exportingDiagnostics => '正在准备报告…';
@@ -978,7 +924,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reportProblem => '反馈问题';
 
   @override
-  String get reportProblemNote => '在浏览器里打开项目的 GitHub，新建一个问题';
+  String get reportProblemNote => '在 GitHub 上新建一个问题';
 
   @override
   String get openingBrowser => '正在打开浏览器…';
@@ -996,14 +942,210 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reportProblemFailedBody => '浏览器没有打开，请检查网络或默认浏览器后再试。';
 
   @override
-  String get diagnosticsPrivacyTitle => '报告里有什么';
+  String get feedbackNote => '报告包含应用版本、设备信息和近期错误，不会自动上传，只在你从分享里发送时离开手机。';
 
   @override
-  String get diagnosticsIncludes => '包含：应用版本、系统与设备信息、近期的错误和崩溃记录。';
+  String get aboutSection => '关于';
 
   @override
-  String get diagnosticsExcludes => '不包含：任何密钥，以及书的正文。';
+  String get licenses => '开源许可';
 
   @override
-  String get diagnosticsNoUpload => '不会自动上传：只有你在分享里选择发送时，报告才会离开手机。';
+  String get llmPageNote => '建档和导演都由它完成：找出说话人，决定每句台词由谁来念、用什么语气。';
+
+  @override
+  String get connectionSection => '连接';
+
+  @override
+  String get baseUrl => '接口地址';
+
+  @override
+  String get baseUrlInvalid => '请输入以 https:// 或 http:// 开头的地址';
+
+  @override
+  String get protocol => '接口协议';
+
+  @override
+  String get protocolChatCompletions => 'Chat Completions';
+
+  @override
+  String get protocolResponses => 'Responses';
+
+  @override
+  String get apiKey => '密钥';
+
+  @override
+  String get llmConnectionNote =>
+      '兼容 OpenAI 接口的服务都可以使用，模型需要支持结构化输出（JSON Schema）。';
+
+  @override
+  String get modelsSection => '模型';
+
+  @override
+  String get profileModel => '建档模型';
+
+  @override
+  String get directorModel => '导演模型';
+
+  @override
+  String get modelHint => '模型名称';
+
+  @override
+  String get sameAsProfileModel => '与建档模型相同';
+
+  @override
+  String get modelsNote => '建档模型分析人物、挑选声音；导演模型逐句分配台词和语气，留空则与建档模型相同。';
+
+  @override
+  String get minimaxPageNote => '为角色配音，也可以按描述设计新音色。';
+
+  @override
+  String get minimaxKeyNote => '使用 MiniMax 国际版（minimax.io）的密钥。';
+
+  @override
+  String get bailianPageNote => '为角色配音。北京地域还可以按描述设计新音色。';
+
+  @override
+  String get region => '地域';
+
+  @override
+  String get regionBeijing => '北京';
+
+  @override
+  String get regionSingapore => '新加坡';
+
+  @override
+  String get bailianRegionNote => '北京和新加坡的密钥不通用，请填写所选地域的密钥。';
+
+  @override
+  String get keyHint => '粘贴或输入密钥';
+
+  @override
+  String get newKeyHint => '粘贴或输入新密钥';
+
+  @override
+  String get keySaved => '已保存';
+
+  @override
+  String get pasteKey => '粘贴';
+
+  @override
+  String get showKey => '显示';
+
+  @override
+  String get hideKey => '隐藏';
+
+  @override
+  String get replaceKey => '更换';
+
+  @override
+  String get deleteKey => '删除密钥';
+
+  @override
+  String get deleteKeyTitle => '删除这个密钥？';
+
+  @override
+  String get deleteLlmKeyBody => '删除后，建档和导演会暂停，直到重新填写密钥。';
+
+  @override
+  String get deleteVoiceKeyBody => '删除后，用这家服务商音色的角色无法生成配音，直到重新填写密钥或换音色。';
+
+  @override
+  String get keyDeleted => '密钥已删除';
+
+  @override
+  String get keyDeleteFailed => '没能删除密钥，请再试一次';
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get saved => '已保存';
+
+  @override
+  String get saveFailed => '没能保存';
+
+  @override
+  String get saveFailedBody => '设置没有改变。检查填写的内容后再试一次。';
+
+  @override
+  String get discardTitle => '放弃未保存的修改？';
+
+  @override
+  String get discardConfirm => '放弃修改';
+
+  @override
+  String get keepEditing => '继续编辑';
+
+  @override
+  String get llmSection => '建档与导演';
+
+  @override
+  String get voiceSection => '配音';
+
+  @override
+  String get voiceSectionNote =>
+      '生成配音只用开启的服务商。Edge 不支持情绪和读音指令。密钥加密存在本机，只发给对应的服务商。';
+
+  @override
+  String get edgeRole => '免费，无需密钥';
+
+  @override
+  String get voiceNeedsKey => '填写密钥后才能开启';
+
+  @override
+  String get noVoiceTitle => '还没有开启配音服务商';
+
+  @override
+  String get noVoiceBody => '至少开启一家才能生成配音。Microsoft Edge 免费，无需密钥。';
+
+  @override
+  String get turnOnEdge => '开启 Microsoft Edge';
+
+  @override
+  String get reasonProviderDisabled => '这家配音服务商已在设置里关闭';
+
+  @override
+  String get reasonNoVoiceProvider => '还没有开启配音服务商，请到设置里打开一个';
+
+  @override
+  String offProviderTitle(String provider) {
+    return '$provider已关闭';
+  }
+
+  @override
+  String offProviderNoKeyTitle(String provider) {
+    return '$provider还没有密钥';
+  }
+
+  @override
+  String offProviderBody(String provider) {
+    return '配音要用到$provider的音色。打开它，或为用到它的角色换上已开启服务商的音色。';
+  }
+
+  @override
+  String offProviderSpeakers(String names, String provider) {
+    return '$names用的是$provider的音色。打开它，或为这些角色换上已开启服务商的音色。';
+  }
+
+  @override
+  String speakersAndMore(String names, int total, int more) {
+    return '$names等 $total 位';
+  }
+
+  @override
+  String turnOnProvider(String provider) {
+    return '打开$provider';
+  }
+
+  @override
+  String addProviderKey(String provider) {
+    return '填写$provider的密钥';
+  }
+
+  @override
+  String get rematchVoices => '重新匹配音色';
+
+  @override
+  String get rematchFailed => '没能重新匹配音色，请再试一次';
 }

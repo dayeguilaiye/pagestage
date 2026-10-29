@@ -1,3 +1,4 @@
+import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 
 /// Localized text for the stable codes the services report. Unknown codes
@@ -29,6 +30,16 @@ abstract final class Labels {
         _ => provider!,
       };
 
+  /// [provider]'s name ready to sit inside a sentence: in Chinese a Latin
+  /// name gets a space on each side, which [sentence] trims at the ends.
+  static String inline(AppLocalizations l, String provider) {
+    final name = Labels.provider(l, provider);
+    return l.localeName.startsWith('zh') && !psHasCjk(name) ? ' $name ' : name;
+  }
+
+  /// Trims the spaces [inline] left at either end.
+  static String sentence(String text) => text.trim();
+
   static String pauseReason(AppLocalizations l, String? reason) =>
       switch (reason) {
         'missingKey' => l.reasonMissingKey,
@@ -44,6 +55,8 @@ abstract final class Labels {
         'truncated' => l.reasonTruncated,
         'interrupted' => l.reasonInterrupted,
         'voiceUnavailable' => l.reasonVoiceUnavailable,
+        'providerDisabled' => l.reasonProviderDisabled,
+        'noVoiceProvider' => l.reasonNoVoiceProvider,
         _ => l.reasonUnknown,
       };
 

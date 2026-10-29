@@ -54,6 +54,9 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
         hasLlmKey: (await secrets.read('llm'))?.isNotEmpty ?? false,
         hasMinimaxKey: (await secrets.read('minimax'))?.isNotEmpty ?? false,
         hasBailianKey: (await secrets.read('bailian'))?.isNotEmpty ?? false,
+        minimaxOn: p['minimaxOn'] as bool? ?? true,
+        bailianOn: p['bailianOn'] as bool? ?? true,
+        edgeOn: p['edgeOn'] as bool? ?? false,
       ),
     );
   }
@@ -77,6 +80,11 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
         kind: ProviderErrorKind.invalidConfiguration,
       );
     }
+    // A key typed in now means the reader wants that provider used.
+    bool on(bool current, String? key) =>
+        key != null && key.trim().isNotEmpty || current;
+    final minimaxOn = on(preferences.minimaxOn, minimaxKey);
+    final bailianOn = on(preferences.bailianOn, bailianKey);
     final operation = _writes.then((_) async {
       for (final entry in {
         'llm': llmKey,
@@ -94,6 +102,9 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
         'profileModel': preferences.profileModel.trim(),
         'directorModel': preferences.directorModel.trim(),
         'region': preferences.region.name,
+        'minimaxOn': minimaxOn,
+        'bailianOn': bailianOn,
+        'edgeOn': preferences.edgeOn,
       };
       await store.put('settings', 'providers', json);
       value = ProviderPreferences(
@@ -105,6 +116,9 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
         hasLlmKey: (await secrets.read('llm'))?.isNotEmpty ?? false,
         hasMinimaxKey: (await secrets.read('minimax'))?.isNotEmpty ?? false,
         hasBailianKey: (await secrets.read('bailian'))?.isNotEmpty ?? false,
+        minimaxOn: minimaxOn,
+        bailianOn: bailianOn,
+        edgeOn: preferences.edgeOn,
       );
     });
     _writes = operation.then<void>(

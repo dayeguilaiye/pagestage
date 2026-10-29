@@ -153,12 +153,24 @@ abstract final class PsTheme {
         ),
       ),
       switchTheme: SwitchThemeData(
-        thumbColor: WidgetStatePropertyAll(p.paperRaised),
+        // Disabled: sunken and faint, so a switch that cannot move reads
+        // apart from one that is merely off.
+        thumbColor: WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.disabled) ? p.rule : p.paperRaised,
+        ),
         trackColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? p.ink : p.paperSunken,
+          (s) => s.contains(WidgetState.disabled)
+              ? p.paperSunken
+              : s.contains(WidgetState.selected)
+              ? p.ink
+              : p.paperSunken,
         ),
         trackOutlineColor: WidgetStateProperty.resolveWith(
-          (s) => s.contains(WidgetState.selected) ? p.ink : p.ruleStrong,
+          (s) => s.contains(WidgetState.disabled)
+              ? p.rule
+              : s.contains(WidgetState.selected)
+              ? p.ink
+              : p.ruleStrong,
         ),
         trackOutlineWidth: const WidgetStatePropertyAll(1),
         thumbIcon: const WidgetStatePropertyAll(null),

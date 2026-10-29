@@ -1034,270 +1034,6 @@ abstract class AppLocalizations {
   /// **'服务暂时不可用'**
   String get reasonUnknown;
 
-  /// No description provided for @settings.
-  ///
-  /// In zh, this message translates to:
-  /// **'设置'**
-  String get settings;
-
-  /// No description provided for @settingsSubtitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'使用你自己的服务商账户'**
-  String get settingsSubtitle;
-
-  /// No description provided for @llmSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'大模型'**
-  String get llmSection;
-
-  /// No description provided for @llmSectionNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'用来建档和导演：找出说话人，为每句台词分配声音和语气。'**
-  String get llmSectionNote;
-
-  /// No description provided for @baseUrl.
-  ///
-  /// In zh, this message translates to:
-  /// **'接口地址'**
-  String get baseUrl;
-
-  /// No description provided for @baseUrlInvalid.
-  ///
-  /// In zh, this message translates to:
-  /// **'请输入以 https:// 或 http:// 开头的地址'**
-  String get baseUrlInvalid;
-
-  /// No description provided for @protocol.
-  ///
-  /// In zh, this message translates to:
-  /// **'接口协议'**
-  String get protocol;
-
-  /// No description provided for @protocolChatCompletions.
-  ///
-  /// In zh, this message translates to:
-  /// **'Chat Completions'**
-  String get protocolChatCompletions;
-
-  /// No description provided for @protocolResponses.
-  ///
-  /// In zh, this message translates to:
-  /// **'Responses'**
-  String get protocolResponses;
-
-  /// No description provided for @profileModel.
-  ///
-  /// In zh, this message translates to:
-  /// **'建档模型'**
-  String get profileModel;
-
-  /// No description provided for @profileModelHelp.
-  ///
-  /// In zh, this message translates to:
-  /// **'用来分析人物和挑选声音。'**
-  String get profileModelHelp;
-
-  /// No description provided for @directorModel.
-  ///
-  /// In zh, this message translates to:
-  /// **'导演模型'**
-  String get directorModel;
-
-  /// No description provided for @directorModelHelp.
-  ///
-  /// In zh, this message translates to:
-  /// **'用来逐句导演。留空则使用建档模型。'**
-  String get directorModelHelp;
-
-  /// No description provided for @sameAsProfileModel.
-  ///
-  /// In zh, this message translates to:
-  /// **'与建档模型相同'**
-  String get sameAsProfileModel;
-
-  /// No description provided for @llmKey.
-  ///
-  /// In zh, this message translates to:
-  /// **'大模型密钥'**
-  String get llmKey;
-
-  /// No description provided for @minimaxSectionNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'生成角色的配音。'**
-  String get minimaxSectionNote;
-
-  /// No description provided for @edgeSectionNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'在线音色，无需密钥，可在演员表中选择。未配置付费语音服务时用于自动选角。支持普通文本朗读；情绪和多音字指令不生效。'**
-  String get edgeSectionNote;
-
-  /// No description provided for @minimaxKey.
-  ///
-  /// In zh, this message translates to:
-  /// **'MiniMax 密钥'**
-  String get minimaxKey;
-
-  /// No description provided for @bailianSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'阿里云百炼'**
-  String get bailianSection;
-
-  /// No description provided for @bailianSectionNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'生成角色的配音，按地域选择接入点。'**
-  String get bailianSectionNote;
-
-  /// No description provided for @bailianKey.
-  ///
-  /// In zh, this message translates to:
-  /// **'百炼密钥'**
-  String get bailianKey;
-
-  /// No description provided for @region.
-  ///
-  /// In zh, this message translates to:
-  /// **'地域'**
-  String get region;
-
-  /// No description provided for @regionBeijing.
-  ///
-  /// In zh, this message translates to:
-  /// **'北京'**
-  String get regionBeijing;
-
-  /// No description provided for @regionSingapore.
-  ///
-  /// In zh, this message translates to:
-  /// **'新加坡'**
-  String get regionSingapore;
-
-  /// No description provided for @keyStored.
-  ///
-  /// In zh, this message translates to:
-  /// **'已保存'**
-  String get keyStored;
-
-  /// No description provided for @keyNotSet.
-  ///
-  /// In zh, this message translates to:
-  /// **'未设置'**
-  String get keyNotSet;
-
-  /// No description provided for @keyWillBeRemoved.
-  ///
-  /// In zh, this message translates to:
-  /// **'将删除'**
-  String get keyWillBeRemoved;
-
-  /// No description provided for @keyHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'粘贴密钥'**
-  String get keyHint;
-
-  /// No description provided for @keyStoredHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'留空保持不变，输入则替换'**
-  String get keyStoredHint;
-
-  /// No description provided for @keyRemovedHint.
-  ///
-  /// In zh, this message translates to:
-  /// **'保存后删除这个密钥'**
-  String get keyRemovedHint;
-
-  /// No description provided for @showKey.
-  ///
-  /// In zh, this message translates to:
-  /// **'显示'**
-  String get showKey;
-
-  /// No description provided for @hideKey.
-  ///
-  /// In zh, this message translates to:
-  /// **'隐藏'**
-  String get hideKey;
-
-  /// No description provided for @removeKey.
-  ///
-  /// In zh, this message translates to:
-  /// **'删除密钥'**
-  String get removeKey;
-
-  /// No description provided for @undoRemoveKey.
-  ///
-  /// In zh, this message translates to:
-  /// **'撤销删除'**
-  String get undoRemoveKey;
-
-  /// No description provided for @saveSettings.
-  ///
-  /// In zh, this message translates to:
-  /// **'保存'**
-  String get saveSettings;
-
-  /// No description provided for @settingsSaved.
-  ///
-  /// In zh, this message translates to:
-  /// **'设置已保存'**
-  String get settingsSaved;
-
-  /// No description provided for @settingsSaveFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'没能保存设置'**
-  String get settingsSaveFailed;
-
-  /// No description provided for @settingsSaveFailedBody.
-  ///
-  /// In zh, this message translates to:
-  /// **'设置没有改变。检查一下填写的内容，再保存一次。'**
-  String get settingsSaveFailedBody;
-
-  /// No description provided for @castSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'演员'**
-  String get castSection;
-
-  /// No description provided for @exclusiveVoices.
-  ///
-  /// In zh, this message translates to:
-  /// **'独占声音数'**
-  String get exclusiveVoices;
-
-  /// No description provided for @exclusiveVoicesNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'戏份最多的角色各用一个专属声音，其余角色共用群演声音。'**
-  String get exclusiveVoicesNote;
-
-  /// No description provided for @exclusiveVoicesFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'没能修改独占声音数'**
-  String get exclusiveVoicesFailed;
-
-  /// No description provided for @fewerVoices.
-  ///
-  /// In zh, this message translates to:
-  /// **'减少'**
-  String get fewerVoices;
-
-  /// No description provided for @moreVoices.
-  ///
-  /// In zh, this message translates to:
-  /// **'增加'**
-  String get moreVoices;
-
   /// No description provided for @consentTitle.
   ///
   /// In zh, this message translates to:
@@ -1490,186 +1226,6 @@ abstract class AppLocalizations {
   /// **'没能保存演绎方式，请再试一次'**
   String get modeSaveFailed;
 
-  /// No description provided for @generationSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'边听边生成'**
-  String get generationSection;
-
-  /// No description provided for @generationSectionNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'提前量是在你听到之前预先处理的章数；合成提前量不能超过导演提前量，设为 0 表示关闭。'**
-  String get generationSectionNote;
-
-  /// No description provided for @autoGenerate.
-  ///
-  /// In zh, this message translates to:
-  /// **'自动生成配音'**
-  String get autoGenerate;
-
-  /// No description provided for @autoGenerateNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'播放没有配音的章节时直接生成，不再询问'**
-  String get autoGenerateNote;
-
-  /// No description provided for @directingAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'导演提前量'**
-  String get directingAhead;
-
-  /// No description provided for @synthesisAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'合成提前量'**
-  String get synthesisAhead;
-
-  /// No description provided for @aheadOff.
-  ///
-  /// In zh, this message translates to:
-  /// **'关闭'**
-  String get aheadOff;
-
-  /// No description provided for @aheadChapters.
-  ///
-  /// In zh, this message translates to:
-  /// **'提前 {count} 章'**
-  String aheadChapters(int count);
-
-  /// No description provided for @fewerDirectingAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'减少导演提前量'**
-  String get fewerDirectingAhead;
-
-  /// No description provided for @moreDirectingAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'增加导演提前量'**
-  String get moreDirectingAhead;
-
-  /// No description provided for @fewerSynthesisAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'减少合成提前量'**
-  String get fewerSynthesisAhead;
-
-  /// No description provided for @moreSynthesisAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'增加合成提前量'**
-  String get moreSynthesisAhead;
-
-  /// No description provided for @generationSettingsFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'没能保存生成设置'**
-  String get generationSettingsFailed;
-
-  /// No description provided for @storageSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'存储'**
-  String get storageSection;
-
-  /// No description provided for @storage.
-  ///
-  /// In zh, this message translates to:
-  /// **'存储空间'**
-  String get storage;
-
-  /// No description provided for @storageRowNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'查看每本书占用的空间，清理音频'**
-  String get storageRowNote;
-
-  /// No description provided for @storageNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'按书统计：书的正文、剧本、演员表等记录加上它的音频文件。数据库文件由所有书共用，其中的索引和日志开销不计入。'**
-  String get storageNote;
-
-  /// No description provided for @storageLoadFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'没能读取存储空间'**
-  String get storageLoadFailed;
-
-  /// No description provided for @storageEmpty.
-  ///
-  /// In zh, this message translates to:
-  /// **'还没有占用空间的书'**
-  String get storageEmpty;
-
-  /// No description provided for @storageTotal.
-  ///
-  /// In zh, this message translates to:
-  /// **'总占用'**
-  String get storageTotal;
-
-  /// No description provided for @storageAudio.
-  ///
-  /// In zh, this message translates to:
-  /// **'可清理的音频'**
-  String get storageAudio;
-
-  /// No description provided for @storageBooks.
-  ///
-  /// In zh, this message translates to:
-  /// **'书'**
-  String get storageBooks;
-
-  /// No description provided for @storageBookLine.
-  ///
-  /// In zh, this message translates to:
-  /// **'共 {total} · 音频 {audio}'**
-  String storageBookLine(String total, String audio);
-
-  /// No description provided for @clearAudio.
-  ///
-  /// In zh, this message translates to:
-  /// **'清理音频'**
-  String get clearAudio;
-
-  /// No description provided for @clearAudioNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。'**
-  String get clearAudioNote;
-
-  /// No description provided for @clearAudioTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'清理《{title}》的音频？'**
-  String clearAudioTitle(String title);
-
-  /// No description provided for @clearAudioBody.
-  ///
-  /// In zh, this message translates to:
-  /// **'将释放 {size}。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。'**
-  String clearAudioBody(String size);
-
-  /// No description provided for @clearAudioConfirm.
-  ///
-  /// In zh, this message translates to:
-  /// **'清理音频'**
-  String get clearAudioConfirm;
-
-  /// No description provided for @clearAudioFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'没能清理音频，请再试一次'**
-  String get clearAudioFailed;
-
-  /// No description provided for @audioCleared.
-  ///
-  /// In zh, this message translates to:
-  /// **'已清理《{title}》的音频'**
-  String audioCleared(String title);
-
   /// No description provided for @changeVoice.
   ///
   /// In zh, this message translates to:
@@ -1739,7 +1295,7 @@ abstract class AppLocalizations {
   /// No description provided for @presetsEmpty.
   ///
   /// In zh, this message translates to:
-  /// **'当前配置下没有适合这本书语言的预设音色。'**
+  /// **'开启的配音服务商里没有适合这本书语言的预设音色。'**
   String get presetsEmpty;
 
   /// No description provided for @designProvider.
@@ -1820,11 +1376,335 @@ abstract class AppLocalizations {
   /// **'重新试听'**
   String get listenAgain;
 
-  /// No description provided for @diagnosticsSection.
+  /// No description provided for @settings.
   ///
   /// In zh, this message translates to:
-  /// **'诊断与反馈'**
-  String get diagnosticsSection;
+  /// **'设置'**
+  String get settings;
+
+  /// No description provided for @llm.
+  ///
+  /// In zh, this message translates to:
+  /// **'大模型'**
+  String get llm;
+
+  /// No description provided for @voiceRole.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音和音色设计'**
+  String get voiceRole;
+
+  /// No description provided for @voiceRoleNoDesign.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音'**
+  String get voiceRoleNoDesign;
+
+  /// No description provided for @providerReady.
+  ///
+  /// In zh, this message translates to:
+  /// **'已配置'**
+  String get providerReady;
+
+  /// No description provided for @providerNotSet.
+  ///
+  /// In zh, this message translates to:
+  /// **'未配置'**
+  String get providerNotSet;
+
+  /// No description provided for @llmNoModel.
+  ///
+  /// In zh, this message translates to:
+  /// **'缺少模型'**
+  String get llmNoModel;
+
+  /// No description provided for @llmNoKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'缺少密钥'**
+  String get llmNoKey;
+
+  /// No description provided for @setupTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'先配置大模型'**
+  String get setupTitle;
+
+  /// No description provided for @setupBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'建档和导演要用你自己的大模型账户。'**
+  String get setupBody;
+
+  /// No description provided for @setupAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'配置大模型'**
+  String get setupAction;
+
+  /// No description provided for @generationSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'边听边生成'**
+  String get generationSection;
+
+  /// No description provided for @generationSectionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'只在收听时生效，静默阅读不会触发。合成提前量不会超过导演提前量，设为 0 即关闭。'**
+  String get generationSectionNote;
+
+  /// No description provided for @autoGenerate.
+  ///
+  /// In zh, this message translates to:
+  /// **'自动生成配音'**
+  String get autoGenerate;
+
+  /// No description provided for @autoGenerateNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有配音的章节直接生成，不再询问'**
+  String get autoGenerateNote;
+
+  /// No description provided for @directingAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'导演提前量'**
+  String get directingAhead;
+
+  /// No description provided for @directingAheadNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'先写好后面几章的剧本'**
+  String get directingAheadNote;
+
+  /// No description provided for @synthesisAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'合成提前量'**
+  String get synthesisAhead;
+
+  /// No description provided for @synthesisAheadNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'先生成后面几章的配音'**
+  String get synthesisAheadNote;
+
+  /// No description provided for @aheadUnit.
+  ///
+  /// In zh, this message translates to:
+  /// **'章'**
+  String get aheadUnit;
+
+  /// No description provided for @fewerDirectingAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'减少导演提前量'**
+  String get fewerDirectingAhead;
+
+  /// No description provided for @moreDirectingAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'增加导演提前量'**
+  String get moreDirectingAhead;
+
+  /// No description provided for @fewerSynthesisAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'减少合成提前量'**
+  String get fewerSynthesisAhead;
+
+  /// No description provided for @moreSynthesisAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'增加合成提前量'**
+  String get moreSynthesisAhead;
+
+  /// No description provided for @generationSettingsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能保存生成设置，请再试一次'**
+  String get generationSettingsFailed;
+
+  /// No description provided for @castingSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'选角'**
+  String get castingSection;
+
+  /// No description provided for @exclusiveVoices.
+  ///
+  /// In zh, this message translates to:
+  /// **'专属音色'**
+  String get exclusiveVoices;
+
+  /// No description provided for @exclusiveVoicesValue.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个'**
+  String exclusiveVoicesValue(int count);
+
+  /// No description provided for @exclusiveVoicesNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'台词最多的角色各有专属音色，其余共用群演音色。'**
+  String get exclusiveVoicesNote;
+
+  /// No description provided for @exclusiveVoicesRecastNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'修改后为已建档的书重新选角，换过或设计的音色不变。'**
+  String get exclusiveVoicesRecastNote;
+
+  /// No description provided for @fewerVoices.
+  ///
+  /// In zh, this message translates to:
+  /// **'减少专属音色'**
+  String get fewerVoices;
+
+  /// No description provided for @moreVoices.
+  ///
+  /// In zh, this message translates to:
+  /// **'增加专属音色'**
+  String get moreVoices;
+
+  /// No description provided for @recast.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新选角'**
+  String get recast;
+
+  /// No description provided for @recastDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已按 {count} 个专属音色重新选角'**
+  String recastDone(int count);
+
+  /// No description provided for @recastFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能重新选角，请再试一次'**
+  String get recastFailed;
+
+  /// No description provided for @appearanceSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'外观'**
+  String get appearanceSection;
+
+  /// No description provided for @storageSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'存储'**
+  String get storageSection;
+
+  /// No description provided for @storage.
+  ///
+  /// In zh, this message translates to:
+  /// **'存储空间'**
+  String get storage;
+
+  /// No description provided for @storageTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'共占用'**
+  String get storageTotal;
+
+  /// No description provided for @storageAudioPart.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频 {size}'**
+  String storageAudioPart(String size);
+
+  /// No description provided for @storageOtherPart.
+  ///
+  /// In zh, this message translates to:
+  /// **'正文、剧本等 {size}'**
+  String storageOtherPart(String size);
+
+  /// No description provided for @storageBooks.
+  ///
+  /// In zh, this message translates to:
+  /// **'每本书'**
+  String get storageBooks;
+
+  /// No description provided for @storageBookLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'共 {total} · 音频 {audio}'**
+  String storageBookLine(String total, String audio);
+
+  /// No description provided for @storageBookNoAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'共 {total} · 没有音频'**
+  String storageBookNoAudio(String total);
+
+  /// No description provided for @storageLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取存储空间'**
+  String get storageLoadFailed;
+
+  /// No description provided for @storageEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有占用空间的书'**
+  String get storageEmpty;
+
+  /// No description provided for @storageCountNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'按书统计正文、剧本、演员表和音频文件；数据库的索引和日志由所有书共用，不计入。'**
+  String get storageCountNote;
+
+  /// No description provided for @clearAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理音频'**
+  String get clearAudio;
+
+  /// No description provided for @clearAudioNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。'**
+  String get clearAudioNote;
+
+  /// No description provided for @clearAudioTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理《{title}》的音频？'**
+  String clearAudioTitle(String title);
+
+  /// No description provided for @clearAudioBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'将释放 {size}。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。'**
+  String clearAudioBody(String size);
+
+  /// No description provided for @clearAudioConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'清理音频'**
+  String get clearAudioConfirm;
+
+  /// No description provided for @clearAudioFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能清理音频，请再试一次'**
+  String get clearAudioFailed;
+
+  /// No description provided for @audioCleared.
+  ///
+  /// In zh, this message translates to:
+  /// **'已清理《{title}》的音频'**
+  String audioCleared(String title);
+
+  /// No description provided for @feedbackSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'反馈'**
+  String get feedbackSection;
 
   /// No description provided for @exportDiagnostics.
   ///
@@ -1835,7 +1715,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportDiagnosticsNote.
   ///
   /// In zh, this message translates to:
-  /// **'生成报告，通过系统分享发给你选择的人或应用'**
+  /// **'不含密钥和书的正文'**
   String get exportDiagnosticsNote;
 
   /// No description provided for @exportingDiagnostics.
@@ -1853,7 +1733,7 @@ abstract class AppLocalizations {
   /// No description provided for @reportProblemNote.
   ///
   /// In zh, this message translates to:
-  /// **'在浏览器里打开项目的 GitHub，新建一个问题'**
+  /// **'在 GitHub 上新建一个问题'**
   String get reportProblemNote;
 
   /// No description provided for @openingBrowser.
@@ -1886,29 +1766,389 @@ abstract class AppLocalizations {
   /// **'浏览器没有打开，请检查网络或默认浏览器后再试。'**
   String get reportProblemFailedBody;
 
-  /// No description provided for @diagnosticsPrivacyTitle.
+  /// No description provided for @feedbackNote.
   ///
   /// In zh, this message translates to:
-  /// **'报告里有什么'**
-  String get diagnosticsPrivacyTitle;
+  /// **'报告包含应用版本、设备信息和近期错误，不会自动上传，只在你从分享里发送时离开手机。'**
+  String get feedbackNote;
 
-  /// No description provided for @diagnosticsIncludes.
+  /// No description provided for @aboutSection.
   ///
   /// In zh, this message translates to:
-  /// **'包含：应用版本、系统与设备信息、近期的错误和崩溃记录。'**
-  String get diagnosticsIncludes;
+  /// **'关于'**
+  String get aboutSection;
 
-  /// No description provided for @diagnosticsExcludes.
+  /// No description provided for @licenses.
   ///
   /// In zh, this message translates to:
-  /// **'不包含：任何密钥，以及书的正文。'**
-  String get diagnosticsExcludes;
+  /// **'开源许可'**
+  String get licenses;
 
-  /// No description provided for @diagnosticsNoUpload.
+  /// No description provided for @llmPageNote.
   ///
   /// In zh, this message translates to:
-  /// **'不会自动上传：只有你在分享里选择发送时，报告才会离开手机。'**
-  String get diagnosticsNoUpload;
+  /// **'建档和导演都由它完成：找出说话人，决定每句台词由谁来念、用什么语气。'**
+  String get llmPageNote;
+
+  /// No description provided for @connectionSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接'**
+  String get connectionSection;
+
+  /// No description provided for @baseUrl.
+  ///
+  /// In zh, this message translates to:
+  /// **'接口地址'**
+  String get baseUrl;
+
+  /// No description provided for @baseUrlInvalid.
+  ///
+  /// In zh, this message translates to:
+  /// **'请输入以 https:// 或 http:// 开头的地址'**
+  String get baseUrlInvalid;
+
+  /// No description provided for @protocol.
+  ///
+  /// In zh, this message translates to:
+  /// **'接口协议'**
+  String get protocol;
+
+  /// No description provided for @protocolChatCompletions.
+  ///
+  /// In zh, this message translates to:
+  /// **'Chat Completions'**
+  String get protocolChatCompletions;
+
+  /// No description provided for @protocolResponses.
+  ///
+  /// In zh, this message translates to:
+  /// **'Responses'**
+  String get protocolResponses;
+
+  /// No description provided for @apiKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥'**
+  String get apiKey;
+
+  /// No description provided for @llmConnectionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'兼容 OpenAI 接口的服务都可以使用，模型需要支持结构化输出（JSON Schema）。'**
+  String get llmConnectionNote;
+
+  /// No description provided for @modelsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'模型'**
+  String get modelsSection;
+
+  /// No description provided for @profileModel.
+  ///
+  /// In zh, this message translates to:
+  /// **'建档模型'**
+  String get profileModel;
+
+  /// No description provided for @directorModel.
+  ///
+  /// In zh, this message translates to:
+  /// **'导演模型'**
+  String get directorModel;
+
+  /// No description provided for @modelHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'模型名称'**
+  String get modelHint;
+
+  /// No description provided for @sameAsProfileModel.
+  ///
+  /// In zh, this message translates to:
+  /// **'与建档模型相同'**
+  String get sameAsProfileModel;
+
+  /// No description provided for @modelsNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'建档模型分析人物、挑选声音；导演模型逐句分配台词和语气，留空则与建档模型相同。'**
+  String get modelsNote;
+
+  /// No description provided for @minimaxPageNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'为角色配音，也可以按描述设计新音色。'**
+  String get minimaxPageNote;
+
+  /// No description provided for @minimaxKeyNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用 MiniMax 国际版（minimax.io）的密钥。'**
+  String get minimaxKeyNote;
+
+  /// No description provided for @bailianPageNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'为角色配音。北京地域还可以按描述设计新音色。'**
+  String get bailianPageNote;
+
+  /// No description provided for @region.
+  ///
+  /// In zh, this message translates to:
+  /// **'地域'**
+  String get region;
+
+  /// No description provided for @regionBeijing.
+  ///
+  /// In zh, this message translates to:
+  /// **'北京'**
+  String get regionBeijing;
+
+  /// No description provided for @regionSingapore.
+  ///
+  /// In zh, this message translates to:
+  /// **'新加坡'**
+  String get regionSingapore;
+
+  /// No description provided for @bailianRegionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'北京和新加坡的密钥不通用，请填写所选地域的密钥。'**
+  String get bailianRegionNote;
+
+  /// No description provided for @keyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'粘贴或输入密钥'**
+  String get keyHint;
+
+  /// No description provided for @newKeyHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'粘贴或输入新密钥'**
+  String get newKeyHint;
+
+  /// No description provided for @keySaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存'**
+  String get keySaved;
+
+  /// No description provided for @pasteKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'粘贴'**
+  String get pasteKey;
+
+  /// No description provided for @showKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示'**
+  String get showKey;
+
+  /// No description provided for @hideKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐藏'**
+  String get hideKey;
+
+  /// No description provided for @replaceKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'更换'**
+  String get replaceKey;
+
+  /// No description provided for @deleteKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除密钥'**
+  String get deleteKey;
+
+  /// No description provided for @deleteKeyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除这个密钥？'**
+  String get deleteKeyTitle;
+
+  /// No description provided for @deleteLlmKeyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除后，建档和导演会暂停，直到重新填写密钥。'**
+  String get deleteLlmKeyBody;
+
+  /// No description provided for @deleteVoiceKeyBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除后，用这家服务商音色的角色无法生成配音，直到重新填写密钥或换音色。'**
+  String get deleteVoiceKeyBody;
+
+  /// No description provided for @keyDeleted.
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥已删除'**
+  String get keyDeleted;
+
+  /// No description provided for @keyDeleteFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能删除密钥，请再试一次'**
+  String get keyDeleteFailed;
+
+  /// No description provided for @save.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存'**
+  String get save;
+
+  /// No description provided for @saved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存'**
+  String get saved;
+
+  /// No description provided for @saveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能保存'**
+  String get saveFailed;
+
+  /// No description provided for @saveFailedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置没有改变。检查填写的内容后再试一次。'**
+  String get saveFailedBody;
+
+  /// No description provided for @discardTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'放弃未保存的修改？'**
+  String get discardTitle;
+
+  /// No description provided for @discardConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'放弃修改'**
+  String get discardConfirm;
+
+  /// No description provided for @keepEditing.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续编辑'**
+  String get keepEditing;
+
+  /// No description provided for @llmSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'建档与导演'**
+  String get llmSection;
+
+  /// No description provided for @voiceSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音'**
+  String get voiceSection;
+
+  /// No description provided for @voiceSectionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'生成配音只用开启的服务商。Edge 不支持情绪和读音指令。密钥加密存在本机，只发给对应的服务商。'**
+  String get voiceSectionNote;
+
+  /// No description provided for @edgeRole.
+  ///
+  /// In zh, this message translates to:
+  /// **'免费，无需密钥'**
+  String get edgeRole;
+
+  /// No description provided for @voiceNeedsKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'填写密钥后才能开启'**
+  String get voiceNeedsKey;
+
+  /// No description provided for @noVoiceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有开启配音服务商'**
+  String get noVoiceTitle;
+
+  /// No description provided for @noVoiceBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少开启一家才能生成配音。Microsoft Edge 免费，无需密钥。'**
+  String get noVoiceBody;
+
+  /// No description provided for @turnOnEdge.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启 Microsoft Edge'**
+  String get turnOnEdge;
+
+  /// No description provided for @reasonProviderDisabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'这家配音服务商已在设置里关闭'**
+  String get reasonProviderDisabled;
+
+  /// No description provided for @reasonNoVoiceProvider.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有开启配音服务商，请到设置里打开一个'**
+  String get reasonNoVoiceProvider;
+
+  /// No description provided for @offProviderTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{provider}已关闭'**
+  String offProviderTitle(String provider);
+
+  /// No description provided for @offProviderNoKeyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{provider}还没有密钥'**
+  String offProviderNoKeyTitle(String provider);
+
+  /// No description provided for @offProviderBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音要用到{provider}的音色。打开它，或为用到它的角色换上已开启服务商的音色。'**
+  String offProviderBody(String provider);
+
+  /// No description provided for @offProviderSpeakers.
+  ///
+  /// In zh, this message translates to:
+  /// **'{names}用的是{provider}的音色。打开它，或为这些角色换上已开启服务商的音色。'**
+  String offProviderSpeakers(String names, String provider);
+
+  /// No description provided for @speakersAndMore.
+  ///
+  /// In zh, this message translates to:
+  /// **'{names}等 {total} 位'**
+  String speakersAndMore(String names, int total, int more);
+
+  /// No description provided for @turnOnProvider.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开{provider}'**
+  String turnOnProvider(String provider);
+
+  /// No description provided for @addProviderKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'填写{provider}的密钥'**
+  String addProviderKey(String provider);
+
+  /// No description provided for @rematchVoices.
+  ///
+  /// In zh, this message translates to:
+  /// **'重新匹配音色'**
+  String get rematchVoices;
+
+  /// No description provided for @rematchFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能重新匹配音色，请再试一次'**
+  String get rematchFailed;
 }
 
 class _AppLocalizationsDelegate

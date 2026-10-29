@@ -67,6 +67,7 @@ class Casting {
     Set<String>? providers,
     String bailianRegion = 'beijing',
     bool preserveExisting = false,
+    bool replaceOutsideProviders = false,
   }) async {
     final previous = preserveExisting ? await getCasting(book.id) : null;
     return _recommend(
@@ -75,6 +76,7 @@ class Casting {
       providers: providers,
       bailianRegion: bailianRegion,
       fixedExclusiveIds: previous?.exclusiveSpeakerIds,
+      replaceOutsideProviders: replaceOutsideProviders,
     );
   }
 
@@ -84,6 +86,7 @@ class Casting {
     Set<String>? providers,
     required String bailianRegion,
     Set<String>? fixedExclusiveIds,
+    bool replaceOutsideProviders = false,
   }) async {
     if (exclusiveCount < 0) {
       throw const FormatException('Exclusive count must be non-negative.');
@@ -129,6 +132,11 @@ class Casting {
         fixedExclusiveIds ??
         ranked.take(exclusiveCount).map((s) => s.id).toSet();
     final voices = <String, Voice>{...previous.voices};
+    // Voices of providers no longer allowed are recast, even ones chosen by
+    // hand or designed; every other voice is kept as it would be.
+    if (replaceOutsideProviders && providers != null) {
+      voices.removeWhere((_, v) => !providers.contains(v.binding.provider));
+    }
     Voice automaticVoice(Speaker speaker, VoicePreset preset) {
       final old = previous.voices[speaker.id];
       // Recommending the same binding preserves its existing audition sample.

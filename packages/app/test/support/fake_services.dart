@@ -89,6 +89,8 @@ class FakeProviders extends ValueNotifier<ProviderPreferences>
   FakeProviders([super.value = const ProviderPreferences()]);
 
   final saves = <SaveCall>[];
+
+  /// Thrown by [save] while set; nothing is saved.
   Object? failWith;
 
   @override
@@ -110,6 +112,9 @@ class FakeProviders extends ValueNotifier<ProviderPreferences>
       hasLlmKey: has(value.hasLlmKey, llmKey),
       hasMinimaxKey: has(value.hasMinimaxKey, minimaxKey),
       hasBailianKey: has(value.hasBailianKey, bailianKey),
+      minimaxOn: preferences.minimaxOn || (minimaxKey?.isNotEmpty ?? false),
+      bailianOn: preferences.bailianOn || (bailianKey?.isNotEmpty ?? false),
+      edgeOn: preferences.edgeOn,
     );
   }
 }
@@ -171,8 +176,23 @@ class FakeCasts extends ChangeNotifier implements Casts {
     notifyListeners();
   }
 
+  final rematches = <String>[];
+
+  /// Thrown by [rematch] while set.
+  Object? rematchFailure;
+
+  @override
+  Future<void> rematch(String bookId) async {
+    if (rematchFailure case final error?) throw error;
+    rematches.add(bookId);
+  }
+
+  /// Thrown by [setExclusiveCount] while set; the count stays.
+  Object? countFailure;
+
   @override
   Future<void> setExclusiveCount(int count) async {
+    if (countFailure case final error?) throw error;
     exclusiveCount = count;
     notifyListeners();
   }
@@ -201,8 +221,12 @@ class FakeGeneration extends ValueNotifier<GenerationState>
     required int through,
   }) async => prepares.add((bookId, first, through));
 
+  /// Thrown by [savePreferences] while set; nothing is saved.
+  Object? saveFailure;
+
   @override
   Future<void> savePreferences(GenerationPreferences preferences) async {
+    if (saveFailure case final error?) throw error;
     saved.add(preferences);
     value = GenerationState(
       preferences: preferences,
@@ -350,11 +374,21 @@ class FakeAudioStorage extends ChangeNotifier implements AudioStorage {
   List<BookStorageUsage> books;
   final cleared = <String>[];
 
+  /// Thrown by [usage] while set.
+  Object? usageFailure;
+
+  /// Thrown by [clearAudio] while set; nothing is cleared.
+  Object? clearFailure;
+
   @override
-  Future<List<BookStorageUsage>> usage() async => books;
+  Future<List<BookStorageUsage>> usage() async {
+    if (usageFailure case final error?) throw error;
+    return books;
+  }
 
   @override
   Future<void> clearAudio(String bookId) async {
+    if (clearFailure case final error?) throw error;
     cleared.add(bookId);
     books = [
       for (final b in books)

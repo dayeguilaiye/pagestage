@@ -15,6 +15,7 @@ void main() {
   late Directory root;
   late LocalStore store;
   late ProviderStore providers;
+  late MemorySecrets secrets;
   late ConsentBroker consents;
   late ListeningController listening;
   late CastController casts;
@@ -26,7 +27,8 @@ void main() {
     root = await Directory.systemTemp.createTemp('cast-app-');
     store = LocalStore('${root.path}/db.sqlite');
     book = await importBook(store, root);
-    providers = await ProviderStore.open(store, MemorySecrets());
+    secrets = MemorySecrets();
+    providers = await ProviderStore.open(store, secrets);
     await providers.save(
       const ProviderPreferences(
         baseUrl: 'https://example.test/v1',
@@ -76,9 +78,57 @@ void main() {
   });
 
   test(
-    'no TTS key selects Edge and auditions through Microsoft consent',
+    'casting waits for a voice provider and goes on once one is on',
     () async {
-      await providers.save(providers.value, minimaxKey: '');
+      await providers.save(providers.value.switched('minimax', false));
+      await casts.profile(book.id, through: 1);
+      await casts.idle;
+      final waiting = await casts.load(book.id);
+      expect(waiting.status, ProfilingStatus.paused);
+      expect(waiting.reason, 'noVoiceProvider');
+      expect(waiting.members.single.provider, isNull);
+
+      await providers.save(providers.value.switched('edge', true));
+      await casts.idle;
+      final cast = await casts.load(book.id);
+      expect(cast.status, ProfilingStatus.complete);
+      expect(cast.members.single.provider, 'edge');
+    },
+  );
+
+  test('rematch moves voices off a switched-off provider only', () async {
+    await casts.profile(book.id, through: 1);
+    await casts.idle;
+    expect((await casts.load(book.id)).members.single.provider, 'minimax');
+
+    await providers.save(
+      providers.value.switched('minimax', false).switched('edge', true),
+    );
+    await casts.idle;
+    // Switching providers never recasts a finished cast by itself.
+    expect((await casts.load(book.id)).members.single.provider, 'minimax');
+    await casts.rematch(book.id);
+    expect((await casts.load(book.id)).members.single.provider, 'edge');
+  });
+
+  test('a new key turns its provider on; switches survive a restart', () async {
+    await providers.save(providers.value.switched('minimax', false));
+    expect(providers.value.voiceProviders, isEmpty);
+    await providers.save(providers.value, minimaxKey: 'another-key');
+    expect(providers.value.voiceProviders, {'minimax'});
+    await providers.save(providers.value.switched('edge', true));
+    final reopened = await ProviderStore.open(store, secrets);
+    expect(reopened.value.voiceProviders, {'minimax', 'edge'});
+    reopened.dispose();
+  });
+
+  test(
+    'with only Edge on, casting picks Edge and auditions through Microsoft consent',
+    () async {
+      await providers.save(
+        providers.value.switched('edge', true),
+        minimaxKey: '',
+      );
       final destinations = <ConsentRequest>[];
       consents.addListener(() {
         if (consents.value case final request?) destinations.add(request);

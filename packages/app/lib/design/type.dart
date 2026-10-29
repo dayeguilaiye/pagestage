@@ -46,6 +46,16 @@ abstract final class PsType {
   static final rowTitle = _sans(16, 22, FontWeight.w400);
   static final chapterTitle = _serif(16, 22, FontWeight.w400);
 
+  /// Not a token: the one large figure a page or sheet is about, such as
+  /// the space in use. Newsreader's lining figures read as print; mono's
+  /// slashed zero would read as code.
+  static final figure = _serifEn(40, 48, FontWeight.w500).copyWith(
+    fontFeatures: const [
+      FontFeature.liningFigures(),
+      FontFeature.tabularFigures(),
+    ],
+  );
+
   /// [serif] set for an English interface: Newsreader at 500, with Noto
   /// Serif SC only for Han characters, so quotes and question marks around a
   /// Chinese book title keep their Latin forms.

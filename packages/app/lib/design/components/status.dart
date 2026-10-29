@@ -314,6 +314,8 @@ class PsBanner extends StatelessWidget {
     this.icon,
     this.actionLabel,
     this.onAction,
+    this.secondaryActionLabel,
+    this.onSecondaryAction,
     this.onClose,
   });
 
@@ -325,6 +327,10 @@ class PsBanner extends StatelessWidget {
   final PsIcons? icon;
   final String? actionLabel;
   final VoidCallback? onAction;
+
+  /// Another way out, beside the action, such as a different fix.
+  final String? secondaryActionLabel;
+  final VoidCallback? onSecondaryAction;
 
   /// Shows a close button.
   final VoidCallback? onClose;
@@ -393,13 +399,23 @@ class PsBanner extends StatelessWidget {
                         FontWeight.w400,
                       ).copyWith(color: p.ink2),
                     ),
-                  if (actionLabel != null)
+                  if (actionLabel != null || secondaryActionLabel != null)
                     Padding(
                       padding: const EdgeInsets.only(top: PsSpace.s2 - 2),
-                      child: _LinkButton(
-                        actionLabel!,
-                        onAction,
-                        tone == PsBannerTone.neutral ? p.ink : fg,
+                      child: Wrap(
+                        spacing: PsSpace.s5,
+                        children: [
+                          for (final (label, action) in [
+                            (actionLabel, onAction),
+                            (secondaryActionLabel, onSecondaryAction),
+                          ])
+                            if (label != null)
+                              _LinkButton(
+                                label,
+                                action,
+                                tone == PsBannerTone.neutral ? p.ink : fg,
+                              ),
+                        ],
                       ),
                     ),
                 ],

@@ -246,6 +246,51 @@ void main() {
     },
   );
 
+  test(
+    'voices of providers no longer allowed are recast, even manual ones',
+    () async {
+      await save([
+        Speaker(id: 'kept', name: '保留'),
+        Speaker(id: 'moved', name: '换掉'),
+      ]);
+      final edge = VoicePreset(
+        id: 'edge:e',
+        binding: const VoiceBinding(
+          provider: 'edge',
+          model: 'fake',
+          voiceId: 'e',
+        ),
+        languages: ['zh'],
+        gender: 'unknown',
+        ageGroup: 'unknown',
+        styles: const [],
+        narratorCandidate: false,
+        narratorReview: 'notReviewed',
+      );
+      final casting = Casting(store, catalog: [preset('m'), edge]);
+      await casting.recommend(book, providers: {'minimax'});
+      await casting.selectPreset(book, 'moved', 'minimax:m');
+
+      final kept = await casting.recommend(
+        book,
+        providers: {'edge'},
+        preserveExisting: true,
+      );
+      expect(kept.voices['moved']!.binding.provider, 'minimax');
+
+      final recast = await casting.recommend(
+        book,
+        providers: {'edge'},
+        preserveExisting: true,
+        replaceOutsideProviders: true,
+      );
+      expect(recast.voices.values.map((v) => v.binding.provider).toSet(), {
+        'edge',
+      });
+      expect(recast.voices['moved']!.manuallySelected, isFalse);
+    },
+  );
+
   test('no compatible candidate leaves saved casting untouched', () async {
     await save([Speaker(id: 'role', name: '角色')]);
     final casting = Casting(store, catalog: [preset('only')]);

@@ -79,9 +79,11 @@ class VoiceController extends ChangeNotifier implements Voices {
     final current = await Casting(store).getCasting(bookId);
     final selected =
         current.voices[current.cast.speaker(speakerId).id]?.binding;
+    final on = gateway.providers.value.voiceProviders;
     return [
       for (final p in defaultVoiceCatalog)
         if (p.languages.contains(book.language) &&
+            on.contains(p.binding.provider) &&
             (p.binding.provider != 'bailian' ||
                 p.regions.contains(gateway.providers.value.region.name)))
           VoiceOption(
@@ -182,9 +184,10 @@ class VoiceController extends ChangeNotifier implements Voices {
   Future<List<String>> designProviders(String bookId) async {
     await Library(store).getBook(bookId);
     final preferences = gateway.providers.value;
+    final on = preferences.voiceProviders;
     return [
-      if (preferences.hasMinimaxKey) 'minimax',
-      if (preferences.hasBailianKey &&
+      if (on.contains('minimax')) 'minimax',
+      if (on.contains('bailian') &&
           preferences.region == ProviderRegion.beijing)
         'bailian',
     ];
