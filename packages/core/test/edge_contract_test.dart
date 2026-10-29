@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:crypto/crypto.dart';
 import 'package:pagestage_core/pagestage_core.dart';
 import 'package:pagestage_core/src/cli.dart';
 import 'package:test/test.dart';
@@ -48,6 +47,44 @@ void main() {
   }
 
   test(
+    'Edge accepts v2 authentication with a single browser user agent',
+    () async {
+      adapter.close();
+      adapter = EdgeTtsAdapter(
+        endpoint: endpoint,
+        clock: () => DateTime.utc(2026, 10, 29, 1, 2, 3),
+      );
+      server.listen((request) async {
+        final query = request.uri.queryParameters;
+        final agents = request.headers[HttpHeaders.userAgentHeader] ?? [];
+        final accepted =
+            query['Sec-MS-GEC-Version'] == '2-143.0.3650.75' &&
+            query['Sec-MS-GEC'] ==
+                '665D83B34BA96B8C-20A037BCBCC8AEEDE4C23212D3D188CC82114432FD50435A4698EB95B10FA37A' &&
+            agents.length == 1 &&
+            agents.single.startsWith('Mozilla/5.0') &&
+            !agents.single.contains('Dart/');
+        if (!accepted) {
+          request.response.statusCode = 403;
+          await request.response.close();
+          return;
+        }
+        final socket = await WebSocketTransformer.upgrade(request);
+        sockets.add(socket);
+        var messages = 0;
+        socket.listen((_) {
+          if (++messages == 2) {
+            socket.add(_frame(mp3));
+            socket.add('Path:turn.end\r\n\r\n{}');
+          }
+        });
+      });
+      final result = await adapter.synthesize(_request());
+      expect(result.audio.samples, isNotEmpty);
+    },
+  );
+
+  test(
     'authenticates Edge protocol, escapes plain text and decodes MP3',
     () async {
       final ledger = _Ledger();
@@ -63,17 +100,16 @@ void main() {
         expect(request.uri.path, '/edge/v1');
         final query = request.uri.queryParameters;
         expect(query['ConnectionId'], matches(r'^[A-F0-9]{32}$'));
-        final seconds = now.millisecondsSinceEpoch ~/ 1000 + 11644473600;
-        final ticks = seconds ~/ 300 * 300 * 10000000;
         expect(
           query['Sec-MS-GEC'],
-          sha256
-              .convert(utf8.encode('${ticks}6A5AA1D4EAFF4E9FB37E23D68491D6F4'))
-              .toString()
-              .toUpperCase(),
+          '665D83B34BA96B8C-20A037BCBCC8AEEDE4C23212D3D188CC82114432FD50435A4698EB95B10FA37A',
         );
-        expect(query['Sec-MS-GEC-Version'], '1-143.0.3650.75');
-        expect(request.headers.value('user-agent'), contains('Edg/143.0.0.0'));
+        expect(query['Sec-MS-GEC-Version'], '2-143.0.3650.75');
+        expect(request.headers[HttpHeaders.userAgentHeader], [
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+              'AppleWebKit/537.36 (KHTML, like Gecko) '
+              'Chrome/143.0.0.0 Safari/537.36 Edg/143.0.0.0',
+        ]);
         expect(
           request.headers.value('origin'),
           startsWith('chrome-extension://'),
@@ -145,7 +181,7 @@ void main() {
         _request(parameters: {'pitch': '+2%'}),
         _request(parameters: {'volume': 1}),
         _request(voice: 'voice"/>'),
-      _request(voice: 'en-USNeural'),
+        _request(voice: 'en-USNeural'),
         _request(model: 'azure'),
         _request(designed: true),
       ]) {
@@ -213,10 +249,21 @@ void main() {
       });
       await expectLater(
         adapter.synthesize(_request()),
-        _fails(
-          status == 429
-              ? ProviderErrorKind.rateLimited
-              : ProviderErrorKind.unavailable,
+        throwsA(
+          isA<ProviderException>()
+              .having(
+                (error) => error.kind,
+                'kind',
+                status == 429
+                    ? ProviderErrorKind.rateLimited
+                    : ProviderErrorKind.unavailable,
+              )
+              .having((error) => error.code, 'code', 'http_$status')
+              .having(
+                (error) => error.toString(),
+                'safe message',
+                isNot(contains('private-text')),
+              ),
         ),
       );
     });

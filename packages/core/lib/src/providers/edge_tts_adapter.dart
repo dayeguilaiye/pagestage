@@ -6,10 +6,10 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:audio_decode/audio_decode.dart' as codec;
-import 'package:crypto/crypto.dart';
 
 import '../models/voice.dart';
 import '../pcm_audio.dart';
+import 'edge_gec.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
 import 'usage_ledger.dart';
@@ -40,7 +40,7 @@ class EdgeTtsAdapter implements TtsAdapter {
   static const defaultEndpoint =
       'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
   static const model = 'edge-read-aloud';
-  static const _token = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+  static const _token = edgeTrustedClientToken;
   static const _version = '143.0.3650.75';
   final Uri _endpoint;
   final Duration timeout;
@@ -101,7 +101,11 @@ class EdgeTtsAdapter implements TtsAdapter {
         '<voice name="${_escape(_voiceName(request.binding.voiceId))}">'
         '<prosody pitch="$pitch" rate="$rate" volume="$volume">'
         '${_escape(text)}</prosody></voice></speak>';
-    final client = HttpClient()..connectionTimeout = timeout;
+    // WebSocket.connect adds the supplied headers to HttpClient's defaults.
+    // Clear Dart's default agent so Edge receives exactly one browser agent.
+    final client = HttpClient()
+      ..userAgent = null
+      ..connectionTimeout = timeout;
     _clients.add(client);
     WebSocket? socket;
     try {
@@ -111,8 +115,8 @@ class EdgeTtsAdapter implements TtsAdapter {
         queryParameters: {
           'TrustedClientToken': _token,
           'ConnectionId': connectionId,
-          'Sec-MS-GEC': _secMsGec(now),
-          'Sec-MS-GEC-Version': '1-$_version',
+          'Sec-MS-GEC': edgeSecMsGec(now),
+          'Sec-MS-GEC-Version': '2-$_version',
         },
       );
       // The total deadline also closes a stalled handshake or audio stream.
@@ -166,18 +170,21 @@ class EdgeTtsAdapter implements TtsAdapter {
       );
       return TtsAudio(audio: audio);
     } on TimeoutException {
-      throw _error(ProviderErrorKind.unavailable);
+      throw _error(ProviderErrorKind.unavailable, code: 'timeout');
     } on SocketException {
-      throw _error(ProviderErrorKind.unavailable);
+      throw _error(ProviderErrorKind.unavailable, code: 'connection_error');
     } on HandshakeException {
-      throw _error(ProviderErrorKind.unavailable);
+      throw _error(ProviderErrorKind.unavailable, code: 'tls_handshake');
     } on HttpException {
-      throw _error(ProviderErrorKind.unavailable);
+      throw _error(ProviderErrorKind.unavailable, code: 'http_error');
     } on WebSocketException catch (error) {
       throw _error(
         error.httpStatusCode == 429
             ? ProviderErrorKind.rateLimited
             : ProviderErrorKind.unavailable,
+        code: error.httpStatusCode == null
+            ? 'websocket_error'
+            : 'http_${error.httpStatusCode}',
       );
     } on FormatException {
       throw _error(ProviderErrorKind.invalidResponse);
@@ -227,7 +234,7 @@ class EdgeTtsAdapter implements TtsAdapter {
       }
     }
     // Do not cache partial audio when the connection closes before turn.end.
-    throw _error(ProviderErrorKind.unavailable);
+    throw _error(ProviderErrorKind.unavailable, code: 'interrupted_stream');
   }
 
   void close() {
@@ -243,8 +250,8 @@ class EdgeTtsAdapter implements TtsAdapter {
   }
 }
 
-ProviderException _error(ProviderErrorKind kind) =>
-    ProviderException(provider: 'edge', kind: kind);
+ProviderException _error(ProviderErrorKind kind, {String? code}) =>
+    ProviderException(provider: 'edge', kind: kind, code: code);
 
 // Keep the isolate closure outside the request scope so it captures only bytes,
 // never the active WebSocket or HttpClient.
@@ -289,15 +296,6 @@ String _randomId() {
     16,
     (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
   ).join().toUpperCase();
-}
-
-String _secMsGec(DateTime now) {
-  final seconds = now.millisecondsSinceEpoch ~/ 1000 + 11644473600;
-  final ticks = seconds ~/ 300 * 300 * 10000000;
-  return sha256
-      .convert(utf8.encode('$ticks${EdgeTtsAdapter._token}'))
-      .toString()
-      .toUpperCase();
 }
 
 String _timestamp(DateTime now) {

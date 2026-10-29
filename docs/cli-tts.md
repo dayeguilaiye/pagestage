@@ -55,7 +55,7 @@ MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中
 
 ## Edge 在线朗读
 
-Edge 适配器直接连接微软 Read Aloud WebSocket 服务，无需启动浏览器或另行部署 Go 服务。显式选择 `--provider edge` 即可联网合成，无需 key 或配置文件：
+Edge 适配器直接连接微软 Read Aloud WebSocket 服务，以纯 Dart 生成 Sec-MS-GEC v2 校验值，并发送单一浏览器 User-Agent。显式选择 `--provider edge` 即可联网合成，无需 key 或配置文件：
 
 ```sh
 dart run packages/core/bin/pagestage.dart narrate <book-id> 1 --provider edge --voice zh-CN-XiaoxiaoNeural --rate=+10% --pitch=-2Hz --volume=+0%
@@ -81,11 +81,11 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1
 
 每次请求预算为 600 个 Unicode 码点，给 XML 转义保留空间。服务返回 24 kHz 单声道 MP3，经 `audio_decode` 的原生 minimp3 解码器转换成 PCM，再走统一响度、缓存和 WAV 输出。解码在后台 isolate 执行。Dart/Flutter 构建钩子从源码编译解码器，开发与构建环境需具备目标平台的 C 工具链；运行时无需 FFmpeg。
 
-收到 `turn.end` 且音频可解码后才接受结果；提前断开、超时、空音频和畸形帧均作为失败返回。Edge 未返回计费用量，账本保存空 `usage`，结果中的字符与 token 用量为 `null`。协议属于微软私有接口，可能需要随服务调整维护。
+收到 `turn.end` 且音频可解码后才接受结果；提前断开、超时、空音频和畸形帧均作为失败返回。连接失败保留安全错误码：HTTP 握手拒绝为 `http_<状态码>`，超时为 `timeout`，网络连接异常为 `connection_error`，TLS 握手失败为 `tls_handshake`，音频流提前关闭为 `interrupted_stream`。App 的诊断报告会记录这些错误码。Edge 未返回计费用量，账本保存空 `usage`，结果中的字符与 token 用量为 `null`。协议属于微软私有接口，可能需要随服务调整维护。
 
 App 的音色列表可直接选择 Edge；未配置付费 TTS key 时，自动选角使用 Edge。首次将文本发送到微软仍经过现有服务商授权弹窗。预设目录取自公开元数据，年龄保留未知，详见 [选角目录](cli-casting.md)。
 
-实现参考：[Go 客户端](https://github.com/dayeguilaiye/tts-api/blob/main/internal/edge/client.go)。离线 WebSocket 契约测试覆盖鉴权参数、SSML 转义、MP3 解码、错误处理、长文本拆分、缓存和 CLI 配置；真实语音合成及人工试听待验证。
+协议与校验实现参考：[Go 客户端](https://github.com/dayeguilaiye/tts-api/blob/main/internal/edge/client.go)、[edge-tts 7.3.1](https://github.com/rany2/edge-tts)。v2 校验的 Dart 移植遵循 LGPLv3，归属与许可见 `packages/core/LICENSE`。离线测试覆盖独立参考校验值、五分钟时间窗口、时区、单一 User-Agent、SSML 转义、MP3 解码、错误处理、长文本拆分、缓存和 CLI 配置。2026-10-29 在 macOS 上使用正式适配器和 `zh-CN-XiaoxiaoNeural` 完成一次 23 字中文真实请求，生成并验证 5.328 秒、24 kHz 单声道 WAV；手机端与长篇连续合成仍需实机验证。
 
 ## 配置
 
