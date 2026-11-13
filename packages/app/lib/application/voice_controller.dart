@@ -79,13 +79,9 @@ class VoiceController extends ChangeNotifier implements Voices {
     final current = await Casting(store).getCasting(bookId);
     final selected =
         current.voices[current.cast.speaker(speakerId).id]?.binding;
-    final on = gateway.providers.value.voiceProviders;
     return [
-      for (final p in defaultVoiceCatalog)
-        if (p.languages.contains(book.language) &&
-            on.contains(p.binding.provider) &&
-            (p.binding.provider != 'bailian' ||
-                p.regions.contains(gateway.providers.value.region.name)))
+      for (final p in gateway.catalog())
+        if (p.languages.contains(book.language))
           VoiceOption(
             id: p.id,
             name: p.binding.voiceId,
@@ -103,10 +99,11 @@ class VoiceController extends ChangeNotifier implements Voices {
     String speakerId,
     String id,
   ) async {
-    if (!(await presets(bookId, speakerId)).any((v) => v.id == id)) {
-      throw StateError('Unavailable preset.');
-    }
-    return defaultVoiceCatalog.singleWhere((p) => p.id == id);
+    final book = await Library(store).getBook(bookId);
+    return gateway.catalog().firstWhere(
+      (p) => p.id == id && p.languages.contains(book.language),
+      orElse: () => throw StateError('Unavailable preset.'),
+    );
   }
 
   @override
@@ -133,7 +130,7 @@ class VoiceController extends ChangeNotifier implements Voices {
                 text: _preview(book.language),
                 language: book.language,
                 binding: preset.binding,
-                direction: Direction(speakerId: speakerId),
+                delivery: _calm(preset.binding),
               ),
             );
         await file.parent.create(recursive: true);
@@ -180,16 +177,30 @@ class VoiceController extends ChangeNotifier implements Voices {
         });
       });
 
+  /// The delivery of a sample: no direction, as the voice reads on its own.
+  Delivery _calm(VoiceBinding binding) => Delivery.calm(
+    gateway.engines.voice
+        .require(binding.provider)
+        .capabilitiesFor(binding, gateway.providers.settings),
+  );
+
+  /// The model [provider] designs voices for, or null when it cannot.
+  String? _designModel(String provider) {
+    try {
+      return gateway.engines.voice[provider]?.designModel(
+        gateway.providers.settings,
+      );
+    } on ProviderException {
+      return null;
+    }
+  }
+
   @override
   Future<List<String>> designProviders(String bookId) async {
     await Library(store).getBook(bookId);
-    final preferences = gateway.providers.value;
-    final on = preferences.voiceProviders;
     return [
-      if (on.contains('minimax')) 'minimax',
-      if (on.contains('bailian') &&
-          preferences.region == ProviderRegion.beijing)
-        'bailian',
+      for (final provider in gateway.providers.value.voiceProviders)
+        if (_designModel(provider) != null) provider,
     ];
   }
 
@@ -235,9 +246,7 @@ class VoiceController extends ChangeNotifier implements Voices {
         book,
         speakerId,
         provider: provider,
-        model: provider == 'minimax'
-            ? 'speech-2.8-hd'
-            : 'qwen-audio-3.1-tts-flash',
+        model: _designModel(provider)!,
         description: description.trim(),
         previewText: _preview(book.language),
         outputDirectory:
@@ -345,7 +354,7 @@ class VoiceController extends ChangeNotifier implements Voices {
             text: _preview(book.language),
             language: book.language,
             binding: designed.binding,
-            direction: Direction(speakerId: affected.first.key),
+            delivery: _calm(designed.binding),
           ),
         );
     final file = File(

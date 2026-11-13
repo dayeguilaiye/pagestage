@@ -26,100 +26,192 @@ class PlatformSecretStore implements SecretStore {
       : _storage.write(key: 'pagestage.$key', value: value);
 }
 
+/// The language and voice engines of this build. The app adds its device
+/// engines here; everything else finds them through these registries.
+class AppEngines {
+  AppEngines({TtsEngines? voice, LlmEngines? language})
+    : voice = voice ?? standardTtsEngines,
+      language = language ?? standardLlmEngines;
+  final TtsEngines voice;
+  final LlmEngines language;
+}
+
+/// The reader's engine settings. Values that are not secret live in the
+/// local store; secrets live in the platform's secure storage under
+/// `<engine>.<setting>` and are only ever read into a [ProviderConfiguration].
 class ProviderStore extends ValueNotifier<ProviderPreferences>
     implements Providers {
-  ProviderStore._(this.store, this.secrets, super.value);
+  ProviderStore._(this.store, this.secrets, this.engines)
+    : super(const ProviderPreferences());
   final LocalStore store;
   final SecretStore secrets;
+  final AppEngines engines;
   Future<void> _writes = Future.value();
+
+  /// The language engine in use.
+  String _language = '';
+  final _on = <String, bool>{};
+  final _values = <String, Map<String, String>>{};
+
+  /// Settings without their secrets: enough for presets, capabilities and
+  /// endpoints, which need no credential.
+  ProviderConfiguration get settings => _settings;
+  ProviderConfiguration _settings = ProviderConfiguration.fromValues(const {});
+
+  Iterable<Engine> get _all => [...engines.language.all, ...engines.voice.all];
 
   static Future<ProviderStore> open(
     LocalStore store,
-    SecretStore secrets,
-  ) async {
-    final p = await store.get('settings', 'providers') ?? {};
-    return ProviderStore._(
-      store,
-      secrets,
-      ProviderPreferences(
-        baseUrl: p['baseUrl'] as String? ?? 'https://api.openai.com/v1',
-        protocol: LlmProtocol.values.byName(
-          p['protocol'] as String? ?? 'chatCompletions',
-        ),
-        profileModel: p['profileModel'] as String? ?? '',
-        directorModel: p['directorModel'] as String? ?? '',
-        region: ProviderRegion.values.byName(
-          p['region'] as String? ?? 'beijing',
-        ),
-        hasLlmKey: (await secrets.read('llm'))?.isNotEmpty ?? false,
-        hasMinimaxKey: (await secrets.read('minimax'))?.isNotEmpty ?? false,
-        hasBailianKey: (await secrets.read('bailian'))?.isNotEmpty ?? false,
-        minimaxOn: p['minimaxOn'] as bool? ?? true,
-        bailianOn: p['bailianOn'] as bool? ?? true,
-        edgeOn: p['edgeOn'] as bool? ?? false,
-      ),
-    );
+    SecretStore secrets, {
+    AppEngines? engines,
+  }) async {
+    final service = ProviderStore._(store, secrets, engines ?? AppEngines());
+    final saved = await store.get('settings', 'engines');
+    if (saved != null) {
+      service._language = saved['language'] as String? ?? '';
+      for (final entry in (saved['engines'] as Map).entries) {
+        final engine = Map<String, Object?>.from(entry.value as Map);
+        service._on[entry.key as String] = engine['on'] as bool? ?? false;
+        service._values[entry.key as String] = Map<String, String>.from(
+          engine['values'] as Map? ?? const {},
+        );
+      }
+    } else if (await store.get('settings', 'providers') case final old?) {
+      // Settings saved before engines were registered by name.
+      service._values['llm'] = {
+        'baseUrl': ?(old['baseUrl'] as String?),
+        'api': old['protocol'] == 'responses'
+            ? 'responses'
+            : 'chat-completions',
+        'profileModel': ?(old['profileModel'] as String?),
+        'directorModel': ?(old['directorModel'] as String?),
+      };
+      service._values['bailian'] = {'region': ?(old['region'] as String?)};
+      service._on.addAll({
+        'minimax': old['minimaxOn'] as bool? ?? true,
+        'bailian': old['bailianOn'] as bool? ?? true,
+        'edge': old['edgeOn'] as bool? ?? false,
+      });
+    }
+    if (service.engines.language[service._language] == null) {
+      service._language = service.engines.language.all.firstOrNull?.id ?? '';
+    }
+    await service._publish();
+    return service;
   }
 
-  @override
-  Future<void> save(
-    ProviderPreferences preferences, {
-    String? llmKey,
-    String? minimaxKey,
-    String? bailianKey,
-  }) {
-    final url = Uri.tryParse(preferences.baseUrl.trim());
-    if (url == null ||
-        !['http', 'https'].contains(url.scheme) ||
-        url.host.isEmpty ||
-        url.userInfo.isNotEmpty ||
-        url.hasQuery ||
-        url.hasFragment) {
-      throw const ProviderException(
-        provider: 'llm',
-        kind: ProviderErrorKind.invalidConfiguration,
-      );
-    }
-    // A key typed in now means the reader wants that provider used.
-    bool on(bool current, String? key) =>
-        key != null && key.trim().isNotEmpty || current;
-    final minimaxOn = on(preferences.minimaxOn, minimaxKey);
-    final bailianOn = on(preferences.bailianOn, bailianKey);
-    final operation = _writes.then((_) async {
-      for (final entry in {
-        'llm': llmKey,
-        'minimax': minimaxKey,
-        'bailian': bailianKey,
-      }.entries) {
-        if (entry.value != null) {
-          final text = entry.value!.trim();
-          await secrets.write(entry.key, text.isEmpty ? null : text);
+  /// A voice engine that asks for a secret is on from the start: nothing is
+  /// sent until its key is stored, and storing it is the reader's choice.
+  /// The others wait for their switch.
+  bool _isOn(TtsEngine engine) =>
+      _on[engine.id] ??
+      engine.fields.any((field) => field.kind == EngineFieldKind.secret);
+
+  Future<String?> _secret(String engineId, String field) async {
+    final value = await secrets.read('$engineId.$field');
+    if (value != null && value.isNotEmpty) return value;
+    // Keys stored before engines had settings by name.
+    if (field != 'key') return null;
+    final legacy = await secrets.read(engineId);
+    return legacy == null || legacy.isEmpty ? null : legacy;
+  }
+
+  Future<ProviderConfiguration> _configuration({required bool secret}) async {
+    final sections = <String, Map<String, String>>{};
+    for (final engine in _all) {
+      final section = {...?_values[engine.id]};
+      if (secret) {
+        for (final field in engine.fields) {
+          if (field.kind != EngineFieldKind.secret) continue;
+          final value = await _secret(engine.id, field.name);
+          if (value != null) section[field.name] = value;
         }
       }
-      final json = <String, Object?>{
-        'baseUrl': url.toString(),
-        'protocol': preferences.protocol.name,
-        'profileModel': preferences.profileModel.trim(),
-        'directorModel': preferences.directorModel.trim(),
-        'region': preferences.region.name,
-        'minimaxOn': minimaxOn,
-        'bailianOn': bailianOn,
-        'edgeOn': preferences.edgeOn,
-      };
-      await store.put('settings', 'providers', json);
-      value = ProviderPreferences(
-        baseUrl: url.toString(),
-        protocol: preferences.protocol,
-        profileModel: preferences.profileModel.trim(),
-        directorModel: preferences.directorModel.trim(),
-        region: preferences.region,
-        hasLlmKey: (await secrets.read('llm'))?.isNotEmpty ?? false,
-        hasMinimaxKey: (await secrets.read('minimax'))?.isNotEmpty ?? false,
-        hasBailianKey: (await secrets.read('bailian'))?.isNotEmpty ?? false,
-        minimaxOn: minimaxOn,
-        bailianOn: bailianOn,
-        edgeOn: preferences.edgeOn,
+      sections[engine.id] = section;
+    }
+    (sections['llm'] ??= {})['engine'] = _language;
+    return ProviderConfiguration.fromValues(sections);
+  }
+
+  /// Rebuilds what screens see from the stored settings and secrets.
+  Future<void> _publish() async {
+    final full = await _configuration(secret: true);
+    _settings = await _configuration(secret: false);
+    final views = <EngineView>[];
+    for (final engine in _all) {
+      final stored = <String>{};
+      for (final field in engine.fields) {
+        if (field.kind == EngineFieldKind.secret &&
+            await _secret(engine.id, field.name) != null) {
+          stored.add(field.name);
+        }
+      }
+      var traits = const <EngineTrait>{};
+      var voiceCount = 0;
+      if (engine is TtsEngine) {
+        try {
+          final presets = engine.presets(_settings);
+          voiceCount = presets.length;
+          final capabilities = presets.isEmpty
+              ? null
+              : engine.capabilitiesFor(presets.first.binding, _settings);
+          traits = {
+            if (capabilities != null) ...{
+              if (capabilities.emotions.length > 1) EngineTrait.emotion,
+              if (capabilities.instruction) EngineTrait.instruction,
+              if (capabilities.cues.isNotEmpty) EngineTrait.vocalCues,
+              if (capabilities.prosody) EngineTrait.pacing,
+            },
+            if (engine.designModel(_settings) != null) EngineTrait.voiceDesign,
+          };
+        } on ProviderException {
+          // An engine that cannot describe itself shows no traits.
+        }
+      }
+      views.add(
+        EngineView(
+          id: engine.id,
+          kind: engine is TtsEngine ? EngineKind.voice : EngineKind.language,
+          site: engine.locality == EngineLocality.device
+              ? EngineSite.device
+              : EngineSite.cloud,
+          status: EngineStatus.values.byName(engine.readiness(full).name),
+          on: engine is TtsEngine ? _isOn(engine) : engine.id == _language,
+          settings: [
+            for (final field in engine.fields)
+              if (!field.advanced)
+                EngineSetting(
+                  name: field.name,
+                  kind: EngineSettingKind.values.byName(field.kind.name),
+                  options: field.options,
+                  fallback: field.fallback,
+                  required: field.required,
+                ),
+          ],
+          values: Map.unmodifiable({...?_values[engine.id]}),
+          secrets: Set.unmodifiable(stored),
+          traits: traits,
+          voiceCount: voiceCount,
+        ),
       );
+    }
+    value = ProviderPreferences(engines: List.unmodifiable(views));
+  }
+
+  Future<void> _save(Future<void> Function() change) {
+    final operation = _writes.then((_) async {
+      await change();
+      await store.put('settings', 'engines', {
+        'language': _language,
+        'engines': {
+          for (final engine in _all)
+            engine.id: {
+              if (engine is TtsEngine) 'on': _isOn(engine),
+              'values': _values[engine.id] ?? const <String, String>{},
+            },
+        },
+      });
+      await _publish();
     });
     _writes = operation.then<void>(
       (_) {},
@@ -128,30 +220,93 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
     return operation;
   }
 
-  /// Captures credentials and non-secret preferences under the same write queue.
-  Future<ProviderConfiguration> configuration() {
-    final result = _writes.then((_) async {
-      final p = value;
-      final keys = <String, String>{};
-      for (final name in ['llm', 'minimax', 'bailian']) {
-        keys[name] = await secrets.read(name) ?? '';
+  Engine _engine(String id) =>
+      _all.where((engine) => engine.id == id).firstOrNull ??
+      (throw ProviderException(
+        provider: id,
+        kind: ProviderErrorKind.invalidConfiguration,
+      ));
+
+  @override
+  Future<void> configure(
+    String engineId, {
+    Map<String, String> values = const {},
+    Map<String, String> secrets = const {},
+  }) {
+    final engine = _engine(engineId);
+    for (final entry in {...values, ...secrets}.entries) {
+      final field = engine.fields
+          .where((field) => field.name == entry.key)
+          .firstOrNull;
+      final text = entry.value.trim();
+      final secret = field?.kind == EngineFieldKind.secret;
+      final valid =
+          field != null &&
+          secret == secrets.containsKey(entry.key) &&
+          (field.kind != EngineFieldKind.choice ||
+              field.options.contains(text)) &&
+          (field.name != 'baseUrl' || text.isEmpty || _validUrl(text));
+      if (!valid) {
+        throw ProviderException(
+          provider: engineId,
+          kind: ProviderErrorKind.invalidConfiguration,
+        );
       }
-      return ProviderConfiguration.fromValues({
-        'llm': {
-          'baseUrl': p.baseUrl,
-          'api': p.protocol == LlmProtocol.responses
-              ? 'responses'
-              : 'chat-completions',
-          'profileModel': p.profileModel,
-          'directorModel': p.directorModel.isEmpty
-              ? p.profileModel
-              : p.directorModel,
-          'key': keys['llm']!,
-        },
-        'minimax': {'key': keys['minimax']!},
-        'bailian': {'key': keys['bailian']!, 'region': p.region.name},
-      });
+    }
+    return _save(() async {
+      for (final entry in secrets.entries) {
+        final text = entry.value.trim();
+        await this.secrets.write(
+          '$engineId.${entry.key}',
+          text.isEmpty ? null : text,
+        );
+        if (text.isEmpty && entry.key == 'key') {
+          await this.secrets.write(engineId, null);
+        }
+        // A key typed in now means the reader wants that engine used.
+        if (text.isNotEmpty && engine is TtsEngine) _on[engineId] = true;
+      }
+      final section = _values[engineId] ??= {};
+      for (final entry in values.entries) {
+        final text = entry.value.trim();
+        if (text.isEmpty) {
+          section.remove(entry.key);
+        } else {
+          section[entry.key] = text;
+        }
+      }
     });
+  }
+
+  static bool _validUrl(String text) {
+    final url = Uri.tryParse(text);
+    return url != null &&
+        const ['http', 'https', 'ws', 'wss'].contains(url.scheme) &&
+        url.host.isNotEmpty &&
+        url.userInfo.isEmpty &&
+        !url.hasQuery &&
+        !url.hasFragment;
+  }
+
+  @override
+  Future<void> switchVoice(String engineId, bool on) {
+    if (_engine(engineId) is! TtsEngine) {
+      throw ArgumentError.value(engineId, 'engineId');
+    }
+    return _save(() async => _on[engineId] = on);
+  }
+
+  @override
+  Future<void> selectLanguage(String engineId) {
+    if (engines.language[engineId] == null) {
+      throw ArgumentError.value(engineId, 'engineId');
+    }
+    return _save(() async => _language = engineId);
+  }
+
+  /// Captures credentials and settings under the same write queue.
+  Future<ProviderConfiguration> configuration() {
+    final result = _writes.then((_) => _configuration(secret: true));
     _writes = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     return result;
   }

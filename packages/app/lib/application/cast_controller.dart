@@ -92,6 +92,7 @@ class CastController extends ChangeNotifier implements Casts {
       runtime: service.gateway.runtime,
       beforeTask: service.gateway.beforeTask,
       recoverVoice: service.gateway.recover,
+      voiceCatalog: () async => service.gateway.catalog(),
     );
     service._events = service.scheduler.events.listen((event) {
       if (event.task.kind == TaskKind.profile &&
@@ -133,7 +134,7 @@ class CastController extends ChangeNotifier implements Casts {
         return;
       }
       final book = await Library(store).getBook(bookId);
-      final casting = Casting(store);
+      final casting = _casting();
       if (_voiceProviders.isEmpty) {
         // Waits for a switch; turning one on reconciles again.
         await store.put('castingFailure', bookId, {
@@ -148,7 +149,6 @@ class CastController extends ChangeNotifier implements Casts {
           book,
           exclusiveCount: exclusiveCount,
           providers: _voiceProviders,
-          bailianRegion: providers.value.region.name,
         );
       } else {
         // Adds voices for newly discovered speakers while retaining existing
@@ -157,7 +157,6 @@ class CastController extends ChangeNotifier implements Casts {
           book,
           exclusiveCount: exclusiveCount,
           providers: _voiceProviders,
-          bailianRegion: providers.value.region.name,
           preserveExisting: true,
         );
       }
@@ -173,6 +172,9 @@ class CastController extends ChangeNotifier implements Casts {
   }
 
   Set<String> get _voiceProviders => providers.value.voiceProviders;
+
+  /// Casts from the presets the engines in use offer right now.
+  Casting _casting() => Casting(store, catalog: gateway.catalog());
 
   /// Casting waiting for a voice provider goes on once one is switched on.
   void _onProviders() {
@@ -274,7 +276,7 @@ class CastController extends ChangeNotifier implements Casts {
         ProviderErrorKind.unavailable => 'network',
         ProviderErrorKind.invalidResponse => invalidResponseReason(code),
         ProviderErrorKind.invalidVoice => 'invalidResponse',
-        ProviderErrorKind.invalidConfiguration => 'missingKey',
+        ProviderErrorKind.invalidConfiguration => configurationReason(code),
       };
 
   Future<bool> _approveProfile(
@@ -283,11 +285,13 @@ class CastController extends ChangeNotifier implements Casts {
   ) async {
     final book = await Library(store).getBook(bookId);
     // Validates all required fields before prompting; no requests are sent.
-    final settings = LlmSettings.fromConfiguration(config);
+    // A device engine sends the text nowhere and needs no asking.
+    final endpoint = gateway.engines.language.active(config).endpoint(config);
+    if (endpoint == null) return true;
     return consents.request(
       bookTitle: book.title,
       provider: 'llm',
-      endpoint: settings.baseUrl.toString(),
+      endpoint: endpoint.toString(),
       content: 'chapterTextAndCast',
     );
   }
@@ -333,11 +337,10 @@ class CastController extends ChangeNotifier implements Casts {
       final book = await Library(store).getBook(bookId);
       await scheduler.withBookPaused(bookId, () async {
         await onCastingChanged?.call(bookId);
-        await Casting(store).recommend(
+        await _casting().recommend(
           book,
           exclusiveCount: exclusiveCount,
           providers: allowed,
-          bailianRegion: providers.value.region.name,
           preserveExisting: true,
           replaceOutsideProviders: true,
         );
@@ -363,11 +366,10 @@ class CastController extends ChangeNotifier implements Casts {
         if (cast.profiledThrough > 0 && _voiceProviders.isNotEmpty) {
           await scheduler.withBookPaused(book.id, () async {
             await onCastingChanged?.call(book.id);
-            await Casting(store).recommend(
+            await _casting().recommend(
               book,
               exclusiveCount: count,
               providers: _voiceProviders,
-              bailianRegion: providers.value.region.name,
             );
           });
         }

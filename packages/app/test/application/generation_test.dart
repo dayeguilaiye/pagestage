@@ -125,14 +125,12 @@ void main() {
     );
     book = await Library(store).importTxt(file.path);
     providers = await ProviderStore.open(store, MemorySecrets());
-    await providers.save(
-      const ProviderPreferences(
-        baseUrl: 'https://offline.test/v1',
-        profileModel: 'fake',
-      ),
-      llmKey: 'fake',
-      minimaxKey: 'fake',
+    await providers.configure(
+      'llm',
+      values: {'baseUrl': 'https://offline.test/v1', 'profileModel': 'fake'},
+      secrets: {'key': 'fake'},
     );
+    await providers.configure('minimax', secrets: {'key': 'fake'});
     consents = ConsentBroker(store);
     accept = true;
     consents.addListener(() {
@@ -200,7 +198,8 @@ void main() {
       ];
       await AudioRepository(store).save(ChapterAudio.fromJson(json));
       final count = tts.requests.length;
-      await providers.save(providers.value, llmKey: '', minimaxKey: '');
+      await providers.configure('llm', secrets: {'key': ''});
+      await providers.configure('minimax', secrets: {'key': ''});
       await automatic();
       await listening.open(book.id);
       expect(engine.loads.last, compressed.path);
@@ -458,12 +457,17 @@ void main() {
       await listening.play();
       await casts.idle;
       await eventually(() => listening.value.playing);
+      // Requests carry no speaker; the voice each was cast to tells. The
+      // narrator's line was voiced once, the hero's once for each voice.
+      final narrator = (await Casting(
+        store,
+      ).getCasting(book.id)).voices['narrator']!.binding.voiceId;
       expect(
-        tts.requests.where((r) => r.direction.speakerId == 'narrator'),
+        tts.requests.where((r) => r.binding.voiceId == narrator),
         hasLength(1),
       );
       expect(
-        tts.requests.where((r) => r.direction.speakerId == 'hero'),
+        tts.requests.where((r) => r.binding.voiceId != narrator),
         hasLength(2),
       );
     },
@@ -573,7 +577,7 @@ void main() {
     () async {
       await prepare();
       await automatic();
-      await providers.save(providers.value.switched('minimax', false));
+      await providers.switchVoice('minimax', false);
       await listening.open(book.id);
       await casts.idle;
       await eventually(() => generation.value.failures.isNotEmpty);
@@ -582,7 +586,7 @@ void main() {
       expect(failure.provider, 'minimax');
       expect(failure.reason, 'providerDisabled');
 
-      await providers.save(providers.value.switched('minimax', true));
+      await providers.switchVoice('minimax', true);
       await generation.resume(book.id);
       await casts.idle;
       await eventually(() => listening.value.playing);
@@ -598,9 +602,8 @@ void main() {
       )).map((v) => v.provider).toSet(),
       {'minimax'},
     );
-    await providers.save(
-      providers.value.switched('minimax', false).switched('edge', true),
-    );
+    await providers.switchVoice('minimax', false);
+    await providers.switchVoice('edge', true);
     expect(
       (await voices.presets(
         book.id,
@@ -698,14 +701,11 @@ void main() {
     'Bailian design is unavailable in Singapore and unsupported design sends no requests',
     () async {
       await prepare();
-      await providers.save(
-        const ProviderPreferences(
-          baseUrl: 'https://offline.test/v1',
-          profileModel: 'fake',
-          region: ProviderRegion.singapore,
-        ),
-        minimaxKey: '',
-        bailianKey: 'fake',
+      await providers.configure('minimax', secrets: {'key': ''});
+      await providers.configure(
+        'bailian',
+        values: {'region': 'singapore'},
+        secrets: {'key': 'fake'},
       );
       expect(await voices.designProviders(book.id), isEmpty);
       await expectLater(

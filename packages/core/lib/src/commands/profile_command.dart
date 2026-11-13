@@ -3,7 +3,9 @@ import 'package:args/command_runner.dart';
 import '../cli.dart';
 import '../profiler.dart';
 import '../provider_configuration.dart';
-import '../providers/llm_settings.dart';
+import '../engines/llm_engine.dart';
+import '../engines/standard_engines.dart';
+import '../providers/llm_adapter.dart';
 
 class ProfileCommand extends Command<void> {
   ProfileCommand(this.context) {
@@ -39,17 +41,21 @@ class ProfileCommand extends Command<void> {
       usageException('Provide a valid chapter range and positive batch size.');
     }
     final injected = context.profileLlm;
-    final adapter = injected == null
-        ? LlmSettings.fromConfiguration(
-            await ProviderConfiguration.load(
-              argResults!['config'] as String?,
-              environment: context.environment,
-            ),
-          ).createProfileAdapter(
+    LlmAdapter? adapter;
+    if (injected == null) {
+      final config = await ProviderConfiguration.load(
+        argResults!['config'] as String?,
+        environment: context.environment,
+      );
+      adapter = standardLlmEngines
+          .active(config)
+          .open(
+            config,
+            LlmRole.profile,
             usageLedger: context.usageLedger,
             runtime: context.requestRuntime,
-          )
-        : null;
+          );
+    }
     try {
       final result = await Profiler(
         context.store,
@@ -57,7 +63,7 @@ class ProfileCommand extends Command<void> {
       ).profile(book, throughChapter: through, batchSize: batchSize);
       context.writeJson(result.toJson());
     } finally {
-      adapter?.close();
+      if (adapter != null) closeLlm(adapter);
     }
   }
 }

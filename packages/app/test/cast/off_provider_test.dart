@@ -36,10 +36,10 @@ const _cast = CastState(
 );
 
 /// MiniMax has its key but is switched off; Bailian is on.
-const _minimaxOff = ProviderPreferences(
-  hasMinimaxKey: true,
+final _minimaxOff = fakeEngines(
+  minimaxKey: true,
   minimaxOn: false,
-  hasBailianKey: true,
+  bailianKey: true,
 );
 
 Future<Fakes> _openBook(WidgetTester tester, Fakes fakes) async {
@@ -128,7 +128,7 @@ void main() {
       tester,
       Fakes(
         casts: FakeCasts(state: _cast),
-        providers: FakeProviders(const ProviderPreferences(edgeOn: true)),
+        providers: FakeProviders(fakeEngines(edgeOn: true)),
       ),
     );
     expect(find.text('MiniMax 还没有密钥'), findsOneWidget);

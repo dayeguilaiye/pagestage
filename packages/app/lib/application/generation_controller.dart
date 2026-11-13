@@ -183,25 +183,55 @@ class GenerationController extends ValueNotifier<GenerationState>
     await _report();
   }
 
+  PerformanceRepository get _performances => PerformanceRepository(store);
+
   @override
   Future<BookPerformanceMode> mode(String bookId) async =>
-      BookPerformanceMode.values.byName(
-        (await store.get('performance', bookId))?['mode'] as String? ??
-            'audiobook',
-      );
+      BookPerformanceMode.values.byName((await coreMode(bookId)).name);
   Future<PerformanceMode> coreMode(String bookId) async =>
-      PerformanceMode.values.byName((await mode(bookId)).name);
+      (await _performances.get(bookId)).mode;
   @override
   Future<void> setMode(String bookId, BookPerformanceMode selected) async {
     await Library(store).getBook(bookId);
     if (await mode(bookId) == selected) return;
+    await _perform(
+      bookId,
+      (performance) => performance.copyWith(
+        mode: PerformanceMode.values.byName(selected.name),
+      ),
+    );
+  }
+
+  @override
+  Future<BookExpressiveness> expressiveness(String bookId) async =>
+      BookExpressiveness.values.byName(
+        (await _performances.get(bookId)).expressiveness.name,
+      );
+  @override
+  Future<void> setExpressiveness(
+    String bookId,
+    BookExpressiveness selected,
+  ) async {
+    await Library(store).getBook(bookId);
+    if (await expressiveness(bookId) == selected) return;
+    await _perform(
+      bookId,
+      (performance) => performance.copyWith(
+        expressiveness: Expressiveness.values.byName(selected.name),
+      ),
+    );
+  }
+
+  /// Changes how a book is performed. Work queued for the old performance
+  /// is dropped, and what is playing reloads for the new one.
+  Future<void> _perform(
+    String bookId,
+    Performance Function(Performance) change,
+  ) async {
     cancelRequest();
     await scheduler.withBookPaused(bookId, () async {
       await scheduler.cancelGeneration(bookId);
-      await store.put('performance', bookId, {
-        'bookId': bookId,
-        'mode': selected.name,
-      });
+      await _performances.save(bookId, change(await _performances.get(bookId)));
     });
     await onModeChanged?.call(bookId);
     _changes.add(null);

@@ -14,6 +14,7 @@ import 'delete_book.dart';
 import 'prepare_sheet.dart';
 import 'reader_page.dart';
 import 'reading_settings.dart';
+import 'share_sheet.dart';
 
 /// One book: its cover and title over the table of contents.
 class BookPage extends StatefulWidget {
@@ -46,7 +47,11 @@ class _BookPageState extends State<BookPage> {
 
   /// How the book is performed; null until loaded or without generation.
   BookPerformanceMode? _mode;
+  BookExpressiveness? _expressiveness;
+
+  /// Which of the two could not be saved.
   var _modeFailed = false;
+  var _expressivenessFailed = false;
 
   @override
   void initState() {
@@ -170,14 +175,22 @@ class _BookPageState extends State<BookPage> {
   Future<void> _menu(BuildContext button) async {
     final l = AppLocalizations.of(context);
     final box = button.findRenderObject()! as RenderBox;
+    final packages = _services?.packages;
     final choice = await showPsMenu(
       context,
       anchor: box.localToGlobal(Offset.zero) & box.size,
       items: [
+        if (packages != null)
+          PsMenuItem(#share, l.shareBook, icon: PsIcons.share),
         PsMenuItem(#delete, l.deleteBook, icon: PsIcons.trash, danger: true),
       ],
     );
-    if (choice != #delete || !mounted) return;
+    if (!mounted) return;
+    if (choice == #share) {
+      await showShareSheet(context, book: widget.book, packages: packages!);
+      return;
+    }
+    if (choice != #delete) return;
     if (await deleteBook(context, widget.bookshelf, widget.book) && mounted) {
       Navigator.of(context).pop();
     }
@@ -372,45 +385,104 @@ class _BookPageState extends State<BookPage> {
           ),
           if (mode != null) ...[
             const SizedBox(height: PsSpace.s5),
-            Row(
-              spacing: PsSpace.s3,
-              children: [
-                Text(
-                  l.performanceMode,
-                  style: PsType.subhead.copyWith(
-                    color: p.ink,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Expanded(
-                  child: PsSegmentedControl<BookPerformanceMode>(
-                    expand: true,
-                    small: true,
-                    value: mode,
-                    onChanged: _setMode,
-                    segments: [
-                      PsSegment(BookPerformanceMode.audiobook, l.modeAudiobook),
-                      PsSegment(BookPerformanceMode.drama, l.modeDrama),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: PsSpace.s2),
-            Text(
-              _modeFailed
-                  ? l.modeSaveFailed
-                  : mode == BookPerformanceMode.audiobook
-                  ? l.modeAudiobookNote
-                  : l.modeDramaNote,
-              style: PsType.caption.copyWith(
-                color: _modeFailed ? p.danger : p.ink2,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
+            _performance(l, p, mode),
           ],
         ],
       ),
+    );
+  }
+
+  /// How the book is performed: whether dialogue tags are read, and how
+  /// much of the director's emotion the voices give. Both apply to the
+  /// whole book and to every engine.
+  Widget _performance(
+    AppLocalizations l,
+    PsPalette p,
+    BookPerformanceMode mode,
+  ) {
+    final expressiveness = _expressiveness ?? BookExpressiveness.natural;
+    final label = PsType.subhead.copyWith(
+      color: p.ink,
+      fontWeight: FontWeight.w500,
+    );
+    final failed = _modeFailed || _expressivenessFailed;
+    TableRow row(String name, Widget control) => TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(right: PsSpace.s3),
+          child: Text(name, style: label),
+        ),
+        control,
+      ],
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Table(
+          columnWidths: const {0: IntrinsicColumnWidth(), 1: FlexColumnWidth()},
+          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+          children: [
+            row(
+              l.performanceMode,
+              PsSegmentedControl<BookPerformanceMode>(
+                expand: true,
+                small: true,
+                value: mode,
+                onChanged: _setMode,
+                segments: [
+                  PsSegment(BookPerformanceMode.audiobook, l.modeAudiobook),
+                  PsSegment(BookPerformanceMode.drama, l.modeDrama),
+                ],
+              ),
+            ),
+            const TableRow(
+              children: [
+                SizedBox(height: PsSpace.s3),
+                SizedBox(height: PsSpace.s3),
+              ],
+            ),
+            row(
+              l.expressiveness,
+              PsSegmentedControl<BookExpressiveness>(
+                key: const ValueKey('expressiveness'),
+                expand: true,
+                small: true,
+                value: expressiveness,
+                onChanged: _setExpressiveness,
+                segments: [
+                  PsSegment(BookExpressiveness.plain, l.expressivenessPlain),
+                  PsSegment(
+                    BookExpressiveness.natural,
+                    l.expressivenessNatural,
+                  ),
+                  PsSegment(
+                    BookExpressiveness.dramatic,
+                    l.expressivenessDramatic,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: PsSpace.s2),
+        Text(
+          _modeFailed
+              ? l.modeSaveFailed
+              : _expressivenessFailed
+              ? l.expressivenessSaveFailed
+              : '${mode == BookPerformanceMode.audiobook ? l.modeAudiobookNote : l.modeDramaNote}'
+                    '${l.localeName.startsWith('zh') ? '' : ' '}'
+                    '${switch (expressiveness) {
+                      BookExpressiveness.plain => l.expressivenessPlainNote,
+                      BookExpressiveness.natural => l.expressivenessNaturalNote,
+                      BookExpressiveness.dramatic => l.expressivenessDramaticNote,
+                    }}',
+          style: PsType.caption.copyWith(
+            color: failed ? p.danger : p.ink2,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ],
     );
   }
 
@@ -419,9 +491,15 @@ class _BookPageState extends State<BookPage> {
     if (generation == null) return;
     try {
       final mode = await generation.mode(widget.book.id);
-      if (mounted) setState(() => _mode = mode);
+      final expressiveness = await generation.expressiveness(widget.book.id);
+      if (mounted) {
+        setState(() {
+          _mode = mode;
+          _expressiveness = expressiveness;
+        });
+      }
     } catch (_) {
-      // Without a stored mode the control stays hidden.
+      // Without a stored performance the controls stay hidden.
     }
   }
 
@@ -439,6 +517,25 @@ class _BookPageState extends State<BookPage> {
         setState(() {
           _mode = previous;
           _modeFailed = true;
+        });
+      }
+    }
+  }
+
+  Future<void> _setExpressiveness(BookExpressiveness value) async {
+    final previous = _expressiveness;
+    if (value == previous) return;
+    setState(() {
+      _expressiveness = value;
+      _expressivenessFailed = false;
+    });
+    try {
+      await _services!.generation!.setExpressiveness(widget.book.id, value);
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _expressiveness = previous;
+          _expressivenessFailed = true;
         });
       }
     }

@@ -4,29 +4,110 @@ enum Emotion { calm, happy, sad, angry, fearful, disgusted, surprised }
 
 enum Intensity { mild, medium, strong }
 
+/// How fast a line is spoken, relative to the speaker's usual pace.
+enum Pace { slow, normal, fast }
+
+/// How loudly a line is spoken, relative to the speaker's usual volume.
+enum Volume { soft, normal, loud }
+
+/// Sounds a speaker makes that are not words.
+enum VocalCueKind {
+  laugh,
+  chuckle,
+  sigh,
+  gasp,
+  sob,
+  sniff,
+  cough,
+  clearThroat,
+  pant,
+  groan,
+  yawn,
+}
+
+/// A non-verbal sound inside a line. [offset] counts UTF-16 code units from
+/// the start of the line's text: 0 is before the first word, the text length
+/// is after the last. The source text itself never changes.
+class VocalCue {
+  const VocalCue(this.kind, {this.offset = 0});
+  final VocalCueKind kind;
+  final int offset;
+
+  Map<String, Object?> toJson() => {'kind': kind.name, 'offset': offset};
+  factory VocalCue.fromJson(Map<String, Object?> json) => VocalCue(
+    VocalCueKind.values.byName(json['kind'] as String),
+    offset: json['offset'] as int? ?? 0,
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is VocalCue && other.kind == kind && other.offset == offset;
+  @override
+  int get hashCode => Object.hash(kind, offset);
+}
+
+/// What the director asks of one line, independent of any voice engine.
+/// Each engine performs as much of it as it can; see `Delivery.lower`.
 class Direction {
   const Direction({
     required this.speakerId,
     this.emotion = Emotion.calm,
     this.intensity = Intensity.mild,
     this.note = '',
+    this.pace = Pace.normal,
+    this.volume = Volume.normal,
+    this.cues = const [],
   });
   final String speakerId;
   final Emotion emotion;
   final Intensity intensity;
-  final String note;
 
+  /// One sentence of vocal direction in the book's language.
+  final String note;
+  final Pace pace;
+  final Volume volume;
+  final List<VocalCue> cues;
+
+  Direction copyWith({
+    String? speakerId,
+    Emotion? emotion,
+    Intensity? intensity,
+    String? note,
+    Pace? pace,
+    Volume? volume,
+    List<VocalCue>? cues,
+  }) => Direction(
+    speakerId: speakerId ?? this.speakerId,
+    emotion: emotion ?? this.emotion,
+    intensity: intensity ?? this.intensity,
+    note: note ?? this.note,
+    pace: pace ?? this.pace,
+    volume: volume ?? this.volume,
+    cues: cues ?? this.cues,
+  );
+
+  // Fields added after director-v5 are written only when set, so scripts
+  // directed before them keep their hash and their audio.
   Map<String, Object?> toJson() => {
     'speakerId': speakerId,
     'emotion': emotion.name,
     'intensity': intensity.name,
     'note': note,
+    if (pace != Pace.normal) 'pace': pace.name,
+    if (volume != Volume.normal) 'volume': volume.name,
+    if (cues.isNotEmpty) 'cues': cues.map((cue) => cue.toJson()).toList(),
   };
   factory Direction.fromJson(Map<String, Object?> json) => Direction(
     speakerId: json['speakerId'] as String,
     emotion: Emotion.values.byName(json['emotion'] as String),
     intensity: Intensity.values.byName(json['intensity'] as String),
     note: json['note'] as String,
+    pace: Pace.values.byName(json['pace'] as String? ?? 'normal'),
+    volume: Volume.values.byName(json['volume'] as String? ?? 'normal'),
+    cues: [
+      for (final cue in json['cues'] as List? ?? const [])
+        VocalCue.fromJson(Map<String, Object?>.from(cue as Map)),
+    ],
   );
 }
 

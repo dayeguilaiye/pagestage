@@ -198,6 +198,9 @@ class ListeningController extends ValueNotifier<ListeningState>
             text: script.lines[i].textIn(source),
             start: script.lines[i].start,
             end: script.lines[i].end,
+            speakerId: cast
+                .findSpeaker(script.lines[i].direction.speakerId)
+                ?.id,
             speakerName: cast
                 .findSpeaker(script.lines[i].direction.speakerId)
                 ?.name,

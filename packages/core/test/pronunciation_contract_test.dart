@@ -46,7 +46,10 @@ void main() {
             model: 'speech-2.8-hd',
             voiceId: 'Chinese (Mandarin)_Male_Announcer',
           ),
-          direction: const Direction(speakerId: 'narrator'),
+          delivery: const Delivery(
+            emotion: Emotion.calm,
+            intensity: Intensity.mild,
+          ),
           pronunciations: (fixture['lexicon'] as List)
               .map(
                 (e) => PronunciationEntry.fromJson(
@@ -97,7 +100,7 @@ void main() {
             model: 'qwen-audio-3.1-tts-flash',
             voiceId: 'longsanshu_v3.1',
           ),
-          direction: Direction(speakerId: 'narrator'),
+          delivery: Delivery(emotion: Emotion.calm, intensity: Intensity.mild),
           pronunciations: [
             PronunciationEntry('长乐', 'cháng lè'),
             PronunciationEntry('重庆', 'chong2 qing4'),
@@ -158,7 +161,10 @@ void main() {
                     ? 'Chinese (Mandarin)_Male_Announcer'
                     : 'longsanshu_v3.1',
               ),
-              direction: const Direction(speakerId: 'narrator'),
+              delivery: const Delivery(
+                emotion: Emotion.calm,
+                intensity: Intensity.mild,
+              ),
               pronunciations: [
                 PronunciationEntry(
                   language == 'en' ? '长乐' : '重庆',

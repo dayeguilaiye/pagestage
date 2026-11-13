@@ -10,10 +10,18 @@ import '../support/fake_services.dart';
 
 const _mb = 1024 * 1024;
 
-const _ready = ProviderPreferences(
-  baseUrl: 'https://api.deepseek.com/v1',
+/// A reader whose language model is set up, with whatever else is given.
+List<EngineView> _ready({
+  bool minimaxKey = false,
+  bool bailianKey = false,
+  String region = 'beijing',
+}) => fakeEngines(
+  llmKey: true,
   profileModel: 'deepseek-chat',
-  hasLlmKey: true,
+  baseUrl: 'https://api.deepseek.com/v1',
+  minimaxKey: minimaxKey,
+  bailianKey: bailianKey,
+  region: region,
 );
 
 /// Opens settings from the shelf.
@@ -48,17 +56,6 @@ Finder _inDialog(String text) =>
 Switch _switch(WidgetTester tester, String provider) =>
     tester.widget<Switch>(find.byKey(ValueKey('switch-$provider')));
 
-extension on ProviderPreferences {
-  ProviderPreferences withKeys({bool minimax = false, bool bailian = false}) =>
-      ProviderPreferences(
-        baseUrl: baseUrl,
-        profileModel: profileModel,
-        hasLlmKey: hasLlmKey,
-        hasMinimaxKey: minimax,
-        hasBailianKey: bailian,
-      );
-}
-
 PsIconButton _button(WidgetTester tester, String label) =>
     tester.widget<PsIconButton>(
       find.ancestor(
@@ -68,7 +65,7 @@ PsIconButton _button(WidgetTester tester, String label) =>
     );
 
 void main() {
-  group('providers', () {
+  group('engines', () {
     testWidgets('a new reader is asked for a language model first', (
       tester,
     ) async {
@@ -87,18 +84,14 @@ void main() {
       expect(find.text('接口地址'), findsOneWidget);
     });
 
-    testWidgets('each provider shows its state', (tester) async {
+    testWidgets('each engine shows its state and what it performs', (
+      tester,
+    ) async {
       await _open(
         tester,
         Fakes(
           providers: FakeProviders(
-            const ProviderPreferences(
-              baseUrl: 'https://api.deepseek.com/v1',
-              profileModel: 'deepseek-chat',
-              region: ProviderRegion.singapore,
-              hasLlmKey: true,
-              hasBailianKey: true,
-            ),
+            _ready(minimaxKey: true, bailianKey: true, region: 'singapore'),
           ),
         ),
       );
@@ -106,53 +99,125 @@ void main() {
       expect(find.text('还没有开启配音服务商'), findsNothing);
       expect(find.text('deepseek-chat · api.deepseek.com'), findsOneWidget);
       expect(find.text('已配置'), findsOneWidget);
-      // A saved key starts on; Singapore cannot design voices.
+      // A saved key starts on. What each engine can perform is spelled out;
+      // Singapore cannot design voices.
       expect(_switch(tester, 'bailian').value, isTrue);
-      expect(find.text('配音 · 新加坡'), findsOneWidget);
-      expect(_switch(tester, 'minimax').value, isFalse);
+      expect(find.text('表演指令 · 语气词 · 新加坡'), findsOneWidget);
+      expect(find.text('情绪 · 语气词 · 语速音高 · 音色设计'), findsOneWidget);
+      await _reveal(tester, find.byKey(const ValueKey('switch-edge')));
+      expect(find.text('免费，无需密钥 · 语速音高'), findsOneWidget);
     });
 
-    testWidgets('switches turn voice providers on and off at once', (
+    testWidgets('engines not offered yet are listed but cannot be used', (
       tester,
     ) async {
       final fakes = await _open(
         tester,
-        Fakes(providers: FakeProviders(_ready.withKeys(minimax: true))),
+        Fakes(providers: FakeProviders(_ready())),
+      );
+      // The on-device language model: named, tagged, and going nowhere.
+      expect(find.text('本机大模型'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('provider-llm-device')));
+      await tester.pumpAndSettle();
+      expect(find.text('接口地址'), findsNothing);
+      expect(find.byKey(const ValueKey('use-llm-device')), findsNothing);
+      // With one usable engine there is no choice to show.
+      expect(find.text('使用中'), findsNothing);
+
+      await _reveal(tester, find.byKey(const ValueKey('switch-device')));
+      expect(find.text('配音 · 本机'), findsOneWidget);
+      expect(_switch(tester, 'device').onChanged, isNull);
+      await tester.tap(find.text('本机语音'));
+      await tester.pumpAndSettle();
+      expect(find.text('演出能力'), findsNothing);
+      expect(fakes.providers.switches, isEmpty);
+    });
+
+    testWidgets('with a second language engine, the reader chooses one', (
+      tester,
+    ) async {
+      final fakes = await _open(
+        tester,
+        Fakes(
+          providers: FakeProviders([
+            for (final engine in _ready())
+              engine.id == 'llm-device'
+                  ? const EngineView(
+                      id: 'llm-device',
+                      kind: EngineKind.language,
+                      site: EngineSite.device,
+                    )
+                  : engine,
+          ]),
+        ),
+      );
+      expect(find.text('使用中'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('use-llm-device')));
+      await tester.pumpAndSettle();
+      expect(fakes.providers.selections, ['llm-device']);
+      expect(fakes.providers.value.language!.id, 'llm-device');
+      expect(find.byKey(const ValueKey('use-llm')), findsOneWidget);
+    });
+
+    testWidgets('switches turn voice engines on and off at once', (
+      tester,
+    ) async {
+      final fakes = await _open(
+        tester,
+        Fakes(providers: FakeProviders(_ready(minimaxKey: true))),
       );
       await tester.tap(find.byKey(const ValueKey('switch-minimax')));
       await tester.pumpAndSettle();
-      expect(fakes.providers.saves.last.preferences.minimaxOn, isFalse);
+      expect(fakes.providers.switches.last, ('minimax', false));
       expect(fakes.providers.value.voiceProviders, isEmpty);
 
-      // Edge has no page, so its whole row is the switch.
-      await tester.tap(find.text('Microsoft Edge'));
-      await tester.pumpAndSettle();
+      await _tap(tester, find.byKey(const ValueKey('switch-edge')));
       expect(fakes.providers.value.voiceProviders, {'edge'});
     });
 
-    testWidgets('with no voice provider on, the banner turns Edge on', (
+    testWidgets('with no voice engine on, the banner turns Edge on', (
       tester,
     ) async {
       final fakes = await _open(
         tester,
-        Fakes(providers: FakeProviders(_ready)),
+        Fakes(providers: FakeProviders(_ready())),
       );
       expect(find.text('还没有开启配音服务商'), findsOneWidget);
-      await tester.tap(find.text('开启 Microsoft Edge'));
+      await tester.tap(find.text('打开 Microsoft Edge'));
       await tester.pumpAndSettle();
-      expect(fakes.providers.saves.single.preferences.edgeOn, isTrue);
+      expect(fakes.providers.switches.single, ('edge', true));
       expect(find.text('还没有开启配音服务商'), findsNothing);
     });
 
     testWidgets('a key without a model is not ready', (tester) async {
       await _open(
         tester,
-        Fakes(
-          providers: FakeProviders(const ProviderPreferences(hasLlmKey: true)),
-        ),
+        Fakes(providers: FakeProviders(fakeEngines(llmKey: true))),
       );
       expect(find.text('缺少模型'), findsOneWidget);
       expect(find.text('先配置大模型'), findsOneWidget);
+    });
+
+    testWidgets('an engine\'s page says what it performs', (tester) async {
+      await _open(
+        tester,
+        Fakes(providers: FakeProviders(_ready(minimaxKey: true))),
+      );
+      await tester.tap(find.byKey(const ValueKey('provider-minimax')));
+      await tester.pumpAndSettle();
+      expect(find.text('演出能力'), findsOneWidget);
+      for (final label in ['58 个音色', '音色设计', '情绪', '语气词', '语速音高']) {
+        expect(find.text(label), findsOneWidget, reason: label);
+      }
+      await tester.tap(find.text('设置'));
+      await tester.pumpAndSettle();
+
+      // Edge asks for nothing, so its page only describes it.
+      await _tap(tester, find.text('Microsoft Edge'));
+      expect(find.text('17 个音色'), findsOneWidget);
+      expect(find.text('语速音高'), findsOneWidget);
+      expect(find.text('密钥'), findsNothing);
+      expect(find.byKey(const ValueKey('deleteKey')), findsNothing);
     });
   });
 
@@ -184,14 +249,15 @@ void main() {
       await tester.tap(find.text('保存'));
       await tester.pumpAndSettle();
 
-      final save = fakes.providers.saves.single;
-      expect(save.preferences.baseUrl, 'https://api.deepseek.com/v1');
-      expect(save.preferences.protocol, LlmProtocol.responses);
-      expect(save.preferences.profileModel, 'deepseek-chat');
-      expect(save.preferences.directorModel, '');
-      expect(save.llmKey, 'sk-test');
-      expect(save.minimaxKey, isNull);
-      expect(save.bailianKey, isNull);
+      final save = fakes.providers.configures.single;
+      expect(save.engineId, 'llm');
+      expect(save.values, {
+        'baseUrl': 'https://api.deepseek.com/v1',
+        'api': 'responses',
+        'profileModel': 'deepseek-chat',
+        'directorModel': '',
+      });
+      expect(save.secrets, {'key': 'sk-test'});
       // Back in settings, which now shows the model.
       expect(find.text('接口地址'), findsNothing);
       expect(find.text('已保存'), findsOneWidget);
@@ -208,7 +274,7 @@ void main() {
       await tester.tap(find.text('保存'));
       await tester.pumpAndSettle();
       expect(find.text('请输入以 https:// 或 http:// 开头的地址'), findsOneWidget);
-      expect(fakes.providers.saves, isEmpty);
+      expect(fakes.providers.configures, isEmpty);
 
       await tester.enterText(
         find.byKey(const ValueKey('baseUrl')),
@@ -263,7 +329,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('接口地址'), findsNothing);
       expect(find.text('先配置大模型'), findsOneWidget);
-      expect(fakes.providers.saves, isEmpty);
+      expect(fakes.providers.configures, isEmpty);
     });
   });
 
@@ -271,7 +337,7 @@ void main() {
     testWidgets('a stored key is replaced only on request', (tester) async {
       final fakes = await _open(
         tester,
-        Fakes(providers: FakeProviders(_ready)),
+        Fakes(providers: FakeProviders(_ready())),
       );
       await tester.tap(find.byKey(const ValueKey('provider-llm')));
       await tester.pumpAndSettle();
@@ -284,13 +350,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('保存'));
       await tester.pumpAndSettle();
-      expect(fakes.providers.saves.single.llmKey, 'sk-new');
+      expect(fakes.providers.configures.single.secrets, {'key': 'sk-new'});
     });
 
     testWidgets('a replacement left empty keeps the stored key', (
       tester,
     ) async {
-      await _open(tester, Fakes(providers: FakeProviders(_ready)));
+      await _open(tester, Fakes(providers: FakeProviders(_ready())));
       await tester.tap(find.byKey(const ValueKey('provider-llm')));
       await tester.pumpAndSettle();
       await tester.tap(find.text('更换'));
@@ -337,24 +403,19 @@ void main() {
     testWidgets('deleting a key asks, then deletes it at once', (tester) async {
       final fakes = await _open(
         tester,
-        Fakes(
-          providers: FakeProviders(
-            const ProviderPreferences(hasMinimaxKey: true),
-          ),
-        ),
+        Fakes(providers: FakeProviders(fakeEngines(minimaxKey: true))),
       );
       await tester.tap(find.byKey(const ValueKey('provider-minimax')));
       await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const ValueKey('deleteKey')));
-      await tester.pumpAndSettle();
+      await _tap(tester, find.byKey(const ValueKey('deleteKey')));
       expect(find.text('删除这个密钥？'), findsOneWidget);
 
       await tester.tap(_inDialog('删除密钥'));
       await tester.pumpAndSettle();
-      final save = fakes.providers.saves.single;
-      expect(save.minimaxKey, '');
-      expect(save.llmKey, isNull);
-      expect(save.bailianKey, isNull);
+      final save = fakes.providers.configures.single;
+      expect(save.engineId, 'minimax');
+      expect(save.secrets, {'key': ''});
+      expect(save.values, isEmpty);
       expect(find.text('密钥已删除'), findsOneWidget);
       expect(find.byKey(const ValueKey('deleteKey')), findsNothing);
       expect(find.byKey(const ValueKey('key-minimax')), findsOneWidget);
@@ -371,12 +432,12 @@ void main() {
     await tester.tap(find.text('保存'));
     await tester.pumpAndSettle();
 
-    final save = fakes.providers.saves.single;
-    expect(save.preferences.region, ProviderRegion.singapore);
-    expect(save.bailianKey, 'bl-key');
-    expect(save.minimaxKey, isNull);
-    expect(save.llmKey, isNull);
-    expect(find.text('配音 · 新加坡'), findsOneWidget);
+    final save = fakes.providers.configures.single;
+    expect(save.engineId, 'bailian');
+    expect(save.values, {'region': 'singapore'});
+    expect(save.secrets, {'key': 'bl-key'});
+    expect(fakes.providers.value.engine('bailian')!.on, isTrue);
+    expect(find.textContaining('新加坡'), findsOneWidget);
   });
 
   group('generate while listening', () {

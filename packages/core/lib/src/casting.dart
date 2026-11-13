@@ -8,7 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'local_store.dart';
 import 'models/book.dart';
 import 'models/cast.dart';
-import 'models/script.dart';
+import 'delivery.dart';
 import 'providers/provider_exception.dart';
 import 'models/voice.dart';
 import 'preset_catalog.dart';
@@ -33,6 +33,9 @@ class Casting {
   Casting(this.store, {List<VoicePreset>? catalog, this.adapters = const {}})
     : catalog = List.unmodifiable(catalog ?? defaultVoiceCatalog);
   final LocalStore store;
+
+  /// The presets voices may be chosen from: those the engines in use offer
+  /// under their current configuration. Defaults to every documented one.
   final List<VoicePreset> catalog;
   final Map<String, TtsAdapter> adapters;
 
@@ -65,7 +68,6 @@ class Casting {
     Book book, {
     int exclusiveCount = 20,
     Set<String>? providers,
-    String bailianRegion = 'beijing',
     bool preserveExisting = false,
     bool replaceOutsideProviders = false,
   }) async {
@@ -74,7 +76,6 @@ class Casting {
       book,
       exclusiveCount: exclusiveCount,
       providers: providers,
-      bailianRegion: bailianRegion,
       fixedExclusiveIds: previous?.exclusiveSpeakerIds,
       replaceOutsideProviders: replaceOutsideProviders,
     );
@@ -84,15 +85,11 @@ class Casting {
     Book book, {
     required int exclusiveCount,
     Set<String>? providers,
-    required String bailianRegion,
     Set<String>? fixedExclusiveIds,
     bool replaceOutsideProviders = false,
   }) async {
     if (exclusiveCount < 0) {
       throw const FormatException('Exclusive count must be non-negative.');
-    }
-    if (!['beijing', 'singapore'].contains(bailianRegion)) {
-      throw const FormatException('Unsupported Bailian region.');
     }
     final previous = await getCasting(book.id);
     if (previous.cast.profiledThrough == 0) {
@@ -104,14 +101,14 @@ class Casting {
               (voice) =>
                   voice.languages.contains(book.language) &&
                   (providers == null ||
-                      providers.contains(voice.binding.provider)) &&
-                  (voice.binding.provider != 'bailian' ||
-                      voice.regions.contains(bailianRegion)),
+                      providers.contains(voice.binding.provider)),
             )
             .toList()
           ..sort((a, b) => a.id.compareTo(b.id));
     if (candidates.isEmpty) {
-      throw StateError('No presets match this language and provider region.');
+      throw StateError(
+        'No presets match this language and the engines in use.',
+      );
     }
     final eligibleBindings = candidates
         .map((preset) => _bindingKey(preset.binding))
@@ -266,7 +263,6 @@ class Casting {
       await store.put('casting', book.id, {
         'exclusiveCount': exclusiveCount,
         'providers': providers?.toList(),
-        'bailianRegion': bailianRegion,
         'exclusiveSpeakerIds': exclusiveIds.toList(),
         'warnings': warnings,
       });
@@ -291,12 +287,7 @@ class Casting {
     if (matches.isEmpty) {
       throw StateError('Preset not available for this book language.');
     }
-    final options = await store.get('casting', book.id);
     final preset = matches.first;
-    if (preset.binding.provider == 'bailian' &&
-        !preset.regions.contains(options?['bailianRegion'] ?? 'beijing')) {
-      throw StateError('Preset not available in the selected Bailian region.');
-    }
     final cast = await CastRepository(store).get(book.id);
     return selectVoice(
       book,
@@ -370,7 +361,7 @@ class Casting {
           text: sampleText,
           language: book.language,
           binding: voice.binding,
-          direction: Direction(speakerId: speaker.id),
+          delivery: Delivery.calm(adapter.capabilitiesFor(voice.binding)),
         ),
       );
       final file = File(p.join(outputDirectory, '${voice.id}.wav'));
@@ -421,7 +412,6 @@ class Casting {
         book,
         exclusiveCount: options['exclusiveCount'] as int,
         providers: (options['providers'] as List?)?.cast<String>().toSet(),
-        bailianRegion: options['bailianRegion'] as String,
         fixedExclusiveIds: current.exclusiveSpeakerIds,
       );
     } else {

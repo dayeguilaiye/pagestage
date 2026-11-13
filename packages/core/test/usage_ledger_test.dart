@@ -218,7 +218,7 @@ const _minimaxRequest = TtsRequest(
     model: 'speech-2.8-hd',
     voiceId: 'Chinese (Mandarin)_Male_Announcer',
   ),
-  direction: Direction(speakerId: 'narrator'),
+  delivery: Delivery(emotion: Emotion.calm, intensity: Intensity.mild),
 );
 
 const _bailianRequest = TtsRequest(
@@ -229,5 +229,5 @@ const _bailianRequest = TtsRequest(
     model: 'qwen-audio-3.1-tts-flash',
     voiceId: 'Emily_v3.1',
   ),
-  direction: Direction(speakerId: 'narrator'),
+  delivery: Delivery(emotion: Emotion.calm, intensity: Intensity.mild),
 );

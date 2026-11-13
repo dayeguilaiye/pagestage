@@ -331,16 +331,19 @@ void main() {
               chapters: book.chapters,
             );
             await CastRepository(store).save(cast);
-            final casting = Casting(store);
+            final casting = Casting(
+              store,
+              catalog: standardTtsEngines.catalog(
+                ProviderConfiguration.fromValues({
+                  'bailian': {'region': region},
+                }),
+              ),
+            );
             if (fixtureBook.language == 'zh' &&
                 provider == 'bailian' &&
                 region == 'singapore') {
               await expectLater(
-                casting.recommend(
-                  fixtureBook,
-                  providers: {provider},
-                  bailianRegion: region,
-                ),
+                casting.recommend(fixtureBook, providers: {provider}),
                 throwsStateError,
               );
               expect(
@@ -352,7 +355,6 @@ void main() {
             final result = await casting.recommend(
               fixtureBook,
               providers: {provider},
-              bailianRegion: region,
             );
             expect(result.voices.length, cast.speakers.length);
             final candidates = defaultVoiceCatalog
@@ -392,7 +394,6 @@ void main() {
             final again = await casting.recommend(
               fixtureBook,
               providers: {provider},
-              bailianRegion: region,
             );
             expect(
               again.voices.map((id, v) => MapEntry(id, v.binding.voiceId)),

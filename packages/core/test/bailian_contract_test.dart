@@ -113,8 +113,7 @@ void main() {
           text: _request.text,
           language: _request.language,
           binding: _request.binding,
-          direction: const Direction(
-            speakerId: 'narrator',
+          delivery: const Delivery(
             emotion: Emotion.sad,
             intensity: Intensity.strong,
             note: 'Speak softly.',
@@ -159,8 +158,7 @@ void main() {
           text: '故事开始了。',
           language: 'zh',
           binding: _request.binding,
-          direction: const Direction(
-            speakerId: 'narrator',
+          delivery: const Delivery(
             emotion: Emotion.happy,
             intensity: Intensity.strong,
             note: '  轻快一些。  ',
@@ -278,5 +276,5 @@ const _request = TtsRequest(
     model: 'qwen-audio-3.1-tts-flash',
     voiceId: 'Emily_v3.1',
   ),
-  direction: Direction(speakerId: 'narrator'),
+  delivery: Delivery(emotion: Emotion.calm, intensity: Intensity.mild),
 );

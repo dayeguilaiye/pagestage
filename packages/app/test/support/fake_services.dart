@@ -76,45 +76,239 @@ class FakeListening extends ValueNotifier<ListeningState> implements Listening {
   Future<ListeningBookmark?> bookmark(String bookId) async => bookmarks[bookId];
 }
 
-class SaveCall {
-  SaveCall(this.preferences, this.llmKey, this.minimaxKey, this.bailianKey);
-  final ProviderPreferences preferences;
-  final String? llmKey;
-  final String? minimaxKey;
-  final String? bailianKey;
+const _llmSettings = [
+  EngineSetting(
+    name: 'baseUrl',
+    kind: EngineSettingKind.text,
+    fallback: 'https://api.openai.com/v1',
+  ),
+  EngineSetting(
+    name: 'api',
+    kind: EngineSettingKind.choice,
+    options: ['chat-completions', 'responses'],
+    fallback: 'chat-completions',
+  ),
+  EngineSetting(name: 'key', kind: EngineSettingKind.secret, required: true),
+  EngineSetting(
+    name: 'profileModel',
+    kind: EngineSettingKind.text,
+    required: true,
+  ),
+  EngineSetting(name: 'directorModel', kind: EngineSettingKind.text),
+];
+const _keySetting = EngineSetting(
+  name: 'key',
+  kind: EngineSettingKind.secret,
+  required: true,
+);
+
+/// The engines a build lists, as screens see them: the cloud language
+/// model, MiniMax, Bailian and Edge, with the two on-device slots that are
+/// not offered yet.
+List<EngineView> fakeEngines({
+  bool llmKey = false,
+  String profileModel = '',
+  String directorModel = '',
+  String? baseUrl,
+  String? api,
+  bool minimaxKey = false,
+  bool minimaxOn = true,
+  bool bailianKey = false,
+  bool bailianOn = true,
+  String region = 'beijing',
+  bool edgeOn = false,
+}) => [
+  EngineView(
+    id: 'llm',
+    kind: EngineKind.language,
+    site: EngineSite.cloud,
+    status: llmKey && profileModel.isNotEmpty
+        ? EngineStatus.ready
+        : EngineStatus.needsSetup,
+    on: true,
+    settings: _llmSettings,
+    values: {
+      'baseUrl': ?baseUrl,
+      'api': ?api,
+      if (profileModel.isNotEmpty) 'profileModel': profileModel,
+      if (directorModel.isNotEmpty) 'directorModel': directorModel,
+    },
+    secrets: {if (llmKey) 'key'},
+  ),
+  const EngineView(
+    id: 'llm-device',
+    kind: EngineKind.language,
+    site: EngineSite.device,
+    status: EngineStatus.unavailable,
+  ),
+  EngineView(
+    id: 'minimax',
+    kind: EngineKind.voice,
+    site: EngineSite.cloud,
+    status: minimaxKey ? EngineStatus.ready : EngineStatus.needsSetup,
+    on: minimaxOn,
+    settings: const [_keySetting],
+    secrets: {if (minimaxKey) 'key'},
+    traits: const {
+      EngineTrait.emotion,
+      EngineTrait.vocalCues,
+      EngineTrait.pacing,
+      EngineTrait.voiceDesign,
+    },
+    voiceCount: 58,
+  ),
+  EngineView(
+    id: 'bailian',
+    kind: EngineKind.voice,
+    site: EngineSite.cloud,
+    status: bailianKey ? EngineStatus.ready : EngineStatus.needsSetup,
+    on: bailianOn,
+    settings: const [
+      EngineSetting(
+        name: 'region',
+        kind: EngineSettingKind.choice,
+        options: ['beijing', 'singapore'],
+        fallback: 'beijing',
+      ),
+      _keySetting,
+    ],
+    values: {if (region != 'beijing') 'region': region},
+    secrets: {if (bailianKey) 'key'},
+    traits: {
+      EngineTrait.instruction,
+      EngineTrait.vocalCues,
+      if (region == 'beijing') EngineTrait.voiceDesign,
+    },
+    voiceCount: 42,
+  ),
+  EngineView(
+    id: 'edge',
+    kind: EngineKind.voice,
+    site: EngineSite.cloud,
+    on: edgeOn,
+    traits: const {EngineTrait.pacing},
+    voiceCount: 17,
+  ),
+  const EngineView(
+    id: 'device',
+    kind: EngineKind.voice,
+    site: EngineSite.device,
+    status: EngineStatus.unavailable,
+  ),
+];
+
+/// One call to [FakeProviders.configure].
+class ConfigureCall {
+  ConfigureCall(this.engineId, this.values, this.secrets);
+  final String engineId;
+  final Map<String, String> values;
+  final Map<String, String> secrets;
 }
 
 class FakeProviders extends ValueNotifier<ProviderPreferences>
     implements Providers {
-  FakeProviders([super.value = const ProviderPreferences()]);
+  FakeProviders([List<EngineView>? engines])
+    : super(ProviderPreferences(engines: engines ?? fakeEngines()));
 
-  final saves = <SaveCall>[];
+  final configures = <ConfigureCall>[];
+  final switches = <(String, bool)>[];
+  final selections = <String>[];
 
-  /// Thrown by [save] while set; nothing is saved.
+  /// Thrown by every change while set; nothing is saved.
   Object? failWith;
 
-  @override
-  Future<void> save(
-    ProviderPreferences preferences, {
-    String? llmKey,
-    String? minimaxKey,
-    String? bailianKey,
-  }) async {
-    saves.add(SaveCall(preferences, llmKey, minimaxKey, bailianKey));
-    if (failWith case final error?) throw error;
-    bool has(bool before, String? key) => key == null ? before : key.isNotEmpty;
+  void _replace(String id, EngineView Function(EngineView) change) {
     value = ProviderPreferences(
-      baseUrl: preferences.baseUrl,
-      protocol: preferences.protocol,
-      profileModel: preferences.profileModel,
-      directorModel: preferences.directorModel,
-      region: preferences.region,
-      hasLlmKey: has(value.hasLlmKey, llmKey),
-      hasMinimaxKey: has(value.hasMinimaxKey, minimaxKey),
-      hasBailianKey: has(value.hasBailianKey, bailianKey),
-      minimaxOn: preferences.minimaxOn || (minimaxKey?.isNotEmpty ?? false),
-      bailianOn: preferences.bailianOn || (bailianKey?.isNotEmpty ?? false),
-      edgeOn: preferences.edgeOn,
+      engines: [
+        for (final engine in value.engines)
+          engine.id == id ? change(engine) : engine,
+      ],
+    );
+  }
+
+  static EngineView _with(
+    EngineView e, {
+    bool? on,
+    Map<String, String>? values,
+    Set<String>? secrets,
+  }) {
+    final stored = secrets ?? e.secrets;
+    final next = values ?? e.values;
+    final complete = e.settings
+        .where((s) => s.required)
+        .every(
+          (s) => s.kind == EngineSettingKind.secret
+              ? stored.contains(s.name)
+              : (next[s.name] ?? '').isNotEmpty,
+        );
+    return EngineView(
+      id: e.id,
+      kind: e.kind,
+      site: e.site,
+      status: e.status == EngineStatus.unavailable
+          ? e.status
+          : complete
+          ? EngineStatus.ready
+          : EngineStatus.needsSetup,
+      on: on ?? e.on,
+      settings: e.settings,
+      values: next,
+      secrets: stored,
+      traits: e.traits,
+      voiceCount: e.voiceCount,
+    );
+  }
+
+  @override
+  Future<void> configure(
+    String engineId, {
+    Map<String, String> values = const {},
+    Map<String, String> secrets = const {},
+  }) async {
+    configures.add(ConfigureCall(engineId, values, secrets));
+    if (failWith case final error?) throw error;
+    _replace(engineId, (engine) {
+      final stored = {...engine.secrets};
+      for (final entry in secrets.entries) {
+        entry.value.isEmpty ? stored.remove(entry.key) : stored.add(entry.key);
+      }
+      final next = {...engine.values};
+      for (final entry in values.entries) {
+        entry.value.isEmpty
+            ? next.remove(entry.key)
+            : next[entry.key] = entry.value;
+      }
+      return _with(
+        engine,
+        values: next,
+        secrets: stored,
+        on:
+            engine.kind == EngineKind.voice &&
+                secrets.values.any((v) => v.isNotEmpty)
+            ? true
+            : null,
+      );
+    });
+  }
+
+  @override
+  Future<void> switchVoice(String engineId, bool on) async {
+    switches.add((engineId, on));
+    if (failWith case final error?) throw error;
+    _replace(engineId, (engine) => _with(engine, on: on));
+  }
+
+  @override
+  Future<void> selectLanguage(String engineId) async {
+    selections.add(engineId);
+    if (failWith case final error?) throw error;
+    value = ProviderPreferences(
+      engines: [
+        for (final engine in value.engines)
+          engine.kind == EngineKind.language
+              ? _with(engine, on: engine.id == engineId)
+              : engine,
+      ],
     );
   }
 }
@@ -207,6 +401,11 @@ class FakeGeneration extends ValueNotifier<GenerationState>
   final resumes = <String>[];
   final modes = <String, BookPerformanceMode>{};
   final modeChanges = <(String, BookPerformanceMode)>[];
+  final expressions = <String, BookExpressiveness>{};
+  final expressionChanges = <(String, BookExpressiveness)>[];
+
+  /// Thrown by [setExpressiveness] while set.
+  Object? expressionFailure;
   final prepares = <(String, int, int)>[];
 
   @override
@@ -257,7 +456,68 @@ class FakeGeneration extends ValueNotifier<GenerationState>
   }
 
   @override
+  Future<BookExpressiveness> expressiveness(String bookId) async =>
+      expressions[bookId] ?? BookExpressiveness.natural;
+
+  @override
+  Future<void> setExpressiveness(
+    String bookId,
+    BookExpressiveness value,
+  ) async {
+    if (expressionFailure case final error?) throw error;
+    expressionChanges.add((bookId, value));
+    expressions[bookId] = value;
+  }
+
+  @override
   Future<void> resume(String bookId) async => resumes.add(bookId);
+}
+
+class FakePackages implements Packages {
+  FakePackages([this.packageContents = const PackageContents()]);
+
+  PackageContents packageContents;
+
+  /// Each share as (bookId, audio).
+  final shares = <(String, bool)>[];
+
+  /// Thrown by [share] while set.
+  Object? shareFailure;
+
+  @override
+  Future<PackageContents> contents(String bookId) async => packageContents;
+
+  @override
+  Future<void> share(String bookId, {required bool audio}) async {
+    if (shareFailure case final error?) throw error;
+    shares.add((bookId, audio));
+  }
+}
+
+class FakeScripts implements Scripts {
+  /// Chapters whose audio came in a package, as (bookId, chapter).
+  final imported = <(String, int)>{};
+
+  /// Each change as (bookId, chapter, line, speakerId).
+  final reassignments = <(String, int, int, String)>[];
+
+  /// Thrown by [reassign] while set.
+  Object? failure;
+
+  @override
+  Future<bool> hasImportedAudio(String bookId, int chapter) async =>
+      imported.contains((bookId, chapter));
+
+  @override
+  Future<void> reassign(
+    String bookId,
+    int chapter,
+    int line,
+    String speakerId,
+  ) async {
+    if (failure case final error?) throw error;
+    reassignments.add((bookId, chapter, line, speakerId));
+  }
 }
 
 class FakeVoices extends ChangeNotifier implements Voices {
@@ -449,8 +709,12 @@ class Fakes {
     FakeGeneration? generation,
     FakeVoices? voices,
     FakeAudioStorage? audioStorage,
+    FakePackages? packages,
+    FakeScripts? scripts,
     bool withDiagnostics = true,
   }) : diagnostics = withDiagnostics ? FakeDiagnostics() : null,
+       packages = packages ?? FakePackages(),
+       scripts = scripts ?? FakeScripts(),
        listening = listening ?? FakeListening(),
        providers = providers ?? FakeProviders(),
        consents = consents ?? FakeConsents(),
@@ -466,6 +730,8 @@ class Fakes {
   final FakeGeneration generation;
   final FakeVoices voices;
   final FakeAudioStorage audioStorage;
+  final FakePackages packages;
+  final FakeScripts scripts;
   final FakeDiagnostics? diagnostics;
 
   late final services = AppServices(
@@ -477,6 +743,8 @@ class Fakes {
     generation: generation,
     voices: voices,
     audioStorage: audioStorage,
+    packages: packages,
+    scripts: scripts,
   );
 }
 
@@ -516,6 +784,8 @@ List<ListeningLine> linesFor(
   List<String> paragraphs, {
   Set<int> nonStory = const {},
   Map<int, String> speakers = const {},
+  Map<int, String> speakerIds = const {},
+  bool directed = false,
 }) {
   final out = <ListeningLine>[];
   var offset = 0;
@@ -527,8 +797,10 @@ List<ListeningLine> linesFor(
         text: text,
         start: offset,
         end: offset + text.length,
+        speakerId: speakerIds[index],
         speakerName: speakers[index],
         nonStory: nonStory.contains(index),
+        directed: directed,
       ),
     );
     offset += text.length;

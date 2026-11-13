@@ -34,9 +34,7 @@ void main() {
         '\n风来了。\n\n',
         '他回家。\n',
       ]);
-      expect(tts.requests.map((r) => r.direction.speakerId).toSet(), {
-        'narrator',
-      });
+      expect(result.utterances.map((u) => u.speakerId).toSet(), {'narrator'});
       expect(result.duration, const Duration(milliseconds: 320));
       expect(result.characters, 12);
       final bytes = await File(result.path).readAsBytes();

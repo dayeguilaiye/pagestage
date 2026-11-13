@@ -4,7 +4,9 @@ import '../cli.dart';
 import '../director.dart';
 import '../models/cast.dart';
 import '../provider_configuration.dart';
-import '../providers/llm_settings.dart';
+import '../engines/llm_engine.dart';
+import '../engines/standard_engines.dart';
+import '../providers/llm_adapter.dart';
 
 class DirectCommand extends Command<void> {
   DirectCommand(this.context) {
@@ -43,17 +45,21 @@ class DirectCommand extends Command<void> {
       throw StateError('Profile this chapter before directing it.');
     }
     final injected = context.directorLlm;
-    final adapter = injected == null
-        ? LlmSettings.fromConfiguration(
-            await ProviderConfiguration.load(
-              argResults!['config'] as String?,
-              environment: context.environment,
-            ),
-          ).createDirectorAdapter(
+    LlmAdapter? adapter;
+    if (injected == null) {
+      final config = await ProviderConfiguration.load(
+        argResults!['config'] as String?,
+        environment: context.environment,
+      );
+      adapter = standardLlmEngines
+          .active(config)
+          .open(
+            config,
+            LlmRole.director,
             usageLedger: context.usageLedger,
             runtime: context.requestRuntime,
-          )
-        : null;
+          );
+    }
     try {
       final result = await Director(
         context.store,
@@ -79,7 +85,7 @@ class DirectCommand extends Command<void> {
         },
       });
     } finally {
-      adapter?.close();
+      if (adapter != null) closeLlm(adapter);
     }
   }
 }

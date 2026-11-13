@@ -6,6 +6,9 @@ class LineSegment {
     this.text, {
     this.line,
     this.speaker,
+    this.speakerId,
+    this.speakerName,
+    this.directed = false,
     this.nonStory = false,
   });
 
@@ -17,6 +20,14 @@ class LineSegment {
 
   /// Only on the first run of a line, so the cue appears once.
   final String? speaker;
+
+  /// Who speaks the line, on every run of it.
+  final String? speakerId;
+  final String? speakerName;
+
+  /// Whether [line] indexes the chapter's script, so the reader can
+  /// correct who speaks it.
+  final bool directed;
   final bool nonStory;
 
   /// Whether this run can be spoken, highlighted or played from.
@@ -43,6 +54,9 @@ List<List<LineSegment>> layoutLines(List<ListeningLine> lines) {
           part,
           line: line.index,
           speaker: cue ? line.speakerName : null,
+          speakerId: line.speakerId,
+          speakerName: line.speakerName,
+          directed: line.directed,
           nonStory: line.nonStory,
         ),
       );
@@ -79,5 +93,8 @@ LineSegment _with(LineSegment run, String text) => LineSegment(
   text,
   line: run.line,
   speaker: run.speaker,
+  speakerId: run.speakerId,
+  speakerName: run.speakerName,
+  directed: run.directed,
   nonStory: run.nonStory,
 );

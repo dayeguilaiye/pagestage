@@ -4,74 +4,86 @@ import 'package:flutter/services.dart';
 import '../application/contracts.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import '../listening/labels.dart';
 
-/// The paid voice providers, each with a key of its own.
-enum VoiceProvider { minimax, bailian }
-
-/// The language model's address, protocol, key and models.
-class LlmSettingsPage extends StatefulWidget {
-  const LlmSettingsPage({super.key, required this.providers});
+/// One engine's page, built from the settings the engine declares: what it
+/// does and can perform, its settings in groups, and its stored key. Any
+/// engine added to the registries gets this page without a screen of its
+/// own.
+class EnginePage extends StatefulWidget {
+  const EnginePage({super.key, required this.providers, required this.id});
 
   final Providers providers;
 
+  /// The engine's id, as in [EngineView.id].
+  final String id;
+
   @override
-  State<LlmSettingsPage> createState() => _LlmSettingsPageState();
+  State<EnginePage> createState() => _EnginePageState();
 }
 
-class _LlmSettingsPageState extends State<LlmSettingsPage> {
-  late final ProviderPreferences _initial = widget.providers.value;
-  late final _baseUrl = TextEditingController(text: _initial.baseUrl);
-  late final _profileModel = TextEditingController(text: _initial.profileModel);
-  late final _directorModel = TextEditingController(
-    text: _initial.directorModel,
-  );
-  late var _protocol = _initial.protocol;
-  final _key = _KeyDraft();
-  var _urlInvalid = false;
+class _EnginePageState extends State<EnginePage> {
+  late final EngineView _initial = _engine;
+  late final _texts = {
+    for (final setting in _initial.settings)
+      if (setting.kind == EngineSettingKind.text)
+        setting.name: TextEditingController(
+          text: _initial.values[setting.name] ?? '',
+        ),
+  };
+  late final _choices = {
+    for (final setting in _initial.settings)
+      if (setting.kind == EngineSettingKind.choice)
+        setting.name: _initial.value(setting.name),
+  };
+  late final _keys = {
+    for (final setting in _initial.settings)
+      if (setting.kind == EngineSettingKind.secret) setting.name: _KeyDraft(),
+  };
 
-  List<TextEditingController> get _fields => [
-    _baseUrl,
-    _profileModel,
-    _directorModel,
-  ];
+  /// Settings whose value needs fixing before it can be saved.
+  final _invalid = <String>{};
+
+  EngineView get _engine => widget.providers.value.engine(widget.id)!;
 
   @override
   void initState() {
     super.initState();
-    for (final field in _fields) {
+    for (final Listenable field in [..._texts.values, ..._keys.values]) {
       field.addListener(_changed);
     }
-    _key.addListener(_changed);
     widget.providers.addListener(_changed);
   }
 
   @override
   void dispose() {
     widget.providers.removeListener(_changed);
-    for (final field in _fields) {
+    for (final field in _texts.values) {
       field.dispose();
     }
-    _key.dispose();
+    for (final key in _keys.values) {
+      key.dispose();
+    }
     super.dispose();
   }
 
   void _changed() => setState(() {});
 
   bool get _dirty {
-    final saved = widget.providers.value;
-    return _baseUrl.text.trim() != saved.baseUrl ||
-        _protocol != saved.protocol ||
-        _profileModel.text.trim() != saved.profileModel ||
-        _directorModel.text.trim() != saved.directorModel ||
-        _key.change != null;
+    final saved = _engine;
+    return _texts.entries.any(
+          (e) => e.value.text.trim() != (saved.values[e.key] ?? ''),
+        ) ||
+        _choices.entries.any((e) => e.value != saved.value(e.key)) ||
+        _keys.values.any((key) => key.change != null);
   }
 
-  /// Mirrors what [Providers.save] accepts, so a bad address shows beside
-  /// its field instead of failing the save.
+  /// Mirrors what [Providers.configure] accepts, so a bad address shows
+  /// beside its field instead of failing the save.
   static bool _validUrl(String text) {
     final uri = Uri.tryParse(text);
     return uri != null &&
-        (uri.scheme == 'https' || uri.scheme == 'http') &&
+        const ['https', 'http', 'wss', 'ws'].contains(uri.scheme) &&
         uri.host.isNotEmpty &&
         uri.userInfo.isEmpty &&
         !uri.hasQuery &&
@@ -79,193 +91,171 @@ class _LlmSettingsPageState extends State<LlmSettingsPage> {
   }
 
   Future<bool> _save() async {
-    final url = _baseUrl.text.trim();
-    if (!_validUrl(url)) {
-      setState(() => _urlInvalid = true);
+    final url = _texts['baseUrl']?.text.trim() ?? '';
+    if (url.isNotEmpty && !_validUrl(url)) {
+      setState(() => _invalid.add('baseUrl'));
       return false;
     }
-    await widget.providers.save(
-      widget.providers.value.copyWith(
-        baseUrl: url,
-        protocol: _protocol,
-        profileModel: _profileModel.text.trim(),
-        directorModel: _directorModel.text.trim(),
-      ),
-      llmKey: _key.change,
+    await widget.providers.configure(
+      widget.id,
+      values: {
+        for (final entry in _texts.entries) entry.key: entry.value.text.trim(),
+        ..._choices,
+      },
+      secrets: {
+        for (final entry in _keys.entries) entry.key: ?entry.value.change,
+      },
     );
     return true;
+  }
+
+  Widget _field(AppLocalizations l, EngineView engine, EngineSetting setting) {
+    final label = Labels.engineSetting(l, setting.name);
+    switch (setting.kind) {
+      case EngineSettingKind.secret:
+        return _KeyRow(
+          id: engine.id,
+          label: label,
+          draft: _keys[setting.name]!,
+          stored: engine.secrets.contains(setting.name),
+        );
+      case EngineSettingKind.choice:
+        return _FieldRow(
+          label: label,
+          child: PsSegmentedControl<String>(
+            expand: true,
+            value: _choices[setting.name]!,
+            onChanged: (v) => setState(() => _choices[setting.name] = v),
+            segments: [
+              for (final option in setting.options)
+                PsSegment(option, Labels.engineOption(l, option)),
+            ],
+          ),
+        );
+      case EngineSettingKind.text:
+        final url = setting.name == 'baseUrl';
+        return _TextRow(
+          id: setting.name,
+          label: label,
+          controller: _texts[setting.name]!,
+          hint:
+              setting.fallback ??
+              (setting.name == 'directorModel'
+                  ? l.sameAsProfileModel
+                  : l.modelHint),
+          keyboardType: url ? TextInputType.url : null,
+          wrap: url,
+          error: _invalid.contains(setting.name) ? l.baseUrlInvalid : null,
+          onChanged: () {
+            if (_invalid.remove(setting.name)) setState(() {});
+          },
+        );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final saved = widget.providers.value;
+    final engine = _engine;
+    final language = engine.kind == EngineKind.language;
+    // Models are chosen apart from how the engine is reached.
+    final models = [
+      for (final s in engine.settings)
+        if (s.name.endsWith('Model')) s,
+    ];
+    final connection = [
+      for (final s in engine.settings)
+        if (!models.contains(s)) s,
+    ];
+    final note = switch (engine.status) {
+      EngineStatus.unavailable => l.engineComingSoonNote,
+      EngineStatus.notInstalled => l.engineNotInstalledNote,
+      _ => switch (engine.id) {
+        'llm' => l.llmPageNote,
+        'minimax' => l.minimaxPageNote,
+        'bailian' => l.bailianPageNote,
+        'edge' => l.edgePageNote,
+        _ => language ? l.llmPageNote : l.enginePageNote,
+      },
+    };
+    final stored = engine.secrets;
     return _FormScaffold(
-      title: l.llm,
-      note: l.llmPageNote,
+      title: Labels.engine(l, engine),
+      note: note,
       dirty: _dirty,
       onSave: _save,
-      deleteKeyBody: l.deleteLlmKeyBody,
-      onDeleteKey: saved.hasLlmKey
-          ? () => widget.providers.save(widget.providers.value, llmKey: '')
-          : null,
+      deleteKeyBody: language ? l.deleteLlmKeyBody : l.deleteVoiceKeyBody,
+      onDeleteKey: stored.isEmpty
+          ? null
+          : () => widget.providers.configure(
+              widget.id,
+              secrets: {for (final name in stored) name: ''},
+            ),
       children: [
-        PsListGroup(
-          header: l.connectionSection,
-          footer: l.llmConnectionNote,
-          children: [
-            _TextRow(
-              id: 'baseUrl',
-              label: l.baseUrl,
-              controller: _baseUrl,
-              hint: const ProviderPreferences().baseUrl,
-              keyboardType: TextInputType.url,
-              wrap: true,
-              error: _urlInvalid ? l.baseUrlInvalid : null,
-              onChanged: () {
-                if (_urlInvalid) setState(() => _urlInvalid = false);
-              },
-            ),
-            _FieldRow(
-              label: l.protocol,
-              child: PsSegmentedControl<LlmProtocol>(
-                expand: true,
-                value: _protocol,
-                onChanged: (v) => setState(() => _protocol = v),
-                segments: [
-                  PsSegment(
-                    LlmProtocol.chatCompletions,
-                    l.protocolChatCompletions,
-                  ),
-                  PsSegment(LlmProtocol.responses, l.protocolResponses),
-                ],
-              ),
-            ),
-            _KeyRow(
-              id: 'llm',
-              label: l.apiKey,
-              draft: _key,
-              stored: saved.hasLlmKey,
-            ),
-          ],
-        ),
-        PsListGroup(
-          header: l.modelsSection,
-          footer: l.modelsNote,
-          children: [
-            _TextRow(
-              id: 'profileModel',
-              label: l.profileModel,
-              controller: _profileModel,
-              hint: l.modelHint,
-            ),
-            _TextRow(
-              id: 'directorModel',
-              label: l.directorModel,
-              controller: _directorModel,
-              hint: l.sameAsProfileModel,
-            ),
-          ],
-        ),
+        if (!language && engine.status != EngineStatus.unavailable)
+          _Abilities(engine: engine),
+        if (connection.isNotEmpty)
+          PsListGroup(
+            header: models.isEmpty ? null : l.connectionSection,
+            footer: switch (engine.id) {
+              'llm' => l.llmConnectionNote,
+              'minimax' => l.minimaxKeyNote,
+              'bailian' => l.bailianRegionNote,
+              _ => null,
+            },
+            children: [for (final s in connection) _field(l, engine, s)],
+          ),
+        if (models.isNotEmpty)
+          PsListGroup(
+            header: l.modelsSection,
+            footer: language ? l.modelsNote : null,
+            children: [for (final s in models) _field(l, engine, s)],
+          ),
       ],
     );
   }
 }
 
-/// A paid voice provider's key and, for Bailian, its region.
-class VoiceProviderPage extends StatefulWidget {
-  const VoiceProviderPage({
-    super.key,
-    required this.provider,
-    required this.providers,
-  });
+/// What a voice engine performs of the director's script, as plain labels:
+/// the reader compares outcomes, never parameters.
+class _Abilities extends StatelessWidget {
+  const _Abilities({required this.engine});
 
-  final VoiceProvider provider;
-  final Providers providers;
-
-  @override
-  State<VoiceProviderPage> createState() => _VoiceProviderPageState();
-}
-
-class _VoiceProviderPageState extends State<VoiceProviderPage> {
-  late var _region = widget.providers.value.region;
-  final _key = _KeyDraft();
-
-  bool get _bailian => widget.provider == VoiceProvider.bailian;
-
-  bool _stored(ProviderPreferences saved) =>
-      _bailian ? saved.hasBailianKey : saved.hasMinimaxKey;
-
-  @override
-  void initState() {
-    super.initState();
-    _key.addListener(_changed);
-    widget.providers.addListener(_changed);
-  }
-
-  @override
-  void dispose() {
-    widget.providers.removeListener(_changed);
-    _key.dispose();
-    super.dispose();
-  }
-
-  void _changed() => setState(() {});
-
-  bool get _dirty =>
-      _key.change != null ||
-      (_bailian && _region != widget.providers.value.region);
-
-  Future<bool> _save() async {
-    await widget.providers.save(
-      widget.providers.value.copyWith(region: _region),
-      minimaxKey: _bailian ? null : _key.change,
-      bailianKey: _bailian ? _key.change : null,
-    );
-    return true;
-  }
-
-  Future<void> _deleteKey() => widget.providers.save(
-    widget.providers.value,
-    minimaxKey: _bailian ? null : '',
-    bailianKey: _bailian ? '' : null,
-  );
+  final EngineView engine;
 
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
-    final stored = _stored(widget.providers.value);
-    return _FormScaffold(
-      title: _bailian ? l.providerBailian : 'MiniMax',
-      note: _bailian ? l.bailianPageNote : l.minimaxPageNote,
-      dirty: _dirty,
-      onSave: _save,
-      deleteKeyBody: l.deleteVoiceKeyBody,
-      onDeleteKey: stored ? _deleteKey : null,
+    final p = context.ps;
+    // Voice design is listed with the voices it adds to.
+    final performed = [
+      for (final trait in EngineTrait.values)
+        if (engine.traits.contains(trait) && trait != EngineTrait.voiceDesign)
+          trait,
+    ];
+    return PsListGroup(
+      header: l.engineAbilities,
+      footer: l.engineAbilitiesNote,
       children: [
-        PsListGroup(
-          footer: _bailian ? l.bailianRegionNote : l.minimaxKeyNote,
-          children: [
-            if (_bailian)
-              _FieldRow(
-                label: l.region,
-                child: PsSegmentedControl<ProviderRegion>(
-                  expand: true,
-                  value: _region,
-                  onChanged: (v) => setState(() => _region = v),
-                  segments: [
-                    PsSegment(ProviderRegion.beijing, l.regionBeijing),
-                    PsSegment(ProviderRegion.singapore, l.regionSingapore),
-                  ],
+        Padding(
+          padding: const EdgeInsets.all(PsSpace.s4),
+          child: Wrap(
+            spacing: PsSpace.s2,
+            runSpacing: PsSpace.s2,
+            children: [
+              if (engine.voiceCount > 0)
+                PsTag(l.engineVoices(engine.voiceCount), icon: PsIcons.voice),
+              if (engine.traits.contains(EngineTrait.voiceDesign))
+                PsTag(l.traitVoiceDesign, icon: PsIcons.pen),
+              for (final trait in performed)
+                PsTag(Labels.trait(l, trait), tone: PsTagTone.jade),
+              if (performed.isEmpty)
+                Text(
+                  l.engineAbilitiesPlain,
+                  style: PsType.subhead.copyWith(color: p.ink2),
                 ),
-              ),
-            _KeyRow(
-              id: widget.provider.name,
-              label: l.apiKey,
-              draft: _key,
-              stored: stored,
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
@@ -709,7 +699,7 @@ class _KeyDraft extends ChangeNotifier {
   var replacing = false;
   var visible = false;
 
-  /// What to pass to [Providers.save]: null keeps the stored key.
+  /// What to pass to [Providers.configure]: null keeps the stored key.
   String? get change {
     final value = text.text.trim();
     return value.isEmpty ? null : value;
@@ -763,7 +753,7 @@ class _KeyRow extends StatelessWidget {
     required this.stored,
   });
 
-  /// Names the field for tests: llm, minimax or bailian.
+  /// The engine's id, naming the field for tests.
   final String id;
   final String label;
   final _KeyDraft draft;

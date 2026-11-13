@@ -7,17 +7,20 @@ import '../settings/provider_pages.dart';
 import 'app_scope.dart';
 import 'labels.dart';
 
-/// The voice providers among [used] that are switched off or have no key,
-/// in a fixed order.
+/// The voice engines among [used] that are switched off or not ready, in
+/// the order settings lists them; engines this build no longer has come
+/// last.
 List<String> offVoiceProviders(
   ProviderPreferences preferences,
   Iterable<String?> used,
 ) {
   final on = preferences.voiceProviders;
-  final wanted = used.toSet();
+  final wanted = used.nonNulls.where((id) => id.isNotEmpty).toSet();
+  final known = [for (final engine in preferences.voiceEngines) engine.id];
   return [
-    for (final provider in const ['minimax', 'bailian', 'edge'])
+    for (final provider in known)
       if (wanted.contains(provider) && !on.contains(provider)) provider,
+    ...wanted.where((id) => !known.contains(id)),
   ];
 }
 
@@ -70,19 +73,16 @@ class _OffProviderBannerState extends State<OffProviderBanner> {
     }
   }
 
-  /// Turns the switch on, or opens the provider's page for its key first.
+  /// Turns the switch on, or opens the engine's page for what it needs
+  /// first.
   Future<bool> _turnOn(Providers providers) async {
-    final preferences = providers.value;
-    if (preferences.canSwitchOn(widget.provider)) {
-      await providers.save(preferences.switched(widget.provider, true));
+    if (providers.value.canSwitchOn(widget.provider)) {
+      await providers.switchVoice(widget.provider, true);
       return true;
     }
     await Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => VoiceProviderPage(
-          provider: VoiceProvider.values.byName(widget.provider),
-          providers: providers,
-        ),
+        builder: (_) => EnginePage(providers: providers, id: widget.provider),
       ),
     );
     return providers.value.voiceProviders.contains(widget.provider);
@@ -98,6 +98,10 @@ class _OffProviderBannerState extends State<OffProviderBanner> {
       builder: (context, preferences, _) {
         final name = Labels.inline(l, widget.provider);
         final keyed = preferences.canSwitchOn(widget.provider);
+        // An engine this build cannot offer can only be rematched away from.
+        final engine = preferences.engine(widget.provider);
+        final offered =
+            engine != null && engine.status != EngineStatus.unavailable;
         final names = widget.speakers;
         final separator = l.chapterListSeparator;
         final who = names.length <= 3
@@ -121,10 +125,12 @@ class _OffProviderBannerState extends State<OffProviderBanner> {
                 ? l.offProviderBody(name)
                 : l.offProviderSpeakers(who, name),
           ),
-          actionLabel: Labels.sentence(
-            keyed ? l.turnOnProvider(name) : l.addProviderKey(name),
-          ),
-          onAction: _busy
+          actionLabel: !offered
+              ? null
+              : Labels.sentence(
+                  keyed ? l.turnOnProvider(name) : l.addProviderKey(name),
+                ),
+          onAction: _busy || !offered
               ? null
               : () => _run(
                   services,

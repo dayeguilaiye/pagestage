@@ -40,7 +40,10 @@ void main() {
                   model: model,
                   voiceId: 'voice',
                 ),
-                direction: const Direction(speakerId: 'narrator'),
+                delivery: const Delivery(
+                  emotion: Emotion.calm,
+                  intensity: Intensity.mild,
+                ),
               ),
             ),
             safeFailure,

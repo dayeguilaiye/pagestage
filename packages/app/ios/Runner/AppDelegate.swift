@@ -20,6 +20,28 @@ import MetricKit
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
     guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PagestageDiagnostics") else { return }
+    let files = FlutterMethodChannel(name: "pagestage/files", binaryMessenger: registrar.messenger())
+    files.setMethodCallHandler { [weak self] call, result in
+      // Only a package the app just exported may leave through here.
+      guard let self = self, call.method == "share" else { result(FlutterMethodNotImplemented); return }
+      guard let args = call.arguments as? [String: Any], let path = args["path"] as? String,
+            let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+        result(FlutterError(code: "share_failed", message: "Package unavailable", details: nil)); return
+      }
+      let file = URL(fileURLWithPath: path).resolvingSymlinksInPath()
+      let exports = support.appendingPathComponent("exports").resolvingSymlinksInPath()
+      guard file.deletingLastPathComponent() == exports, file.pathExtension == "pagestage",
+            FileManager.default.fileExists(atPath: file.path), let presenter = self.presenter() else {
+        result(FlutterError(code: "share_failed", message: "Package unavailable", details: nil)); return
+      }
+      let sheet = UIActivityViewController(activityItems: [file], applicationActivities: nil)
+      if let popover = sheet.popoverPresentationController {
+        popover.sourceView = presenter.view
+        popover.sourceRect = CGRect(x: presenter.view.bounds.midX, y: presenter.view.bounds.midY, width: 1, height: 1)
+        popover.permittedArrowDirections = []
+      }
+      presenter.present(sheet, animated: true) { result(nil) }
+    }
     let channel = FlutterMethodChannel(name: "pagestage/diagnostics", binaryMessenger: registrar.messenger())
     channel.setMethodCallHandler { [weak self] call, result in
       guard let self = self else { return }

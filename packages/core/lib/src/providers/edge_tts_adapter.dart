@@ -16,8 +16,9 @@ import 'usage_ledger.dart';
 
 /// Edge Read Aloud's private WebSocket protocol, based on
 /// https://github.com/dayeguilaiye/tts-api/blob/main/internal/edge/client.go.
-/// A request contains one voice and one prosody element. Direction and
-/// pronunciation instructions are intentionally not sent to this service.
+/// A request contains one voice and one prosody element. Emotion reaches
+/// this service only as the pace, loudness and pitch changes of the lowered
+/// delivery; notes, vocal cues and pronunciations are never sent.
 class EdgeTtsAdapter implements TtsAdapter {
   EdgeTtsAdapter({
     Uri? endpoint,
@@ -53,9 +54,9 @@ class EdgeTtsAdapter implements TtsAdapter {
   @override
   String get provider => 'edge';
 
-  @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) {
-    if (binding.provider != provider ||
+  /// What [binding] can perform; the service needs no credential.
+  static TtsCapabilities capabilities(VoiceBinding binding) {
+    if (binding.provider != 'edge' ||
         binding.model != model ||
         binding.designed ||
         !RegExp(
@@ -68,8 +69,13 @@ class EdgeTtsAdapter implements TtsAdapter {
     return const TtsCapabilities(
       supportsPronunciation: false,
       maxCharacters: 600,
+      prosody: true,
     );
   }
+
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      capabilities(binding);
 
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
@@ -84,17 +90,22 @@ class EdgeTtsAdapter implements TtsAdapter {
       throw _error(ProviderErrorKind.invalidConfiguration);
     }
     final parameters = request.binding.parameters;
-    String prosody(String name, String fallback, String unit) {
-      final value = parameters[name] ?? fallback;
+    // The voice's own setting plus the delivery's change for this line.
+    String prosody(String name, String unit, int change) {
+      final value = parameters[name] ?? '+0$unit';
       if (value is! String || !RegExp('^[+-][0-9]+$unit\$').hasMatch(value)) {
         throw _error(ProviderErrorKind.invalidConfiguration);
       }
-      return value;
+      final total =
+          int.parse(value.substring(0, value.length - unit.length)) + change;
+      return '${total < 0 ? '-' : '+'}${total.abs()}$unit';
     }
 
-    final rate = prosody('rate', '+0%', '%');
-    final volume = prosody('volume', '+0%', '%');
-    final pitch = prosody('pitch', '+0Hz', 'Hz');
+    final delivery = request.delivery;
+    final rate = prosody('rate', '%', delivery.rateChange);
+    final volume = prosody('volume', '%', delivery.volumeChange);
+    // Read Aloud takes pitch in hertz; a percent is about two for speech.
+    final pitch = prosody('pitch', 'Hz', delivery.pitchChange * 2);
     final ssml =
         '<speak version="1.0" '
         'xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">'

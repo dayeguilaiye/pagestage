@@ -532,22 +532,28 @@ void main() {
         narratorCandidate: narrator,
         regions: regions,
       );
-      final selection = Casting(
+      // An engine offers only the presets of its configured region.
+      final presets = [
+        regional('bailian', 'beijing-narrator', ['beijing'], narrator: true),
+        regional('bailian', 'beijing-character', ['beijing']),
+        regional('bailian', 'singapore-narrator', [
+          'singapore',
+        ], narrator: true),
+        regional('bailian', 'singapore-character', ['singapore']),
+        regional('minimax', 'narrator', [
+          'beijing',
+          'singapore',
+        ], narrator: true),
+        regional('minimax', 'character', ['beijing', 'singapore']),
+      ];
+      Casting inRegion(String region) => Casting(
         store,
         catalog: [
-          regional('bailian', 'beijing-narrator', ['beijing'], narrator: true),
-          regional('bailian', 'beijing-character', ['beijing']),
-          regional('bailian', 'singapore-narrator', [
-            'singapore',
-          ], narrator: true),
-          regional('bailian', 'singapore-character', ['singapore']),
-          regional('minimax', 'narrator', [
-            'beijing',
-            'singapore',
-          ], narrator: true),
-          regional('minimax', 'character', ['beijing', 'singapore']),
+          for (final preset in presets)
+            if (preset.regions.contains(region)) preset,
         ],
       );
+      final selection = inRegion('beijing');
       await CastRepository(store).save(
         Cast(
           bookId: book.id,
@@ -577,12 +583,9 @@ void main() {
         providers: {'bailian'},
       );
       await selection.selectPreset(book, 'manual', 'bailian:beijing-character');
-      final singapore = await selection.recommend(
-        book,
-        exclusiveCount: 0,
-        providers: {'bailian'},
-        bailianRegion: 'singapore',
-      );
+      final singapore = await inRegion(
+        'singapore',
+      ).recommend(book, exclusiveCount: 0, providers: {'bailian'});
       expect(
         singapore.voices['narrator']!.binding.voiceId,
         'singapore-narrator',

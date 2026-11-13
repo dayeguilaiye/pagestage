@@ -14,6 +14,31 @@ import java.io.File
 class MainActivity : AudioServiceActivity() {
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pagestage/files")
+            .setMethodCallHandler { call, result ->
+                try {
+                    when (call.method) {
+                        "share" -> {
+                            // Only a package the app just exported may leave through here.
+                            val file = File(call.argument<String>("path") ?: "").canonicalFile
+                            val exports = File(filesDir, "exports").canonicalFile
+                            require(file.parentFile == exports && file.isFile &&
+                                file.name.endsWith(".pagestage"))
+                            val uri = FileProvider.getUriForFile(this, "$packageName.diagnostics", file)
+                            val send = Intent(Intent.ACTION_SEND).apply {
+                                type = "application/octet-stream"
+                                putExtra(Intent.EXTRA_STREAM, uri)
+                                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            }
+                            startActivity(Intent.createChooser(send, null))
+                            result.success(null)
+                        }
+                        else -> result.notImplemented()
+                    }
+                } catch (_: Exception) {
+                    result.error("share_failed", "Package unavailable", null)
+                }
+            }
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "pagestage/diagnostics")
             .setMethodCallHandler { call, result ->
                 try {

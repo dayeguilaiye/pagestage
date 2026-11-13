@@ -9,8 +9,13 @@ abstract interface class Bookshelf {
   /// Most recently imported first.
   Future<List<ShelfBook>> books();
 
-  /// Lets the reader pick a file with the system picker and imports it.
-  Future<ImportOutcome> importBook();
+  /// Lets the reader pick a file with the system picker and imports it: a
+  /// TXT or EPUB book, or a script or audio package. A package for a book
+  /// already on the shelf replaces that book's cast, scripts and audio once
+  /// [confirmReplace] agrees, given the book's title.
+  Future<ImportOutcome> importBook({
+    Future<bool> Function(String title)? confirmReplace,
+  });
 
   /// Deletes the book with its chapters, cast, scripts and audio.
   Future<void> deleteBook(String bookId);
@@ -83,6 +88,24 @@ final class BookUpdated extends ImportOutcome {
   final List<int> changedChapters;
 }
 
+/// A script or audio package was installed.
+final class PackageImported extends ImportOutcome {
+  const PackageImported(
+    this.book, {
+    required this.scriptChapters,
+    required this.audioChapters,
+    required this.replaced,
+  });
+  final ShelfBook book;
+
+  /// How many chapters arrived already directed, and already voiced.
+  final int scriptChapters;
+  final int audioChapters;
+
+  /// Whether it took the place of a book already on the shelf.
+  final bool replaced;
+}
+
 /// The reader closed the picker without choosing a file.
 final class ImportCancelled extends ImportOutcome {
   const ImportCancelled();
@@ -103,4 +126,7 @@ enum ImportFailure {
 
   /// Neither UTF-8 nor GBK, or the file could not be read.
   unreadable,
+
+  /// A package that is damaged, incomplete or made by a newer pagestage.
+  invalidPackage,
 }

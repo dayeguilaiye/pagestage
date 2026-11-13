@@ -442,7 +442,7 @@ TtsRequest _request({
     parameters: parameters,
     designed: designed,
   ),
-  direction: const Direction(speakerId: 'narrator', emotion: Emotion.angry),
+  delivery: const Delivery(emotion: Emotion.angry),
   pronunciations: const [PronunciationEntry('重庆', 'chong2 qing4')],
 );
 

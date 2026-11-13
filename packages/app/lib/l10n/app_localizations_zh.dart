@@ -127,7 +127,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shelfEmptyTitle => '书架还是空的';
 
   @override
-  String get shelfEmptyBody => '导入手机里的 TXT 或无 DRM 的 EPUB 小说，就可以在这里读和听。';
+  String get shelfEmptyBody =>
+      '导入手机里的 TXT 或无 DRM 的 EPUB 小说，或者别人分享的剧本包、有声包，就可以在这里读和听。';
 
   @override
   String get shelfEmptyAction => '导入一本书';
@@ -151,7 +152,8 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get importUnsupportedBody => '目前可以导入 TXT 和没有 DRM 的 EPUB 文件，书架没有变化。';
+  String get importUnsupportedBody =>
+      '目前可以导入 TXT、没有 DRM 的 EPUB，以及剧本包和有声包（.pagestage）。书架没有变化。';
 
   @override
   String importDrmTitle(String file) {
@@ -680,7 +682,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetsLoadFailed => '没能读取预设音色';
 
   @override
-  String get presetsEmpty => '开启的配音服务商里没有适合这本书语言的预设音色。';
+  String get presetsEmpty => '开启的声音引擎里没有适合这本书语言的预设音色。';
 
   @override
   String get designProvider => '设计服务商';
@@ -1084,8 +1086,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get voiceSection => '配音';
 
   @override
-  String get voiceSectionNote =>
-      '生成配音只用开启的服务商。Edge 不支持情绪和读音指令。密钥加密存在本机，只发给对应的服务商。';
+  String get voiceSectionNote => '生成配音只用开启的引擎。密钥加密存在本机，只发给对应的服务商。';
 
   @override
   String get edgeRole => '免费，无需密钥';
@@ -1148,4 +1149,210 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get rematchFailed => '没能重新匹配音色，请再试一次';
+
+  @override
+  String get languageEngineCloud => '云端大模型';
+
+  @override
+  String get languageEngineDevice => '本机大模型';
+
+  @override
+  String get voiceEngineDevice => '本机语音';
+
+  @override
+  String get engineInUse => '使用中';
+
+  @override
+  String get useEngine => '使用';
+
+  @override
+  String get engineComingSoon => '即将支持';
+
+  @override
+  String get engineNotInstalled => '未安装模型';
+
+  @override
+  String get engineComingSoonNote => '在手机上直接运行，正文不离开设备，也不需要密钥。这个引擎还在准备中。';
+
+  @override
+  String get engineNotInstalledNote => '这个引擎在手机上直接运行，需要先安装它的模型。';
+
+  @override
+  String get llmSectionNote => '没有大模型也能听：导入别人分享的剧本包或有声包，不需要再导演。';
+
+  @override
+  String get voiceSectionCloud => '配音 · 云端';
+
+  @override
+  String get voiceSectionDevice => '配音 · 本机';
+
+  @override
+  String get voiceSectionDeviceNote => '本机引擎在手机上合成，正文不离开设备。';
+
+  @override
+  String get traitEmotion => '情绪';
+
+  @override
+  String get traitInstruction => '表演指令';
+
+  @override
+  String get traitVocalCues => '语气词';
+
+  @override
+  String get traitPacing => '语速音高';
+
+  @override
+  String get traitVoiceDesign => '音色设计';
+
+  @override
+  String engineVoices(int count) {
+    return '$count 个音色';
+  }
+
+  @override
+  String get engineAbilities => '演出能力';
+
+  @override
+  String get engineAbilitiesNote => '导演只写一份剧本。每个引擎演出它做得到的部分，做不到的换成接近的效果或省略。';
+
+  @override
+  String get engineAbilitiesPlain => '只分角色朗读';
+
+  @override
+  String get enginePageNote => '为角色配音。';
+
+  @override
+  String get edgePageNote => '微软 Edge 浏览器的朗读服务。免费，无需密钥；不带情绪，只调整语速和音高。';
+
+  @override
+  String get reasonEngineNotInstalled => '这个本机引擎还没有安装模型';
+
+  @override
+  String get reasonEngineUnavailable => '这个引擎暂时还不能用，请在设置里换一个';
+
+  @override
+  String packageImported(String title, int scripts) {
+    return '已导入《$title》：$scripts 章剧本';
+  }
+
+  @override
+  String packageImportedAudio(String title, int scripts, int audio) {
+    return '已导入《$title》：$scripts 章剧本，$audio 章可以直接听';
+  }
+
+  @override
+  String importPackageInvalidTitle(String file) {
+    return '「$file」不是有效的剧本包或有声包';
+  }
+
+  @override
+  String get importPackageInvalidBody =>
+      '文件可能不完整，或者是用更新版本的 pagestage 导出的。书架没有变化。';
+
+  @override
+  String replaceBookTitle(String title) {
+    return '替换《$title》？';
+  }
+
+  @override
+  String get replaceBookBody => '书架上已经有这本书。导入会替换它的演员表、剧本和音频，收听进度保留。';
+
+  @override
+  String get replaceBookConfirm => '替换';
+
+  @override
+  String get shareBook => '分享';
+
+  @override
+  String shareBookTitle(String title) {
+    return '分享《$title》';
+  }
+
+  @override
+  String get shareScript => '剧本包';
+
+  @override
+  String shareScriptNote(int count) {
+    return '原文、演员表和 $count 章剧本。对方用自己的声音配音，不用再跑大模型。';
+  }
+
+  @override
+  String get shareAudio => '有声包';
+
+  @override
+  String shareAudioNote(int count) {
+    return '剧本包，再加上已配音的 $count 章音频。对方导入后直接听。';
+  }
+
+  @override
+  String get shareAudioNone => '还没有配好音的章节。';
+
+  @override
+  String get shareNothing => '还没有可以分享的剧本。先为几章导演或配音。';
+
+  @override
+  String get sharePreparing => '正在打包…';
+
+  @override
+  String get shareFailed => '没能打包，请再试一次';
+
+  @override
+  String get shareNote => '包里有全书正文，只通过系统分享发出。请只分享你有权分享的书。';
+
+  @override
+  String get shareLoadFailed => '没能读取这本书的剧本和音频';
+
+  @override
+  String get expressiveness => '表现力';
+
+  @override
+  String get expressivenessPlain => '平实';
+
+  @override
+  String get expressivenessNatural => '自然';
+
+  @override
+  String get expressivenessDramatic => '戏剧';
+
+  @override
+  String get expressivenessPlainNote => '只分角色朗读，不带情绪和语气词。';
+
+  @override
+  String get expressivenessNaturalNote => '按导演写的情绪和语气演出。';
+
+  @override
+  String get expressivenessDramaticNote => '情绪比导演写的再强一档。';
+
+  @override
+  String get expressivenessSaveFailed => '没能保存表现力，请再试一次';
+
+  @override
+  String changeVoiceOf(String name) {
+    return '换$name的声音';
+  }
+
+  @override
+  String reassignLine(String name) {
+    return '这句不是$name说的';
+  }
+
+  @override
+  String get reassignTitle => '这句是谁说的？';
+
+  @override
+  String get reassignNote => '改了之后，这一章只有这一句重新配音。';
+
+  @override
+  String get reassignImportedNote => '这一章的音频是导入的。改了之后，整章会用你开启的声音重新配音。';
+
+  @override
+  String reassigned(String name) {
+    return '已改为$name';
+  }
+
+  @override
+  String get reassignFailed => '没能修改，请再试一次';
+
+  @override
+  String get speakersLoadFailed => '没能读取演员表';
 }

@@ -13,6 +13,8 @@ import 'commands/synthesize_command.dart';
 import 'providers/llm_adapter.dart';
 import 'providers/provider_exception.dart';
 import 'commands/narrate_command.dart';
+import 'commands/package_command.dart';
+import 'book_package.dart';
 import 'providers/tts_adapter.dart';
 import 'providers/usage_ledger.dart';
 import 'providers/request_recovery.dart';
@@ -73,6 +75,7 @@ class PagestageCommandRunner extends CommandRunner<void> {
     addCommand(EvaluateCommand(context));
     addCommand(NarrateCommand(context));
     addCommand(SynthesizeCommand(context));
+    addCommand(ExportCommand(context));
   }
 
   final CliContext context;
@@ -144,20 +147,48 @@ Future<int> runCli(
 
 class _ImportCommand extends Command<void> {
   _ImportCommand(this.context) {
-    argParser.addOption('title', help: 'Display title for the book.');
+    argParser
+      ..addOption('title', help: 'Display title for the book.')
+      ..addFlag(
+        'replace',
+        negatable: false,
+        help:
+            'For a package: replace the cast, scripts and audio of the same '
+            'book already imported.',
+      );
   }
   final CliContext context;
   @override
   String get name => 'import';
   @override
-  String get description => 'Import a TXT or EPUB novel and list its chapters.';
+  String get description =>
+      'Import a TXT or EPUB novel, or a script or audio package.';
   @override
-  String get invocation => 'pagestage import <file> [--title <title>]';
+  String get invocation =>
+      'pagestage import <file> [--title <title>] [--replace]';
 
   @override
   Future<void> run() async {
     if (argResults!.rest.length != 1) {
-      usageException('Provide one TXT or EPUB path.');
+      usageException('Provide one TXT, EPUB or package path.');
+    }
+    final path = argResults!.rest.single;
+    if (path.toLowerCase().endsWith(BookPackages.extension)) {
+      final package = await context.library.importPackage(
+        path,
+        confirmReplace: (_) async => argResults!['replace'] as bool,
+      );
+      if (package == null) {
+        throw StateError(
+          'This book is already imported; pass --replace to replace its '
+          'cast, scripts and audio.',
+        );
+      }
+      context.writeJson({
+        ...package.summary.toJson(),
+        'replaced': package.replaced,
+      });
+      return;
     }
     final imported = await context.library.importFile(
       argResults!.rest.single,

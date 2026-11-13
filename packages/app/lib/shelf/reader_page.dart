@@ -4,13 +4,15 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
-import '../application/contracts.dart';
+import '../application/app_services.dart';
+import '../cast/voice_page.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import '../listening/app_scope.dart';
 import '../listening/chapter_lines.dart';
 import '../listening/labels.dart';
 import '../listening/player.dart';
+import '../listening/reassign_sheet.dart';
 import 'bookshelf.dart';
 import 'contents.dart';
 import 'reading_settings.dart';
@@ -363,37 +365,98 @@ class _ReaderPageState extends State<ReaderPage> {
     }
   }
 
-  /// A tap on a line only offers to play from it; playback moves only when
-  /// the reader chooses to.
+  /// A tap on a line only offers what can be done with it: play from it,
+  /// change its speaker's voice, or say who really speaks it. Playback moves
+  /// only when the reader chooses to.
   Future<void> _tapLine(int index, LineSegment segment, Offset at) async {
     final listening = _listening;
     final line = segment.line;
     if (listening == null || line == null || !segment.spoken) return;
     final l = AppLocalizations.of(context);
+    final services = AppScope.servicesOf(context);
     final generation = _generations[index] ?? 0;
+    final speakerId = segment.directed ? segment.speakerId : null;
+    final speaker = speakerId == 'narrator'
+        ? l.narrator
+        : segment.speakerName ?? '';
     setState(() => _selected = (index, line));
     final choice = await showPsMenu(
       context,
       anchor: Rect.fromLTWH(at.dx, at.dy + PsSpace.s3, 0, 0),
       items: [
         PsMenuItem(#playFromHere, l.playFromHere, icon: PsIcons.playFrom),
+        if (speakerId != null && services?.voices != null)
+          PsMenuItem(#voice, l.changeVoiceOf(speaker), icon: PsIcons.voice),
+        if (speakerId != null && services?.scripts != null)
+          PsMenuItem(#speaker, l.reassignLine(speaker), icon: PsIcons.cast),
       ],
     );
     if (!mounted) return;
     setState(() => _selected = null);
-    if (choice != #playFromHere) return;
     // The lines were re-segmented while the menu was open: this index
     // belongs to the old text.
-    if (generation != (_generations[index] ?? 0) || _stale.contains(index)) {
+    if (choice == null ||
+        generation != (_generations[index] ?? 0) ||
+        _stale.contains(index)) {
       return;
     }
-    _following = true;
-    _followed = null;
-    await listening.open(
-      widget.book.id,
-      chapter: widget.chapters[index].number,
-      line: line,
+    final number = widget.chapters[index].number;
+    switch (choice) {
+      case #voice:
+        await _changeVoice(services!, speakerId!);
+      case #speaker:
+        final chosen = await showReassignSheet(
+          context,
+          services: services!,
+          bookId: widget.book.id,
+          chapter: number,
+          line: line,
+          speakerId: speakerId!,
+        );
+        if (chosen == null || !mounted) return;
+        showPsToast(
+          context,
+          l.reassigned(
+            chosen.kind == CastMemberKind.narrator ? l.narrator : chosen.name,
+          ),
+        );
+        _refresh(number);
+      default:
+        _following = true;
+        _followed = null;
+        await listening.open(widget.book.id, chapter: number, line: line);
+    }
+  }
+
+  /// Opens the voices of whoever speaks the tapped line.
+  Future<void> _changeVoice(AppServices services, String speakerId) async {
+    final l = AppLocalizations.of(context);
+    final voices = services.voices!;
+    final CastMember member;
+    var designProviders = const <String>[];
+    try {
+      member = (await services.casts.load(
+        widget.book.id,
+      )).members.firstWhere((m) => m.id == speakerId);
+      designProviders = await voices.designProviders(widget.book.id);
+    } catch (_) {
+      if (mounted) showPsToast(context, l.speakersLoadFailed);
+      return;
+    }
+    if (!mounted) return;
+    final chosen = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => VoicePage(
+          voices: voices,
+          bookId: widget.book.id,
+          member: member,
+          designProviders: designProviders,
+        ),
+      ),
     );
+    if (chosen == true && mounted) {
+      showPsToast(context, l.voiceChanged(member.name));
+    }
   }
 
   @override

@@ -311,7 +311,7 @@ abstract class AppLocalizations {
   /// No description provided for @shelfEmptyBody.
   ///
   /// In zh, this message translates to:
-  /// **'导入手机里的 TXT 或无 DRM 的 EPUB 小说，就可以在这里读和听。'**
+  /// **'导入手机里的 TXT 或无 DRM 的 EPUB 小说，或者别人分享的剧本包、有声包，就可以在这里读和听。'**
   String get shelfEmptyBody;
 
   /// No description provided for @shelfEmptyAction.
@@ -347,7 +347,7 @@ abstract class AppLocalizations {
   /// No description provided for @importUnsupportedBody.
   ///
   /// In zh, this message translates to:
-  /// **'目前可以导入 TXT 和没有 DRM 的 EPUB 文件，书架没有变化。'**
+  /// **'目前可以导入 TXT、没有 DRM 的 EPUB，以及剧本包和有声包（.pagestage）。书架没有变化。'**
   String get importUnsupportedBody;
 
   /// No description provided for @importDrmTitle.
@@ -1295,7 +1295,7 @@ abstract class AppLocalizations {
   /// No description provided for @presetsEmpty.
   ///
   /// In zh, this message translates to:
-  /// **'开启的配音服务商里没有适合这本书语言的预设音色。'**
+  /// **'开启的声音引擎里没有适合这本书语言的预设音色。'**
   String get presetsEmpty;
 
   /// No description provided for @designProvider.
@@ -2051,7 +2051,7 @@ abstract class AppLocalizations {
   /// No description provided for @voiceSectionNote.
   ///
   /// In zh, this message translates to:
-  /// **'生成配音只用开启的服务商。Edge 不支持情绪和读音指令。密钥加密存在本机，只发给对应的服务商。'**
+  /// **'生成配音只用开启的引擎。密钥加密存在本机，只发给对应的服务商。'**
   String get voiceSectionNote;
 
   /// No description provided for @edgeRole.
@@ -2149,6 +2149,372 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'没能重新匹配音色，请再试一次'**
   String get rematchFailed;
+
+  /// No description provided for @languageEngineCloud.
+  ///
+  /// In zh, this message translates to:
+  /// **'云端大模型'**
+  String get languageEngineCloud;
+
+  /// No description provided for @languageEngineDevice.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机大模型'**
+  String get languageEngineDevice;
+
+  /// No description provided for @voiceEngineDevice.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机语音'**
+  String get voiceEngineDevice;
+
+  /// No description provided for @engineInUse.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用中'**
+  String get engineInUse;
+
+  /// No description provided for @useEngine.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用'**
+  String get useEngine;
+
+  /// No description provided for @engineComingSoon.
+  ///
+  /// In zh, this message translates to:
+  /// **'即将支持'**
+  String get engineComingSoon;
+
+  /// No description provided for @engineNotInstalled.
+  ///
+  /// In zh, this message translates to:
+  /// **'未安装模型'**
+  String get engineNotInstalled;
+
+  /// No description provided for @engineComingSoonNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'在手机上直接运行，正文不离开设备，也不需要密钥。这个引擎还在准备中。'**
+  String get engineComingSoonNote;
+
+  /// No description provided for @engineNotInstalledNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个引擎在手机上直接运行，需要先安装它的模型。'**
+  String get engineNotInstalledNote;
+
+  /// No description provided for @llmSectionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有大模型也能听：导入别人分享的剧本包或有声包，不需要再导演。'**
+  String get llmSectionNote;
+
+  /// No description provided for @voiceSectionCloud.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音 · 云端'**
+  String get voiceSectionCloud;
+
+  /// No description provided for @voiceSectionDevice.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音 · 本机'**
+  String get voiceSectionDevice;
+
+  /// No description provided for @voiceSectionDeviceNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机引擎在手机上合成，正文不离开设备。'**
+  String get voiceSectionDeviceNote;
+
+  /// No description provided for @traitEmotion.
+  ///
+  /// In zh, this message translates to:
+  /// **'情绪'**
+  String get traitEmotion;
+
+  /// No description provided for @traitInstruction.
+  ///
+  /// In zh, this message translates to:
+  /// **'表演指令'**
+  String get traitInstruction;
+
+  /// No description provided for @traitVocalCues.
+  ///
+  /// In zh, this message translates to:
+  /// **'语气词'**
+  String get traitVocalCues;
+
+  /// No description provided for @traitPacing.
+  ///
+  /// In zh, this message translates to:
+  /// **'语速音高'**
+  String get traitPacing;
+
+  /// No description provided for @traitVoiceDesign.
+  ///
+  /// In zh, this message translates to:
+  /// **'音色设计'**
+  String get traitVoiceDesign;
+
+  /// No description provided for @engineVoices.
+  ///
+  /// In zh, this message translates to:
+  /// **'{count} 个音色'**
+  String engineVoices(int count);
+
+  /// No description provided for @engineAbilities.
+  ///
+  /// In zh, this message translates to:
+  /// **'演出能力'**
+  String get engineAbilities;
+
+  /// No description provided for @engineAbilitiesNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'导演只写一份剧本。每个引擎演出它做得到的部分，做不到的换成接近的效果或省略。'**
+  String get engineAbilitiesNote;
+
+  /// No description provided for @engineAbilitiesPlain.
+  ///
+  /// In zh, this message translates to:
+  /// **'只分角色朗读'**
+  String get engineAbilitiesPlain;
+
+  /// No description provided for @enginePageNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'为角色配音。'**
+  String get enginePageNote;
+
+  /// No description provided for @edgePageNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'微软 Edge 浏览器的朗读服务。免费，无需密钥；不带情绪，只调整语速和音高。'**
+  String get edgePageNote;
+
+  /// No description provided for @reasonEngineNotInstalled.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个本机引擎还没有安装模型'**
+  String get reasonEngineNotInstalled;
+
+  /// No description provided for @reasonEngineUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个引擎暂时还不能用，请在设置里换一个'**
+  String get reasonEngineUnavailable;
+
+  /// No description provided for @packageImported.
+  ///
+  /// In zh, this message translates to:
+  /// **'已导入《{title}》：{scripts} 章剧本'**
+  String packageImported(String title, int scripts);
+
+  /// No description provided for @packageImportedAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'已导入《{title}》：{scripts} 章剧本，{audio} 章可以直接听'**
+  String packageImportedAudio(String title, int scripts, int audio);
+
+  /// No description provided for @importPackageInvalidTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'「{file}」不是有效的剧本包或有声包'**
+  String importPackageInvalidTitle(String file);
+
+  /// No description provided for @importPackageInvalidBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'文件可能不完整，或者是用更新版本的 pagestage 导出的。书架没有变化。'**
+  String get importPackageInvalidBody;
+
+  /// No description provided for @replaceBookTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'替换《{title}》？'**
+  String replaceBookTitle(String title);
+
+  /// No description provided for @replaceBookBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'书架上已经有这本书。导入会替换它的演员表、剧本和音频，收听进度保留。'**
+  String get replaceBookBody;
+
+  /// No description provided for @replaceBookConfirm.
+  ///
+  /// In zh, this message translates to:
+  /// **'替换'**
+  String get replaceBookConfirm;
+
+  /// No description provided for @shareBook.
+  ///
+  /// In zh, this message translates to:
+  /// **'分享'**
+  String get shareBook;
+
+  /// No description provided for @shareBookTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'分享《{title}》'**
+  String shareBookTitle(String title);
+
+  /// No description provided for @shareScript.
+  ///
+  /// In zh, this message translates to:
+  /// **'剧本包'**
+  String get shareScript;
+
+  /// No description provided for @shareScriptNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'原文、演员表和 {count} 章剧本。对方用自己的声音配音，不用再跑大模型。'**
+  String shareScriptNote(int count);
+
+  /// No description provided for @shareAudio.
+  ///
+  /// In zh, this message translates to:
+  /// **'有声包'**
+  String get shareAudio;
+
+  /// No description provided for @shareAudioNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'剧本包，再加上已配音的 {count} 章音频。对方导入后直接听。'**
+  String shareAudioNote(int count);
+
+  /// No description provided for @shareAudioNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有配好音的章节。'**
+  String get shareAudioNone;
+
+  /// No description provided for @shareNothing.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有可以分享的剧本。先为几章导演或配音。'**
+  String get shareNothing;
+
+  /// No description provided for @sharePreparing.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在打包…'**
+  String get sharePreparing;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能打包，请再试一次'**
+  String get shareFailed;
+
+  /// No description provided for @shareNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'包里有全书正文，只通过系统分享发出。请只分享你有权分享的书。'**
+  String get shareNote;
+
+  /// No description provided for @shareLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取这本书的剧本和音频'**
+  String get shareLoadFailed;
+
+  /// No description provided for @expressiveness.
+  ///
+  /// In zh, this message translates to:
+  /// **'表现力'**
+  String get expressiveness;
+
+  /// No description provided for @expressivenessPlain.
+  ///
+  /// In zh, this message translates to:
+  /// **'平实'**
+  String get expressivenessPlain;
+
+  /// No description provided for @expressivenessNatural.
+  ///
+  /// In zh, this message translates to:
+  /// **'自然'**
+  String get expressivenessNatural;
+
+  /// No description provided for @expressivenessDramatic.
+  ///
+  /// In zh, this message translates to:
+  /// **'戏剧'**
+  String get expressivenessDramatic;
+
+  /// No description provided for @expressivenessPlainNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'只分角色朗读，不带情绪和语气词。'**
+  String get expressivenessPlainNote;
+
+  /// No description provided for @expressivenessNaturalNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'按导演写的情绪和语气演出。'**
+  String get expressivenessNaturalNote;
+
+  /// No description provided for @expressivenessDramaticNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'情绪比导演写的再强一档。'**
+  String get expressivenessDramaticNote;
+
+  /// No description provided for @expressivenessSaveFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能保存表现力，请再试一次'**
+  String get expressivenessSaveFailed;
+
+  /// No description provided for @changeVoiceOf.
+  ///
+  /// In zh, this message translates to:
+  /// **'换{name}的声音'**
+  String changeVoiceOf(String name);
+
+  /// No description provided for @reassignLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'这句不是{name}说的'**
+  String reassignLine(String name);
+
+  /// No description provided for @reassignTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'这句是谁说的？'**
+  String get reassignTitle;
+
+  /// No description provided for @reassignNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'改了之后，这一章只有这一句重新配音。'**
+  String get reassignNote;
+
+  /// No description provided for @reassignImportedNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'这一章的音频是导入的。改了之后，整章会用你开启的声音重新配音。'**
+  String get reassignImportedNote;
+
+  /// No description provided for @reassigned.
+  ///
+  /// In zh, this message translates to:
+  /// **'已改为{name}'**
+  String reassigned(String name);
+
+  /// No description provided for @reassignFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能修改，请再试一次'**
+  String get reassignFailed;
+
+  /// No description provided for @speakersLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取演员表'**
+  String get speakersLoadFailed;
 }
 
 class _AppLocalizationsDelegate

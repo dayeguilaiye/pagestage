@@ -8,6 +8,7 @@ export 'package:pagestage_core/pagestage_core.dart'
         ImportOutcome,
         BookImported,
         BookUpdated,
+        PackageImported,
         ImportCancelled,
         ImportFailed,
         ImportFailure;

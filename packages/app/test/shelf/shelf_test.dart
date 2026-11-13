@@ -107,7 +107,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('不支持「红楼梦.pdf」的格式'), findsOneWidget);
-    expect(find.textContaining('TXT 和没有 DRM 的 EPUB'), findsOneWidget);
+    expect(find.textContaining('没有 DRM 的 EPUB'), findsOneWidget);
     expect(find.text('全部 · 1 本'), findsOneWidget);
 
     await tester.tap(find.byTooltip('关闭'));

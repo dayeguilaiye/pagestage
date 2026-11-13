@@ -38,7 +38,7 @@ void main() {
         text: text,
         language: 'zh',
         binding: _request.binding,
-        direction: _request.direction,
+        delivery: _request.delivery,
       );
       await adapter.synthesize(request(text));
       expect(calls, 1);
@@ -212,8 +212,7 @@ void main() {
           text: _request.text,
           language: _request.language,
           binding: _request.binding,
-          direction: const Direction(
-            speakerId: 'narrator',
+          delivery: const Delivery(
             emotion: Emotion.sad,
             intensity: Intensity.strong,
             note: 'Speak softly.',
@@ -326,5 +325,5 @@ const _request = TtsRequest(
     model: 'speech-2.8-hd',
     voiceId: 'Chinese (Mandarin)_Male_Announcer',
   ),
-  direction: Direction(speakerId: 'narrator'),
+  delivery: Delivery(emotion: Emotion.calm, intensity: Intensity.mild),
 );

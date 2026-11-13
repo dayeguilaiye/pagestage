@@ -153,7 +153,9 @@ class _ShelfPageState extends State<ShelfPage> {
     });
     final ImportOutcome outcome;
     try {
-      outcome = await widget.bookshelf.importBook();
+      outcome = await widget.bookshelf.importBook(
+        confirmReplace: _confirmReplace,
+      );
     } finally {
       if (mounted) setState(() => _importing = false);
     }
@@ -176,11 +178,55 @@ class _ShelfPageState extends State<ShelfPage> {
                   changedChapters.length,
                 ),
         );
+      case PackageImported(
+        :final book,
+        :final scriptChapters,
+        :final audioChapters,
+      ):
+        showPsToast(
+          context,
+          audioChapters == 0
+              ? l.packageImported(book.title, scriptChapters)
+              : l.packageImportedAudio(
+                  book.title,
+                  scriptChapters,
+                  audioChapters,
+                ),
+        );
       case ImportCancelled():
         break;
       case final ImportFailed failure:
         setState(() => _failure = failure);
     }
+  }
+
+  /// A package for a book already on the shelf takes its place only once
+  /// the reader agrees.
+  Future<bool> _confirmReplace(String title) async {
+    if (!mounted) return false;
+    final l = AppLocalizations.of(context);
+    final replace = await showDialog<bool>(
+      context: context,
+      builder: (context) => PsDialog(
+        title: l.replaceBookTitle(title),
+        body: Text(l.replaceBookBody),
+        actions: [
+          PsButton(
+            label: l.replaceBookConfirm,
+            variant: PsButtonVariant.primary,
+            expand: true,
+            onPressed: () => Navigator.pop(context, true),
+          ),
+          PsButton(
+            label: l.cancel,
+            variant: PsButtonVariant.ghost,
+            expand: true,
+            onPressed: () => Navigator.pop(context, false),
+          ),
+        ],
+      ),
+    );
+    return replace ?? false;
   }
 
   void _open(ShelfBook book) {
@@ -329,6 +375,10 @@ class _ShelfPageState extends State<ShelfPage> {
       ImportFailure.unreadable => (
         l.importUnreadableTitle(failure.fileName),
         l.importUnreadableBody,
+      ),
+      ImportFailure.invalidPackage => (
+        l.importPackageInvalidTitle(failure.fileName),
+        l.importPackageInvalidBody,
       ),
     };
     return Padding(

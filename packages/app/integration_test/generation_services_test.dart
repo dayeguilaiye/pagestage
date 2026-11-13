@@ -60,14 +60,12 @@ void main() {
         store,
       ).importTxt(source.path, title: 'Offline integration book');
       final providers = await ProviderStore.open(store, MemorySecrets());
-      await providers.save(
-        const ProviderPreferences(
-          baseUrl: 'https://offline.test/v1',
-          profileModel: 'fake',
-        ),
-        llmKey: 'fake',
-        minimaxKey: 'fake',
+      await providers.configure(
+        'llm',
+        values: {'baseUrl': 'https://offline.test/v1', 'profileModel': 'fake'},
+        secrets: {'key': 'fake'},
       );
+      await providers.configure('minimax', secrets: {'key': 'fake'});
       final consents = ConsentBroker(store);
       // This is the production consent broker. Only in-memory fake adapters receive
       // these values, and the test accepts its prompts rather than using API keys.

@@ -8,7 +8,10 @@ import 'shelf/reading_settings.dart';
 
 /// Supplies platform resources to core. Screens use [library] directly.
 class AppStorage {
-  AppStorage._(this.store, this.library, this.readingSettings);
+  AppStorage._(this.directory, this.store, this.library, this.readingSettings);
+
+  /// The app's private directory, holding the database and generated files.
+  final Directory directory;
   final LocalStore store;
   final Library library;
   final SavedReadingSettings readingSettings;
@@ -21,6 +24,7 @@ class AppStorage {
     final store = LocalStore('${root.path}/pagestage.sqlite');
     try {
       return AppStorage._(
+        root,
         store,
         Library(store, pickFile: pickFile ?? _pickBook),
         await SavedReadingSettings.open(store),
@@ -33,14 +37,22 @@ class AppStorage {
 
   static Future<String?> _pickBook() async => (await openFile(
     acceptedTypeGroups: const [
+      // Packages have no registered type of their own, so the picker also
+      // offers plain data; the library decides by extension and content.
       XTypeGroup(
-        label: 'TXT / EPUB',
-        extensions: ['txt', 'epub'],
+        label: 'TXT / EPUB / pagestage',
+        extensions: ['txt', 'epub', 'pagestage'],
         uniformTypeIdentifiers: [
           'public.plain-text',
           'org.idpf.epub-container',
+          'public.data',
         ],
-        mimeTypes: ['text/plain', 'application/epub+zip'],
+        mimeTypes: [
+          'text/plain',
+          'application/epub+zip',
+          'application/zip',
+          'application/octet-stream',
+        ],
       ),
     ],
   ))?.path;

@@ -98,6 +98,7 @@ class ListeningLine {
     required this.text,
     required this.start,
     required this.end,
+    this.speakerId,
     this.speakerName,
     this.nonStory = false,
     this.directed = false,
@@ -106,6 +107,7 @@ class ListeningLine {
   final String text;
   final int start;
   final int end;
+  final String? speakerId;
   final String? speakerName;
   final bool nonStory;
 
@@ -129,100 +131,140 @@ class ListeningBookmark {
   final int? sourceOffset;
 }
 
-enum LlmProtocol { chatCompletions, responses }
+/// What an engine does for a book.
+enum EngineKind { language, voice }
 
-enum ProviderRegion { beijing, singapore }
+enum EngineSite { cloud, device }
+
+/// Whether an engine can be used as configured.
+enum EngineStatus {
+  ready,
+
+  /// A required setting, such as a key, is missing.
+  needsSetup,
+
+  /// Its model has not been installed on this device.
+  notInstalled,
+
+  /// Not offered in this build.
+  unavailable,
+}
+
+enum EngineSettingKind { secret, text, choice }
+
+/// One setting an engine asks the reader for.
+class EngineSetting {
+  const EngineSetting({
+    required this.name,
+    required this.kind,
+    this.options = const [],
+    this.fallback,
+    this.required = false,
+  });
+
+  /// Stable name, such as key, region or baseUrl; screens label it.
+  final String name;
+  final EngineSettingKind kind;
+  final List<String> options;
+
+  /// The value in use while nothing is stored.
+  final String? fallback;
+  final bool required;
+}
+
+/// What a voice engine can perform beyond reading in a voice, for the
+/// labels that tell engines apart.
+enum EngineTrait { emotion, instruction, vocalCues, pacing, voiceDesign }
+
+/// An engine as screens see it. Secrets never appear, only which are stored.
+class EngineView {
+  const EngineView({
+    required this.id,
+    required this.kind,
+    required this.site,
+    this.status = EngineStatus.ready,
+    this.on = false,
+    this.settings = const [],
+    this.values = const {},
+    this.secrets = const {},
+    this.traits = const {},
+    this.voiceCount = 0,
+  });
+  final String id;
+  final EngineKind kind;
+  final EngineSite site;
+  final EngineStatus status;
+
+  /// A voice engine's switch; for a language engine, whether it is the one
+  /// in use.
+  final bool on;
+  final List<EngineSetting> settings;
+
+  /// Stored values of the settings that are not secret.
+  final Map<String, String> values;
+
+  /// Names of the secret settings that have a stored value.
+  final Set<String> secrets;
+  final Set<EngineTrait> traits;
+
+  /// Preset voices offered under the current settings.
+  final int voiceCount;
+
+  bool get ready => status == EngineStatus.ready;
+
+  /// The stored or default value of setting [name].
+  String value(String name) =>
+      values[name] ??
+      settings.where((s) => s.name == name).firstOrNull?.fallback ??
+      '';
+}
 
 class ProviderPreferences {
-  const ProviderPreferences({
-    this.baseUrl = 'https://api.openai.com/v1',
-    this.protocol = LlmProtocol.chatCompletions,
-    this.profileModel = '',
-    this.directorModel = '',
-    this.region = ProviderRegion.beijing,
-    this.hasLlmKey = false,
-    this.hasMinimaxKey = false,
-    this.hasBailianKey = false,
-    this.minimaxOn = true,
-    this.bailianOn = true,
-    this.edgeOn = false,
-  });
-  final String baseUrl;
-  final LlmProtocol protocol;
-  final String profileModel;
+  const ProviderPreferences({this.engines = const []});
 
-  /// An empty value uses profileModel.
-  final String directorModel;
-  final ProviderRegion region;
-  final bool hasLlmKey;
-  final bool hasMinimaxKey;
-  final bool hasBailianKey;
+  /// Every engine of this build, language engines first, each kind in the
+  /// order screens list it.
+  final List<EngineView> engines;
 
-  /// The reader's switch for each voice provider. A paid provider is used
-  /// only with its key as well; saving a new key turns its switch on.
-  final bool minimaxOn;
-  final bool bailianOn;
-  final bool edgeOn;
+  EngineView? engine(String id) => engines.where((e) => e.id == id).firstOrNull;
+  Iterable<EngineView> get languageEngines =>
+      engines.where((e) => e.kind == EngineKind.language);
+  Iterable<EngineView> get voiceEngines =>
+      engines.where((e) => e.kind == EngineKind.voice);
 
-  /// Whether profiling and directing can run: a key and a profiling model.
-  bool get llmReady => hasLlmKey && profileModel.isNotEmpty;
+  /// The language engine in use.
+  EngineView? get language => languageEngines.where((e) => e.on).firstOrNull;
 
-  /// The voice providers casting, voices and synthesis may use.
+  /// Whether profiling and directing can run.
+  bool get llmReady => language?.ready ?? false;
+
+  /// The voice engines casting, voices and synthesis may use: switched on
+  /// and ready.
   Set<String> get voiceProviders => {
-    if (hasMinimaxKey && minimaxOn) 'minimax',
-    if (hasBailianKey && bailianOn) 'bailian',
-    if (edgeOn) 'edge',
+    for (final engine in voiceEngines)
+      if (engine.on && engine.ready) engine.id,
   };
 
-  /// Whether [provider]'s switch can be turned on: it needs no key or has one.
-  bool canSwitchOn(String provider) => switch (provider) {
-    'minimax' => hasMinimaxKey,
-    'bailian' => hasBailianKey,
-    _ => true,
-  };
-
-  ProviderPreferences copyWith({
-    String? baseUrl,
-    LlmProtocol? protocol,
-    String? profileModel,
-    String? directorModel,
-    ProviderRegion? region,
-    bool? minimaxOn,
-    bool? bailianOn,
-    bool? edgeOn,
-  }) => ProviderPreferences(
-    baseUrl: baseUrl ?? this.baseUrl,
-    protocol: protocol ?? this.protocol,
-    profileModel: profileModel ?? this.profileModel,
-    directorModel: directorModel ?? this.directorModel,
-    region: region ?? this.region,
-    hasLlmKey: hasLlmKey,
-    hasMinimaxKey: hasMinimaxKey,
-    hasBailianKey: hasBailianKey,
-    minimaxOn: minimaxOn ?? this.minimaxOn,
-    bailianOn: bailianOn ?? this.bailianOn,
-    edgeOn: edgeOn ?? this.edgeOn,
-  );
-
-  /// [provider]'s switch set to [on].
-  ProviderPreferences switched(String provider, bool on) => copyWith(
-    minimaxOn: provider == 'minimax' ? on : null,
-    bailianOn: provider == 'bailian' ? on : null,
-    edgeOn: provider == 'edge' ? on : null,
-  );
+  /// Whether [engineId]'s switch can be turned on: it has what it needs.
+  bool canSwitchOn(String engineId) => engine(engineId)?.ready ?? false;
 }
 
 abstract interface class Providers
     implements ValueListenable<ProviderPreferences> {
-  /// Null retains a stored key; an empty string removes it. Keys are never
-  /// returned by this interface or included in preferences. A new key turns
-  /// its provider's switch on.
-  Future<void> save(
-    ProviderPreferences preferences, {
-    String? llmKey,
-    String? minimaxKey,
-    String? bailianKey,
+  /// Saves settings of [engineId]. In [secrets] an empty string removes the
+  /// stored value and an absent name keeps it; secrets are never returned.
+  /// Storing a secret turns a voice engine's switch on.
+  Future<void> configure(
+    String engineId, {
+    Map<String, String> values = const {},
+    Map<String, String> secrets = const {},
   });
+
+  /// Turns a voice engine's switch.
+  Future<void> switchVoice(String engineId, bool on);
+
+  /// Chooses the language engine that profiles and directs.
+  Future<void> selectLanguage(String engineId);
 }
 
 class ConsentRequest {
@@ -319,6 +361,9 @@ abstract interface class Casts implements Listenable {
 }
 
 enum BookPerformanceMode { audiobook, drama }
+
+/// How much of the director's performance a book asks of its voices.
+enum BookExpressiveness { plain, natural, dramatic }
 
 enum GenerationChoice { generate, system, cancel }
 
@@ -432,6 +477,11 @@ abstract interface class Generation
   void respond(int requestId, GenerationChoice choice);
   Future<BookPerformanceMode> mode(String bookId);
   Future<void> setMode(String bookId, BookPerformanceMode mode);
+  Future<BookExpressiveness> expressiveness(String bookId);
+
+  /// Chapters already voiced are voiced again the next time they are heard;
+  /// lines whose delivery does not change come from the cache.
+  Future<void> setExpressiveness(String bookId, BookExpressiveness value);
   Future<void> resume(String bookId);
 
   /// Directs and voices chapters [first]..[through] ahead of listening, in
@@ -525,4 +575,36 @@ class BookStorageUsage {
 abstract interface class AudioStorage implements Listenable {
   Future<List<BookStorageUsage>> usage();
   Future<void> clearAudio(String bookId);
+}
+
+/// What of a book can be packed for another device or another reader.
+class PackageContents {
+  const PackageContents({this.scriptChapters = 0, this.audioChapters = 0});
+
+  /// Chapters with a current script.
+  final int scriptChapters;
+
+  /// Chapters fully voiced in the book's performance mode.
+  final int audioChapters;
+}
+
+/// Sharing a book's scripts and audio as one file.
+abstract interface class Packages {
+  Future<PackageContents> contents(String bookId);
+
+  /// Packs the book and hands the file to the system share sheet. With
+  /// [audio] the voiced chapters travel too; otherwise only the text, cast
+  /// and scripts.
+  Future<void> share(String bookId, {required bool audio});
+}
+
+/// The reader's corrections to a directed chapter.
+abstract interface class Scripts {
+  /// Whether [chapter]'s audio arrived in an audio package, so correcting
+  /// a line voices the whole chapter again with this device's voices.
+  Future<bool> hasImportedAudio(String bookId, int chapter);
+
+  /// Gives script line [line] of [chapter] to [speakerId]. The chapter is
+  /// voiced again when next heard; unchanged lines come from the cache.
+  Future<void> reassign(String bookId, int chapter, int line, String speakerId);
 }

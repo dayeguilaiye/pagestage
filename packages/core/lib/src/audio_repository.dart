@@ -4,7 +4,9 @@ import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:path/path.dart' as p;
 
+import 'delivery.dart';
 import 'local_store.dart';
+import 'performance.dart';
 import 'casting.dart';
 import 'library.dart';
 import 'models/cast.dart';
@@ -22,6 +24,7 @@ class ChapterAudio {
     this.complete = false,
     this.path,
     this.inputsHash,
+    this.imported = false,
   }) : utterances = List.unmodifiable(utterances);
 
   final String bookId;
@@ -32,6 +35,10 @@ class ChapterAudio {
   final bool complete;
   final String? path;
   final String? inputsHash;
+
+  /// Audio that arrived in an audio package. It was voiced elsewhere, so it
+  /// stays valid whatever this device's cast is, until its script changes.
+  final bool imported;
 
   Duration get duration => utterances.fold(
     Duration.zero,
@@ -46,6 +53,7 @@ class ChapterAudio {
     'complete': complete,
     'path': path,
     'inputsHash': inputsHash,
+    if (imported) 'imported': true,
     'utterances': utterances.map((item) => item.toJson()).toList(),
   };
 
@@ -57,6 +65,7 @@ class ChapterAudio {
     complete: json['complete'] as bool,
     path: json['path'] as String?,
     inputsHash: json['inputsHash'] as String?,
+    imported: json['imported'] as bool? ?? false,
     utterances: (json['utterances'] as List)
         .map(
           (item) => SynthesizedUtterance.fromJson(
@@ -101,6 +110,9 @@ class AudioRepository {
       store,
     ).getChapterBindings(book, script.chapterNumber, speakerIds: ids);
     final cast = await CastRepository(store).get(script.bookId);
+    final expressiveness = (await PerformanceRepository(
+      store,
+    ).get(script.bookId)).expressiveness;
     return sha256
         .convert(
           utf8.encode(
@@ -109,6 +121,9 @@ class AudioRepository {
               'mode': mode.name,
               'bindings': {for (final id in ids) id: bindings[id]!.toJson()},
               'lexicon': cast.lexicon.map((entry) => entry.toJson()).toList(),
+              // Written only when changed, so earlier audio stays valid.
+              if (expressiveness != Expressiveness.natural)
+                'expressiveness': expressiveness.name,
             }),
           ),
         )
@@ -152,7 +167,9 @@ class AudioRepository {
         audio.scriptHash != hashScript(script)) {
       return false;
     }
-    if (audio.inputsHash != await hashInputs(script, mode)) return false;
+    if (!audio.imported && audio.inputsHash != await hashInputs(script, mode)) {
+      return false;
+    }
     for (final item in audio.utterances) {
       if (!await File(item.audioPath).exists()) return false;
     }

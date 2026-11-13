@@ -45,6 +45,7 @@ class MemoryBookshelf extends ChangeNotifier implements Bookshelf {
   MemoryBookshelf({
     Iterable<MemoryBook> books = const [],
     MemoryImport? onImport,
+    this.onReplace,
     this.latency = Duration.zero,
   }) : _onImport = onImport {
     for (final book in books) {
@@ -103,6 +104,14 @@ class MemoryBookshelf extends ChangeNotifier implements Bookshelf {
 
   final MemoryImport? _onImport;
 
+  /// Stands for importing a package whose book is already on the shelf:
+  /// given the question the page asks before it is replaced. Takes the
+  /// place of the import when set.
+  final Future<ImportOutcome> Function(
+    Future<bool> Function(String title) confirm,
+  )?
+  onReplace;
+
   /// Added before every answer, to show loading states.
   final Duration latency;
 
@@ -143,8 +152,13 @@ class MemoryBookshelf extends ChangeNotifier implements Bookshelf {
   }
 
   @override
-  Future<ImportOutcome> importBook() async {
+  Future<ImportOutcome> importBook({
+    Future<bool> Function(String title)? confirmReplace,
+  }) async {
     await _wait();
+    if (onReplace != null && confirmReplace != null) {
+      return onReplace!(confirmReplace);
+    }
     return await _onImport?.call(this) ?? const ImportCancelled();
   }
 

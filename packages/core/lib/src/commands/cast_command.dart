@@ -5,6 +5,7 @@ import '../casting.dart';
 import '../cli.dart';
 import '../preset_catalog.dart';
 import '../provider_configuration.dart';
+import '../engines/standard_engines.dart';
 import '../providers/tts_settings.dart';
 
 class CastCommand extends Command<void> {
@@ -28,7 +29,7 @@ class _Recommend extends Command<void> {
       ..addOption('exclusive-count', defaultsTo: '20')
       ..addOption(
         'provider',
-        allowed: ['all', 'minimax', 'bailian', 'edge'],
+        allowed: ['all', ...standardTtsEngines.ids],
         defaultsTo: 'all',
       )
       ..addOption(
@@ -52,11 +53,17 @@ class _Recommend extends Command<void> {
     }
     final book = await context.library.getBook(argResults!.rest.single);
     final provider = argResults!['provider'] as String;
-    final result = await Casting(context.store).recommend(
+    // Each engine offers the presets of its own configuration; the region
+    // option is the one setting recommending needs without a config file.
+    final catalog = standardTtsEngines.catalog(
+      ProviderConfiguration.fromValues({
+        'bailian': {'region': argResults!['region'] as String},
+      }),
+    );
+    final result = await Casting(context.store, catalog: catalog).recommend(
       book,
       exclusiveCount: count,
       providers: provider == 'all' ? null : {provider},
-      bailianRegion: argResults!['region'] as String,
     );
     context.writeJson(_castSummary(result));
   }
@@ -102,7 +109,7 @@ Map<String, Object?> _castSummary(CastingResult result) => {
 class _Catalog extends Command<void> {
   _Catalog(this.context) {
     argParser.addOption('language', allowed: ['zh', 'en']);
-    argParser.addOption('provider', allowed: ['minimax', 'bailian', 'edge']);
+    argParser.addOption('provider', allowed: standardTtsEngines.ids);
   }
   final CliContext context;
   @override

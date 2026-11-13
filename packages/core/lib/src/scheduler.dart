@@ -6,6 +6,8 @@ import 'director.dart';
 import 'library.dart';
 import 'local_store.dart';
 import 'models/cast.dart';
+import 'performance.dart';
+import 'preset_catalog.dart';
 import 'profiler.dart';
 import 'providers/llm_adapter.dart';
 import 'providers/provider_exception.dart';
@@ -134,6 +136,7 @@ class Scheduler {
     this.runtime,
     this.beforeTask,
     this.recoverVoice,
+    this.voiceCatalog,
   ) : _audio = AudioRepository(store);
 
   static Future<Scheduler> open({
@@ -144,6 +147,7 @@ class Scheduler {
     RequestRuntime? runtime,
     Future<void> Function(ScheduledTask)? beforeTask,
     Future<bool> Function(ScheduledTask, ProviderException)? recoverVoice,
+    Future<List<VoicePreset>> Function()? voiceCatalog,
   }) async {
     final scheduler = Scheduler._(
       store,
@@ -153,6 +157,7 @@ class Scheduler {
       runtime ?? RequestRuntime(),
       beforeTask,
       recoverVoice,
+      voiceCatalog,
     );
     for (final json in await store.list('tasks')) {
       var task = ScheduledTask.fromJson(json);
@@ -174,6 +179,10 @@ class Scheduler {
   final RequestRuntime runtime;
   final Future<void> Function(ScheduledTask)? beforeTask;
   final Future<bool> Function(ScheduledTask, ProviderException)? recoverVoice;
+
+  /// The presets a speaker first heard while directing may be cast to: those
+  /// of the engines in use. Null allows every documented preset.
+  final Future<List<VoicePreset>> Function()? voiceCatalog;
   final _suspended = <String>{};
   final _voiceRecoveries = <String, int>{};
   ScheduledTask? _active;
@@ -586,7 +595,9 @@ class Scheduler {
         .toSet();
     final bindings = await Casting(
       store,
+      catalog: await voiceCatalog?.call(),
     ).prepareChapterBindings(book, task.chapter, speakerIds: speakerIds);
+    final performance = await PerformanceRepository(store).get(book.id);
     final cast = await CastRepository(store).get(book.id);
     final inputsHash = await _audio.hashInputs(script, task.mode);
     final completed = <SynthesizedUtterance>[];
@@ -603,6 +614,7 @@ class Scheduler {
           voices: bindings,
           lexicon: cast.lexicon,
           mode: task.mode,
+          expressiveness: performance.expressiveness,
           outputPath: _audio.outputPath(book.id, task.chapter, task.mode),
           onUtterance: (utterance) async {
             completed.add(utterance);

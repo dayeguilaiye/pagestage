@@ -1,13 +1,13 @@
+import '../engines/standard_engines.dart';
+import '../engines/tts_engine.dart';
 import '../provider_configuration.dart';
-import 'bailian_tts_adapter.dart';
-import 'edge_tts_adapter.dart';
-import 'minimax_tts_adapter.dart';
 import 'provider_exception.dart';
 import 'tts_adapter.dart';
 import 'usage_ledger.dart';
 import 'request_recovery.dart';
 
-/// Opens only the TTS providers needed by an operation; closes owned clients.
+/// Opens only the voice engines needed by an operation, each behind its
+/// account's request queue; closes the clients it owns.
 class TtsProviderSession {
   TtsProviderSession._(this.adapters, this._closers);
   final Map<String, TtsAdapter> adapters;
@@ -16,24 +16,27 @@ class TtsProviderSession {
   factory TtsProviderSession.open(
     ProviderConfiguration config, {
     required Iterable<String> providers,
+    TtsEngines? engines,
     Map<String, TtsAdapter> overrides = const {},
     UsageLedger? usageLedger,
     RequestRuntime? runtime,
     Map<String, ProviderRequestQueue>? queues,
   }) {
+    final registry = engines ?? standardTtsEngines;
     final sharedQueues = queues ?? <String, ProviderRequestQueue>{};
     final adapters = <String, TtsAdapter>{};
     final closers = <void Function()>[];
     try {
       for (final provider in providers.toSet()) {
-        final prefix = provider.toUpperCase();
+        final engine = registry[provider];
         final limit = int.tryParse(
           config.value(
                 provider,
                 'requestsPerMinute',
-                environmentVariable: '${prefix}_REQUESTS_PER_MINUTE',
+                environmentVariable:
+                    '${provider.toUpperCase()}_REQUESTS_PER_MINUTE',
               ) ??
-              (provider == 'minimax' ? '12' : '60'),
+              '${engine?.requestsPerMinute ?? 60}',
         );
         if (limit == null || limit < 1 || limit > 60000) {
           throw ProviderException(
@@ -54,67 +57,15 @@ class TtsProviderSession {
           adapters[provider] = ScheduledTtsAdapter(injected, queue);
           continue;
         }
-        if (provider == 'edge') {
-          final endpoint = config.value(
-            'edge',
-            'baseUrl',
-            environmentVariable: 'EDGE_BASE_URL',
-          );
-          final adapter = EdgeTtsAdapter(
-            endpoint: endpoint == null ? null : Uri.parse(endpoint),
-            usageLedger: usageLedger,
-          );
-          adapters[provider] = ScheduledTtsAdapter(adapter, queue);
-          closers.add(adapter.close);
-          continue;
-        }
-        final key = config.value(
-          provider,
-          'key',
-          environmentVariable: '${prefix}_API_KEY',
-        );
-        final region =
-            config.value(
-              'bailian',
-              'region',
-              environmentVariable: 'BAILIAN_REGION',
-            ) ??
-            'beijing';
-        final endpoint = config.value(
-          provider,
-          'baseUrl',
-          environmentVariable: '${prefix}_BASE_URL',
-        );
-        final baseUrl = endpoint == null ? null : Uri.tryParse(endpoint);
-        if (key == null ||
-            key.isEmpty ||
-            (endpoint != null && baseUrl == null) ||
-            !['minimax', 'bailian'].contains(provider) ||
-            (provider == 'bailian' &&
-                !['beijing', 'singapore'].contains(region))) {
+        if (engine == null) {
           throw ProviderException(
             provider: provider,
             kind: ProviderErrorKind.invalidConfiguration,
           );
         }
-        if (provider == 'minimax') {
-          final adapter = MiniMaxTtsAdapter(
-            apiKey: key,
-            baseUrl: baseUrl,
-            usageLedger: usageLedger,
-          );
-          adapters[provider] = ScheduledTtsAdapter(adapter, queue);
-          closers.add(adapter.close);
-        } else {
-          final adapter = BailianTtsAdapter(
-            apiKey: key,
-            baseUrl: baseUrl,
-            region: BailianRegion.values.byName(region),
-            usageLedger: usageLedger,
-          );
-          adapters[provider] = ScheduledTtsAdapter(adapter, queue);
-          closers.add(adapter.close);
-        }
+        final opened = engine.open(config, usageLedger: usageLedger);
+        adapters[provider] = ScheduledTtsAdapter(opened.adapter, queue);
+        closers.add(opened.close);
       }
       return TtsProviderSession._(Map.unmodifiable(adapters), closers);
     } catch (_) {

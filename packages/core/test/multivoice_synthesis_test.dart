@@ -60,9 +60,8 @@ void main() {
             outputPath: '${temp.path}/chapter.wav',
           );
       expect(minimax.requests.map((r) => r.text), ['A.', 'B.']);
-      expect(minimax.requests.first.direction.emotion, Emotion.calm);
-      expect(bailian.requests.first.direction.toJson(), {
-        'speakerId': 'alice',
+      expect(minimax.requests.first.delivery.emotion, Emotion.calm);
+      expect(bailian.requests.first.delivery.toJson(), {
         'emotion': 'sad',
         'intensity': 'strong',
         'note': 'Speak softly.',
@@ -241,8 +240,8 @@ void main() {
         [0, 1],
         [2],
       ]);
-      expect(adapter.requests.first.direction.note, 'Dry.');
-      expect(adapter.requests.last.direction.emotion, Emotion.sad);
+      expect(adapter.requests.first.delivery.note, 'Dry.');
+      expect(adapter.requests.last.delivery.emotion, Emotion.sad);
     },
   );
   test(
@@ -373,8 +372,13 @@ class _FakeTts implements TtsAdapter {
   final String provider;
   final requests = <TtsRequest>[];
   @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
-      TtsCapabilities(supportsPronunciation: false, maxCharacters: 9999);
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
+    supportsPronunciation: false,
+    maxCharacters: 9999,
+    emotions: Emotion.values.toSet(),
+    intensity: true,
+    instruction: true,
+  );
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
     requests.add(request);

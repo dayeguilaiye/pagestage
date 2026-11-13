@@ -5,7 +5,7 @@ import 'package:path/path.dart' as p;
 
 import 'local_store.dart';
 import 'casting.dart';
-import 'models/script.dart';
+import 'delivery.dart';
 import 'models/book.dart';
 import 'models/cast.dart';
 import 'models/voice.dart';
@@ -150,7 +150,9 @@ class VoiceDesign {
         text: candidate.previewText,
         language: book.language,
         binding: candidate.voice.binding,
-        direction: Direction(speakerId: speaker.id),
+        delivery: Delivery.calm(
+          adapter.capabilitiesFor(candidate.voice.binding),
+        ),
       ),
     );
     if (audio.audio.samples.isEmpty) {

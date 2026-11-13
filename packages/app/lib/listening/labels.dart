@@ -1,3 +1,4 @@
+import '../application/contracts.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 
@@ -19,15 +20,52 @@ abstract final class Labels {
   /// The end of the book is news, not a failure.
   static bool isEndOfBook(String? code) => code == 'endOfBook';
 
+  /// An engine's name. Engines this build has no name for show their id.
   static String provider(AppLocalizations l, String? provider) =>
       switch (provider?.toLowerCase()) {
         null || '' => l.providerUnknown,
         'llm' => l.providerLlm,
+        'llm-device' => l.languageEngineDevice,
         'minimax' => 'MiniMax',
         'edge' => 'Microsoft Edge',
         'bailian' => l.providerBailian,
+        'device' => l.voiceEngineDevice,
         'system' => l.systemVoice,
         _ => provider!,
+      };
+
+  /// An engine's name where the language engines are listed side by side.
+  static String engine(AppLocalizations l, EngineView engine) =>
+      engine.id == 'llm' ? l.languageEngineCloud : provider(l, engine.id);
+
+  /// What a voice engine can perform beyond reading in a voice.
+  static String trait(AppLocalizations l, EngineTrait trait) => switch (trait) {
+    EngineTrait.emotion => l.traitEmotion,
+    EngineTrait.instruction => l.traitInstruction,
+    EngineTrait.vocalCues => l.traitVocalCues,
+    EngineTrait.pacing => l.traitPacing,
+    EngineTrait.voiceDesign => l.traitVoiceDesign,
+  };
+
+  /// A setting's label; one this build has no label for shows its name.
+  static String engineSetting(AppLocalizations l, String name) =>
+      switch (name) {
+        'key' => l.apiKey,
+        'baseUrl' => l.baseUrl,
+        'api' => l.protocol,
+        'region' => l.region,
+        'profileModel' => l.profileModel,
+        'directorModel' => l.directorModel,
+        _ => name,
+      };
+
+  static String engineOption(AppLocalizations l, String option) =>
+      switch (option) {
+        'chat-completions' => l.protocolChatCompletions,
+        'responses' => l.protocolResponses,
+        'beijing' => l.regionBeijing,
+        'singapore' => l.regionSingapore,
+        _ => option,
       };
 
   /// [provider]'s name ready to sit inside a sentence: in Chinese a Latin
@@ -56,6 +94,8 @@ abstract final class Labels {
         'interrupted' => l.reasonInterrupted,
         'voiceUnavailable' => l.reasonVoiceUnavailable,
         'providerDisabled' => l.reasonProviderDisabled,
+        'engineNotInstalled' => l.reasonEngineNotInstalled,
+        'engineUnavailable' => l.reasonEngineUnavailable,
         'noVoiceProvider' => l.reasonNoVoiceProvider,
         _ => l.reasonUnknown,
       };

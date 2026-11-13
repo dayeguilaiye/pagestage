@@ -24,7 +24,7 @@ const ttsRequest = TtsRequest(
     model: 'speech-2.8-hd',
     voiceId: 'fake',
   ),
-  direction: Direction(speakerId: 'narrator'),
+  delivery: Delivery(emotion: Emotion.calm, intensity: Intensity.mild),
 );
 
 Map<String, Object?> chatResponse({String content = '{}', String? refusal}) => {
@@ -377,7 +377,10 @@ void main() {
               model: 'qwen-audio-3.1-tts-flash',
               voiceId: 'Emily_v3.1',
             ),
-            direction: Direction(speakerId: 'narrator'),
+            delivery: Delivery(
+              emotion: Emotion.calm,
+              intensity: Intensity.mild,
+            ),
           ),
         ),
         throwsA(isA<ProviderException>()),

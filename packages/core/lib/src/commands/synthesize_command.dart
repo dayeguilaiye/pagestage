@@ -10,6 +10,9 @@ import '../providers/tts_settings.dart';
 import '../script_repository.dart';
 import '../synthesizer.dart';
 import '../audio_repository.dart';
+import '../delivery.dart';
+import '../engines/standard_engines.dart';
+import '../performance.dart';
 
 class SynthesizeCommand extends Command<void> {
   SynthesizeCommand(this.context) {
@@ -19,6 +22,13 @@ class SynthesizeCommand extends Command<void> {
         'mode',
         allowed: ['audiobook', 'drama'],
         defaultsTo: 'audiobook',
+      )
+      ..addOption(
+        'expressiveness',
+        allowed: Expressiveness.values.map((e) => e.name),
+        help:
+            'How much of the direction voices perform; saved for the book. '
+            'Defaults to the saved choice.',
       )
       ..addFlag(
         'merge-narrator',
@@ -67,14 +77,24 @@ class SynthesizeCommand extends Command<void> {
         .where((line) => skipped(line) == null)
         .map((line) => line.direction.speakerId)
         .toSet();
+    final config = await ProviderConfiguration.load(
+      argResults!['config'] as String?,
+      environment: context.environment,
+    );
+    final performances = PerformanceRepository(context.store);
+    var performance = await performances.get(book.id);
+    if (argResults!['expressiveness'] case final String chosen) {
+      performance = performance.copyWith(
+        expressiveness: Expressiveness.values.byName(chosen),
+      );
+      await performances.save(book.id, performance);
+    }
     final bindings = await Casting(
       context.store,
+      catalog: standardTtsEngines.catalog(config),
     ).prepareChapterBindings(book, number, speakerIds: speakerIds);
     final session = TtsProviderSession.open(
-      await ProviderConfiguration.load(
-        argResults!['config'] as String?,
-        environment: context.environment,
-      ),
+      config,
       providers: speakerIds.map((id) {
         final binding = bindings[id];
         if (binding == null) {
@@ -103,6 +123,7 @@ class SynthesizeCommand extends Command<void> {
             lexicon: cast.lexicon,
             voices: bindings,
             mode: mode,
+            expressiveness: performance.expressiveness,
             mergeAdjacentNarrator: argResults!['merge-narrator'] as bool,
             outputPath:
                 argResults!['output'] as String? ??

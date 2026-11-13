@@ -135,7 +135,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shelfEmptyBody =>
-      'Import a TXT or DRM-free EPUB novel from your phone to read and listen to it here.';
+      'Import a TXT or DRM-free EPUB novel from your phone, or a script or audio package someone shared, to read and listen to it here.';
 
   @override
   String get shelfEmptyAction => 'Import a book';
@@ -166,7 +166,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get importUnsupportedBody =>
-      'You can import TXT files and DRM-free EPUB files. Your bookshelf hasn’t changed.';
+      'You can import TXT files, DRM-free EPUB files, and script or audio packages (.pagestage). Your bookshelf hasn’t changed.';
 
   @override
   String importDrmTitle(String file) {
@@ -748,7 +748,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get presetsEmpty =>
-      'No preset voices from the providers that are on suit this book’s language.';
+      'No preset voices from the engines that are on suit this book’s language.';
 
   @override
   String get designProvider => 'Design with';
@@ -1181,7 +1181,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voiceSectionNote =>
-      'Voices are generated only by providers that are on. Edge doesn’t follow emotion or pronunciation instructions. Keys are stored encrypted on this device and only sent to their own provider.';
+      'Voices are generated only by engines that are on. Keys are stored encrypted on this device and only sent to their own provider.';
 
   @override
   String get edgeRole => 'Free, no key needed';
@@ -1247,4 +1247,255 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get rematchFailed => 'Couldn’t rematch the voices. Try again';
+
+  @override
+  String get languageEngineCloud => 'Cloud language model';
+
+  @override
+  String get languageEngineDevice => 'On-device language model';
+
+  @override
+  String get voiceEngineDevice => 'On-device voices';
+
+  @override
+  String get engineInUse => 'In use';
+
+  @override
+  String get useEngine => 'Use';
+
+  @override
+  String get engineComingSoon => 'Coming soon';
+
+  @override
+  String get engineNotInstalled => 'Model not installed';
+
+  @override
+  String get engineComingSoonNote =>
+      'Runs on this device: the text never leaves it and no key is needed. This engine is not ready yet.';
+
+  @override
+  String get engineNotInstalledNote =>
+      'This engine runs on this device and needs its model installed first.';
+
+  @override
+  String get llmSectionNote =>
+      'You can listen without a language model: import a script or audio package someone shared, and nothing needs directing again.';
+
+  @override
+  String get voiceSectionCloud => 'Voices · Cloud';
+
+  @override
+  String get voiceSectionDevice => 'Voices · On device';
+
+  @override
+  String get voiceSectionDeviceNote =>
+      'On-device engines voice lines on this device; the text never leaves it.';
+
+  @override
+  String get traitEmotion => 'Emotion';
+
+  @override
+  String get traitInstruction => 'Direction notes';
+
+  @override
+  String get traitVocalCues => 'Vocal sounds';
+
+  @override
+  String get traitPacing => 'Pace and pitch';
+
+  @override
+  String get traitVoiceDesign => 'Voice design';
+
+  @override
+  String engineVoices(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count voices',
+      one: '1 voice',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get engineAbilities => 'What it performs';
+
+  @override
+  String get engineAbilitiesNote =>
+      'The director writes one script. Each engine performs what it can, and replaces or leaves out the rest.';
+
+  @override
+  String get engineAbilitiesPlain => 'Distinct voices only';
+
+  @override
+  String get enginePageNote => 'Voices the cast.';
+
+  @override
+  String get edgePageNote =>
+      'Microsoft Edge’s Read Aloud service. Free and needs no key; it has no emotions, only pace and pitch.';
+
+  @override
+  String get reasonEngineNotInstalled =>
+      'This on-device engine has no model installed yet';
+
+  @override
+  String get reasonEngineUnavailable =>
+      'This engine can’t be used yet. Choose another in Settings';
+
+  @override
+  String packageImported(String title, int scripts) {
+    String _temp0 = intl.Intl.pluralLogic(
+      scripts,
+      locale: localeName,
+      other: '$scripts chapters',
+      one: '1 chapter',
+    );
+    return 'Imported “$title”: $_temp0 already directed';
+  }
+
+  @override
+  String packageImportedAudio(String title, int scripts, int audio) {
+    String _temp0 = intl.Intl.pluralLogic(
+      scripts,
+      locale: localeName,
+      other: '$scripts chapters',
+      one: '1 chapter',
+    );
+    return 'Imported “$title”: $_temp0 directed, $audio ready to listen';
+  }
+
+  @override
+  String importPackageInvalidTitle(String file) {
+    return '“$file” isn’t a valid script or audio package';
+  }
+
+  @override
+  String get importPackageInvalidBody =>
+      'The file may be incomplete, or exported by a newer pagestage. Your bookshelf hasn’t changed.';
+
+  @override
+  String replaceBookTitle(String title) {
+    return 'Replace “$title”?';
+  }
+
+  @override
+  String get replaceBookBody =>
+      'This book is already on your shelf. Importing replaces its cast, scripts and audio, and keeps your place.';
+
+  @override
+  String get replaceBookConfirm => 'Replace';
+
+  @override
+  String get shareBook => 'Share';
+
+  @override
+  String shareBookTitle(String title) {
+    return 'Share “$title”';
+  }
+
+  @override
+  String get shareScript => 'Script package';
+
+  @override
+  String shareScriptNote(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count directed chapters',
+      one: '1 directed chapter',
+    );
+    return 'The text, the cast and $_temp0. They voice it with their own engines, with no language model needed.';
+  }
+
+  @override
+  String get shareAudio => 'Audio package';
+
+  @override
+  String shareAudioNote(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count voiced chapters',
+      one: '1 voiced chapter',
+    );
+    return 'The script package plus the audio of $_temp0. They import it and listen.';
+  }
+
+  @override
+  String get shareAudioNone => 'No chapter has been voiced yet.';
+
+  @override
+  String get shareNothing =>
+      'There are no scripts to share yet. Direct or voice a few chapters first.';
+
+  @override
+  String get sharePreparing => 'Packing…';
+
+  @override
+  String get shareFailed => 'Couldn’t pack the book. Try again.';
+
+  @override
+  String get shareNote =>
+      'A package holds the whole book’s text and leaves only through the system share sheet. Share only books you have the right to share.';
+
+  @override
+  String get shareLoadFailed => 'Couldn’t read this book’s scripts and audio';
+
+  @override
+  String get expressiveness => 'Expression';
+
+  @override
+  String get expressivenessPlain => 'Plain';
+
+  @override
+  String get expressivenessNatural => 'Natural';
+
+  @override
+  String get expressivenessDramatic => 'Dramatic';
+
+  @override
+  String get expressivenessPlainNote =>
+      'Distinct voices reading evenly, without emotion or vocal sounds.';
+
+  @override
+  String get expressivenessNaturalNote => 'Performed as the director wrote it.';
+
+  @override
+  String get expressivenessDramaticNote =>
+      'Emotions one step stronger than directed.';
+
+  @override
+  String get expressivenessSaveFailed =>
+      'Couldn’t save the expression. Try again.';
+
+  @override
+  String changeVoiceOf(String name) {
+    return 'Change $name’s voice';
+  }
+
+  @override
+  String reassignLine(String name) {
+    return 'This isn’t $name';
+  }
+
+  @override
+  String get reassignTitle => 'Who says this line?';
+
+  @override
+  String get reassignNote => 'Only this line of the chapter is voiced again.';
+
+  @override
+  String get reassignImportedNote =>
+      'This chapter’s audio was imported. After the change the whole chapter is voiced again with the voices you have on.';
+
+  @override
+  String reassigned(String name) {
+    return 'Now spoken by $name';
+  }
+
+  @override
+  String get reassignFailed => 'Couldn’t change the speaker. Try again.';
+
+  @override
+  String get speakersLoadFailed => 'Couldn’t load the cast';
 }

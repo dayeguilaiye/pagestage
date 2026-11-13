@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 
+import 'delivery.dart';
 import 'models/book.dart';
 import 'models/loudness.dart';
 import 'audio/loudness.dart';
@@ -119,8 +120,10 @@ class Synthesizer {
   /// Read-only migration source for previously shared CLI caches.
   final Directory? fallbackCacheDirectory;
 
-  // Advance when request semantics or the adapters' direction mapping changes.
-  static const _cacheVersion = 'tts-raw-v3-adapter-direction-v1';
+  // Advance when request semantics or an adapter's wire mapping changes.
+  // Audio is keyed by the lowered delivery, so direction a voice cannot
+  // perform never splits its cache.
+  static const _cacheVersion = 'tts-raw-v4-delivery-v1';
 
   Future<SynthesisResult> synthesize({
     required Chapter chapter,
@@ -131,6 +134,7 @@ class Synthesizer {
     List<PronunciationEntry> lexicon = const [],
     LoudnessSettings loudness = const LoudnessSettings(),
     PerformanceMode mode = PerformanceMode.audiobook,
+    Expressiveness expressiveness = Expressiveness.natural,
     bool mergeAdjacentNarrator = false,
     Duration paragraphPause = const Duration(milliseconds: 300),
     Duration sameSpeakerPause = const Duration(milliseconds: 100),
@@ -192,28 +196,43 @@ class Synthesizer {
           ? matches
           : <PronunciationMatch>[];
       final pronunciations = matchedPronunciations(effectiveMatches);
+      final delivery = Delivery.lower(
+        entry.line.direction,
+        capabilities,
+        expressiveness: expressiveness,
+      );
+      final chunks = _sourceChunks(
+        text,
+        capabilities.maxCharacters,
+        effectiveMatches,
+      ).toList();
+      final requests = <TtsRequest>[];
+      var offset = 0;
+      for (final (index, chunk) in chunks.indexed) {
+        requests.add(
+          TtsRequest(
+            text: chunk,
+            language: language,
+            binding: binding,
+            delivery: delivery.chunk(
+              offset,
+              offset + chunk.length,
+              last: index == chunks.length - 1,
+            ),
+            pronunciations: List.unmodifiable(
+              matchedPronunciations(
+                pronunciationMatches(chunk, pronunciations),
+              ),
+            ),
+          ),
+        );
+        offset += chunk.length;
+      }
       prepared.add(
         _PreparedUtterance(
           entry,
           adapter,
-          [
-            for (final chunk in _sourceChunks(
-              text,
-              capabilities.maxCharacters,
-              effectiveMatches,
-            ))
-              TtsRequest(
-                text: chunk,
-                language: language,
-                binding: binding,
-                direction: entry.line.direction,
-                pronunciations: List.unmodifiable(
-                  matchedPronunciations(
-                    pronunciationMatches(chunk, pronunciations),
-                  ),
-                ),
-              ),
-          ],
+          requests,
           matches.isNotEmpty && !capabilities.supportsPronunciation
               ? 'Selected voice does not support pronunciation; synthesized plain text.'
               : null,
@@ -235,7 +254,7 @@ class Synthesizer {
                         'text': request.text,
                         'language': request.language,
                         'binding': request.binding.toJson(),
-                        'direction': request.direction.toJson(),
+                        'delivery': request.delivery.toJson(),
                         'pronunciations': request.pronunciations
                             .map((e) => e.toJson())
                             .toList(),

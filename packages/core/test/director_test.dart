@@ -170,7 +170,7 @@ void main() {
       expect(result.script.lines.first.isDialogueTag, true);
       expect(result.script.lines.last.isNonStory, true);
       expect(result.script.model, 'fake-director');
-      expect(result.script.promptVersion, 'director-v5');
+      expect(result.script.promptVersion, 'director-v6');
       expect(result.usage.totalTokens, 14);
       expect(
         (await ScriptRepository(store).get(book.id, 1))!.toJson(),

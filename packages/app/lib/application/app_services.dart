@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
@@ -13,6 +14,7 @@ import 'audio_storage_controller.dart';
 import 'contracts.dart';
 import 'listening_controller.dart';
 import 'listening_handler.dart';
+import 'package_controller.dart';
 import 'provider_store.dart';
 import 'system_speech.dart';
 
@@ -28,6 +30,8 @@ class AppServices {
     this.voices,
     this.audioStorage,
     this.diagnostics,
+    this.packages,
+    this.scripts,
     Future<void> Function()? onClose,
   }) : _onClose = onClose;
   final Listening listening;
@@ -38,16 +42,20 @@ class AppServices {
   final Voices? voices;
   final AudioStorage? audioStorage;
   final Diagnostics? diagnostics;
+  final Packages? packages;
+  final Scripts? scripts;
   final Future<void> Function()? _onClose;
   bool _closed = false;
 
   static Future<AppServices> open(
     AppStorage storage, {
     Diagnostics? diagnostics,
+    AppEngines? engines,
   }) async {
     final providers = await ProviderStore.open(
       storage.store,
       const PlatformSecretStore(),
+      engines: engines,
     );
     final consents = ConsentBroker(storage.store);
     final listening = ListeningController(
@@ -141,6 +149,16 @@ class AppServices {
       voices: voices,
       audioStorage: audioStorage,
       diagnostics: diagnostics,
+      packages: PackageController(
+        storage.store,
+        directory: Directory('${storage.directory.path}/exports'),
+      ),
+      scripts: ScriptController(
+        storage.store,
+        storage.library,
+        revoice: (bookId, chapter) =>
+            generation.prepare(bookId, first: chapter, through: chapter),
+      ),
       onClose: () async {
         storage.library.editBook = null;
         await pauses.cancel();

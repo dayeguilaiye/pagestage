@@ -60,19 +60,26 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
     'qwen-audio-3.0-tts-plus',
   };
 
-  bool get _supportsDesignedVoices =>
+  static const defaultModel = 'qwen-audio-3.1-tts-flash';
+
+  /// Only the Beijing region designs voices and voices designed ones.
+  static bool designsVoices(BailianRegion region, [Uri? baseUrl]) =>
       region == BailianRegion.beijing &&
-      _baseUrl.host != 'dashscope-intl.aliyuncs.com' &&
-      !_baseUrl.host.contains('.ap-southeast-');
+      baseUrl?.host != 'dashscope-intl.aliyuncs.com' &&
+      !(baseUrl?.host.contains('.ap-southeast-') ?? false);
 
-  @override
-  String get provider => 'bailian';
+  bool get _supportsDesignedVoices => designsVoices(region, _baseUrl);
 
-  @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) {
-    if (binding.provider != provider ||
+  /// What [binding] can perform under this region; needs no credential.
+  static TtsCapabilities capabilities(
+    VoiceBinding binding, {
+    BailianRegion region = BailianRegion.beijing,
+    Uri? baseUrl,
+    int requestCharacterLimit = 600,
+  }) {
+    if (binding.provider != 'bailian' ||
         !_models.contains(binding.model) ||
-        (binding.designed && !_supportsDesignedVoices)) {
+        (binding.designed && !designsVoices(region, baseUrl))) {
       throw const ProviderException(
         provider: 'bailian',
         kind: ProviderErrorKind.invalidConfiguration,
@@ -84,8 +91,21 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
           !binding.designed &&
           binding.voiceId.endsWith('_v3.1'),
       maxCharacters: requestCharacterLimit,
+      instruction: true,
+      cues: _cueTags.keys.toSet(),
     );
   }
+
+  @override
+  String get provider => 'bailian';
+
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) => capabilities(
+    binding,
+    region: region,
+    baseUrl: _baseUrl,
+    requestCharacterLimit: requestCharacterLimit,
+  );
 
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
@@ -107,11 +127,13 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
       final json = await _post('services/audio/tts/SpeechSynthesizer', {
         'model': request.binding.model,
         'input': {
+          // Sound tags are only documented for plain text, so a line that
+          // needs pinyin markup goes without them.
           'text': matches.isEmpty
-              ? request.text
+              ? request.delivery.inline(request.text, (kind) => _cueTags[kind])
               : pronunciationSsml(request.text, matches),
           if (matches.isNotEmpty) 'enable_ssml': true,
-          'instruction': _instruction(request.direction, request.language),
+          'instruction': request.delivery.instruction(request.language),
           'voice': request.binding.voiceId,
           'format': 'wav',
           'sample_rate': 24000,
@@ -264,17 +286,15 @@ class BailianTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
   }
 }
 
-String _instruction(Direction direction, String language) {
-  final note = direction.note.trim();
-  if (language == 'zh') {
-    const emotions = ['平静', '开心', '悲伤', '愤怒', '恐惧', '厌恶', '惊讶'];
-    const intensities = ['轻', '中', '强'];
-    return '以${emotions[direction.emotion.index]}的语气、'
-        '强度${intensities[direction.intensity.index]}朗读。$note';
-  }
-  return 'Read with a ${direction.emotion.name} emotion and '
-      '${direction.intensity.name} intensity.${note.isEmpty ? '' : ' $note'}';
-}
+// Qwen-Audio sound tags, written inline where the sound belongs.
+const _cueTags = <VocalCueKind, String>{
+  VocalCueKind.laugh: '[laughing]',
+  VocalCueKind.chuckle: '[giggles]',
+  VocalCueKind.sigh: '[sighing]',
+  VocalCueKind.gasp: '[gasp]',
+  VocalCueKind.cough: '[cough]',
+  VocalCueKind.clearThroat: '[clears throat]',
+};
 
 ProviderErrorKind _errorKind(Object? code, int statusCode) => switch (code) {
   'InvalidApiKey' || 'invalid_api_key' => ProviderErrorKind.invalidKey,

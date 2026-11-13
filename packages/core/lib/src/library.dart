@@ -12,6 +12,8 @@ import 'models/book.dart';
 import 'models/cast.dart';
 import 'bookshelf.dart';
 import 'audio_repository.dart';
+import 'book_package.dart';
+import 'performance.dart';
 import 'script_repository.dart';
 import 'synthesizer.dart';
 
@@ -55,12 +57,18 @@ class Library implements Bookshelf {
   );
 
   @override
-  Future<ImportOutcome> importBook() async {
+  Future<ImportOutcome> importBook({
+    Future<bool> Function(String title)? confirmReplace,
+  }) async {
     String? path;
     try {
       path = await pickFile?.call();
       if (path == null) return const ImportCancelled();
-      if (!['.txt', '.epub'].contains(p.extension(path).toLowerCase())) {
+      final extension = p.extension(path).toLowerCase();
+      if (extension == BookPackages.extension) {
+        return await _importPackage(path, confirmReplace);
+      }
+      if (!['.txt', '.epub'].contains(extension)) {
         return ImportFailed(p.basename(path), ImportFailure.unsupportedFormat);
       }
       final result = await importFile(path);
@@ -91,15 +99,55 @@ class Library implements Bookshelf {
     }
   }
 
+  Future<ImportOutcome> _importPackage(
+    String path,
+    Future<bool> Function(String title)? confirmReplace,
+  ) async {
+    try {
+      final imported = await importPackage(
+        path,
+        confirmReplace: confirmReplace,
+      );
+      if (imported == null) return const ImportCancelled();
+      return PackageImported(
+        _shelfBook(imported.book),
+        scriptChapters: imported.summary.scriptChapters.length,
+        audioChapters: imported.summary.audioChapters.length,
+        replaced: imported.replaced,
+      );
+    } catch (_) {
+      return ImportFailed(p.basename(path), ImportFailure.invalidPackage);
+    }
+  }
+
+  /// Installs a script or audio package, after any other import under way.
+  /// Returns null when its book is on the shelf and [confirmReplace] is
+  /// missing or declines.
+  Future<BookPackageImport?> importPackage(
+    String path, {
+    Future<bool> Function(String title)? confirmReplace,
+  }) {
+    final packages = BookPackages(store);
+    final result = _imports.then((_) async {
+      try {
+        return await packages.import(path, edit: editBook);
+      } on BookPackageConflict catch (conflict) {
+        if (confirmReplace == null || !await confirmReplace(conflict.title)) {
+          return null;
+        }
+        return packages.import(path, replace: true, edit: editBook);
+      }
+    });
+    _imports = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
+    return result;
+  }
+
   @override
   Future<List<ChapterEntry>> chapters(String bookId) async {
     final book = await getBook(bookId);
     final cast = await CastRepository(store).get(bookId);
     final audio = AudioRepository(store);
-    final modeName = (await store.get('performance', bookId))?['mode'];
-    final mode = modeName == 'drama'
-        ? PerformanceMode.drama
-        : PerformanceMode.audiobook;
+    final mode = (await PerformanceRepository(store).get(bookId)).mode;
     return [
       for (final chapter in book.chapters)
         ChapterEntry(

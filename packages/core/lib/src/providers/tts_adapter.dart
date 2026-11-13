@@ -1,3 +1,4 @@
+import '../delivery.dart';
 import '../models/script.dart';
 import '../models/cast.dart';
 import '../models/voice.dart';
@@ -14,13 +15,15 @@ class TtsRequest {
     required this.text,
     required this.language,
     required this.binding,
-    required this.direction,
+    this.delivery = const Delivery(),
     this.pronunciations = const [],
   });
   final String text;
   final String language;
   final VoiceBinding binding;
-  final Direction direction;
+
+  /// Already lowered to [binding]'s capabilities; adapters only translate it.
+  final Delivery delivery;
   final List<PronunciationEntry> pronunciations;
 }
 
@@ -39,15 +42,36 @@ class TtsAudio {
   final int? totalTokens;
 }
 
-/// Capabilities of the selected model/voice and this adapter's transport mode.
+/// What the selected model and voice can perform through this adapter.
+/// `Delivery.lower` reduces every direction to these before synthesis.
 class TtsCapabilities {
   const TtsCapabilities({
     required this.supportsPronunciation,
     required this.maxCharacters,
+    this.emotions = const {},
+    this.intensity = false,
+    this.instruction = false,
+    this.cues = const {},
+    this.prosody = false,
   });
   final bool supportsPronunciation;
 
   /// Maximum source Unicode code points per request, including whitespace.
   /// An adapter may choose a conservative implementation budget.
   final int maxCharacters;
+
+  /// Emotions the engine takes as a parameter of its own.
+  final Set<Emotion> emotions;
+
+  /// Whether an emotion's strength can be set.
+  final bool intensity;
+
+  /// Whether a free-text sentence of vocal direction is followed.
+  final bool instruction;
+
+  /// Non-verbal sounds the engine can voice inside a line.
+  final Set<VocalCueKind> cues;
+
+  /// Whether pace, loudness and pitch can be set per request.
+  final bool prosody;
 }

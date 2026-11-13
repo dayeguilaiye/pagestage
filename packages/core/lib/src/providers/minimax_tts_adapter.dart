@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import '../models/script.dart';
 import '../pcm_audio.dart';
 import '../pronunciation.dart';
 import '../models/voice.dart';
@@ -43,19 +44,27 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
   @override
   String get provider => 'minimax';
 
-  @override
-  TtsCapabilities capabilitiesFor(VoiceBinding binding) {
-    if (binding.provider != provider) {
+  /// What [binding] can perform; needs no credential.
+  static TtsCapabilities capabilities(VoiceBinding binding) {
+    if (binding.provider != 'minimax') {
       throw const ProviderException(
         provider: 'minimax',
         kind: ProviderErrorKind.invalidConfiguration,
       );
     }
-    return const TtsCapabilities(
+    return TtsCapabilities(
       supportsPronunciation: true,
       maxCharacters: 9999,
+      emotions: Emotion.values.toSet(),
+      prosody: true,
+      // Interjection tags are read aloud as text by models before 2.8.
+      cues: binding.model.startsWith('speech-2.8') ? _cueTags.keys.toSet() : {},
     );
   }
+
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) =>
+      capabilities(binding);
 
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
@@ -73,10 +82,11 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
         request.language == 'zh' ? request.pronunciations : [],
       ),
     );
+    final delivery = request.delivery;
     return withTtsErrors(provider, () async {
       final json = await _post('t2a_v2', {
         'model': request.binding.model,
-        'text': request.text,
+        'text': delivery.inline(request.text, (kind) => _cueTags[kind]),
         if (pronunciations.isNotEmpty)
           'pronunciation_dict': {
             'tone': [
@@ -89,10 +99,15 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
         'language_boost': request.language == 'zh' ? 'Chinese' : 'English',
         'voice_setting': {
           'voice_id': request.binding.voiceId,
-          'speed': 1,
-          'vol': 1,
-          'pitch': 0,
-          'emotion': request.direction.emotion.name,
+          'speed': delivery.rateChange == 0
+              ? 1
+              : (1 + delivery.rateChange / 100).clamp(0.5, 2),
+          'vol': delivery.volumeChange == 0
+              ? 1
+              : (1 + delivery.volumeChange / 100).clamp(0.1, 10),
+          // MiniMax pitch moves in whole steps of about six percent.
+          'pitch': (delivery.pitchChange / 6).round().clamp(-12, 12),
+          if (delivery.emotion != null) 'emotion': delivery.emotion!.name,
         },
         'audio_setting': {'sample_rate': 24000, 'format': 'wav', 'channel': 1},
       });
@@ -189,6 +204,19 @@ class MiniMaxTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
     if (_ownsClient) _client.close();
   }
 }
+
+// speech-2.8 interjection tags, written inline where the sound belongs.
+const _cueTags = <VocalCueKind, String>{
+  VocalCueKind.laugh: '(laughs)',
+  VocalCueKind.chuckle: '(chuckle)',
+  VocalCueKind.sigh: '(sighs)',
+  VocalCueKind.gasp: '(gasps)',
+  VocalCueKind.sniff: '(sniffs)',
+  VocalCueKind.cough: '(coughs)',
+  VocalCueKind.clearThroat: '(clear-throat)',
+  VocalCueKind.pant: '(pant)',
+  VocalCueKind.groan: '(groans)',
+};
 
 ProviderErrorKind _errorKind(Object? code, int statusCode) => switch (code) {
   1004 || 2049 => ProviderErrorKind.invalidKey,

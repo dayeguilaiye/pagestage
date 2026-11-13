@@ -48,7 +48,7 @@ class Director {
   final LlmAdapter llm;
   final int chunkCharacters;
   final int contextLines;
-  static const promptVersion = 'director-v5';
+  static const promptVersion = 'director-v6';
 
   Future<DirectingResult> direct(Book book, int chapterNumber) async {
     final cast = await CastRepository(store).get(book.id);
@@ -129,10 +129,13 @@ class Director {
       }
       lines.addAll(
         aligned.lines.map(
-          (line) => _range(
-            readerCast.resolve(line),
-            line.start + start,
-            line.end + start,
+          (line) => _placeCues(
+            _range(
+              readerCast.resolve(line),
+              line.start + start,
+              line.end + start,
+            ),
+            chapter.text,
           ),
         ),
       );
@@ -270,12 +273,7 @@ class _ReaderCast {
     return ScriptLine(
       start: line.start,
       end: line.end,
-      direction: Direction(
-        speakerId: speaker?.id ?? 'narrator',
-        emotion: line.direction.emotion,
-        intensity: line.direction.intensity,
-        note: line.direction.note,
-      ),
+      direction: line.direction.copyWith(speakerId: speaker?.id ?? 'narrator'),
       isDialogueTag: line.isDialogueTag,
       isNonStory: line.isNonStory,
     );
@@ -296,7 +294,9 @@ String _instructions(String language) => language == 'zh'
 - `text`：对应的原文。
 - `speakerId`：说话人。
 - `emotion`、`intensity`：schema 支持的情绪和强度。
+- `pace`、`volume`：语速和音量。
 - `note`：简短的声音表演说明。
+- `cues`：说话人发出的非语言声音，例如笑、叹气、抽泣。
 - `isDialogueTag`：是否为可省略的说话提示。
 - `isNonStory`：是否为作者公告、广告等非故事内容。
 
@@ -372,7 +372,9 @@ String _instructions(String language) => language == 'zh'
 ## 表演
 
 - 默认使用 `calm` 和 `mild`；原文有明确依据时再调整。
+- `pace` 和 `volume` 默认 `normal`；原文明确写出慢吞吞、急促、低声、大喊等说话方式时再调整。
 - `note` 简洁描述声音表现，例如低声、迟疑、急促、内心独白。
+- `cues` 默认为空数组。只有原文明确写出说话人笑了、叹气、抽泣、咳嗽、喘气等声音时，才记在发出声音的那条台词上；`position` 为 `before` 表示先出声再说话，`after` 表示说完再出声。例如 `他叹了口气：“算了。”` 中，`“算了。”` 的 `cues` 为 `[{"kind":"sigh","position":"before"}]`。不要凭感觉添加，旁白台词不加。
 - 旁白描述人物生气，不代表旁白本身必须愤怒；分别判断叙述语气和人物情绪。
 
 ## 输出前检查
@@ -393,7 +395,9 @@ Include these fields for every line:
 - `text`: the corresponding source text.
 - `speakerId`: the speaker.
 - `emotion` and `intensity`: values supported by the schema.
+- `pace` and `volume`: how fast and how loudly the line is spoken.
 - `note`: a concise vocal performance instruction.
+- `cues`: non-verbal sounds the speaker makes, such as a laugh, a sigh or a sob.
 - `isDialogueTag`: whether the line is an omissible speech attribution.
 - `isNonStory`: whether the line is non-story content, such as an author announcement or advertisement.
 
@@ -469,7 +473,9 @@ Requests made by characters, in-story letters and diaries, and commentary that s
 ## Performance
 
 - Use `calm` and `mild` by default; adjust only when supported by the source.
+- Use `normal` for `pace` and `volume` by default; adjust only when the source states the manner of speaking, such as drawling, hurried, whispered or shouted.
 - Keep `note` focused on vocal delivery, such as quiet, hesitant, hurried or inner monologue.
+- Leave `cues` empty by default. Add a cue only when the source states that the speaker laughed, sighed, sobbed, coughed, panted or made a similar sound, on the line of the speaker who made it; `position` is `before` when the sound comes before the words and `after` when it follows them. In `He sighed. “Never mind.”`, the line `“Never mind.”` has `cues` `[{"kind":"sigh","position":"before"}]`. Never add cues by feel, and never to narration.
 - Narration describing an angry character need not itself sound angry. Judge the narrator's tone separately from the character's emotion.
 
 ## Final check
@@ -570,6 +576,16 @@ _Alignment _align(String source, Map<String, Object?> response) {
           emotion: Emotion.values.byName(json['emotion'] as String),
           intensity: Intensity.values.byName(json['intensity'] as String),
           note: json['note'] as String,
+          // Answers written for an earlier prompt go without these.
+          pace: Pace.values.byName(json['pace'] as String? ?? 'normal'),
+          volume: Volume.values.byName(json['volume'] as String? ?? 'normal'),
+          cues: [
+            for (final cue in json['cues'] as List? ?? const [])
+              VocalCue(
+                VocalCueKind.values.byName((cue as Map)['kind'] as String),
+                offset: cue['position'] == 'after' ? _afterText : 0,
+              ),
+          ],
         ),
         isDialogueTag: json['isDialogueTag'] as bool,
         isNonStory: json['isNonStory'] as bool,
@@ -594,6 +610,30 @@ _Alignment _align(String source, Map<String, Object?> response) {
     }
   }
   return _Alignment(lines, complete);
+}
+
+/// Marks a cue that follows the words until the line's final range is known.
+const _afterText = 1 << 30;
+
+/// Turns before/after into offsets around the line's words, inside any
+/// whitespace the line carries.
+ScriptLine _placeCues(ScriptLine line, String source) {
+  if (line.direction.cues.isEmpty) return line;
+  final text = line.textIn(source);
+  final before = text.length - text.trimLeft().length;
+  final after = text.trimRight().length;
+  return ScriptLine(
+    start: line.start,
+    end: line.end,
+    direction: line.direction.copyWith(
+      cues: [
+        for (final cue in line.direction.cues)
+          VocalCue(cue.kind, offset: cue.offset >= _afterText ? after : before),
+      ],
+    ),
+    isDialogueTag: line.isDialogueTag,
+    isNonStory: line.isNonStory,
+  );
 }
 
 ScriptLine _range(ScriptLine line, int start, int end) => ScriptLine(
@@ -671,7 +711,33 @@ final _scriptSchema = <String, Object?>{
             'type': 'string',
             'enum': Intensity.values.map((e) => e.name).toList(),
           },
+          'pace': {
+            'type': 'string',
+            'enum': Pace.values.map((e) => e.name).toList(),
+          },
+          'volume': {
+            'type': 'string',
+            'enum': Volume.values.map((e) => e.name).toList(),
+          },
           'note': {'type': 'string'},
+          'cues': {
+            'type': 'array',
+            'items': {
+              'type': 'object',
+              'properties': {
+                'kind': {
+                  'type': 'string',
+                  'enum': VocalCueKind.values.map((e) => e.name).toList(),
+                },
+                'position': {
+                  'type': 'string',
+                  'enum': ['before', 'after'],
+                },
+              },
+              'required': ['kind', 'position'],
+              'additionalProperties': false,
+            },
+          },
           'isDialogueTag': {'type': 'boolean'},
           'isNonStory': {'type': 'boolean'},
         },
@@ -680,7 +746,10 @@ final _scriptSchema = <String, Object?>{
           'speakerId',
           'emotion',
           'intensity',
+          'pace',
+          'volume',
           'note',
+          'cues',
           'isDialogueTag',
           'isNonStory',
         ],
