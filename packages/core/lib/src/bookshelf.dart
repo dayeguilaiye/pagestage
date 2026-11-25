@@ -17,6 +17,13 @@ abstract interface class Bookshelf {
     Future<bool> Function(String title)? confirmReplace,
   });
 
+  /// Imports the file at [path] as [importBook] imports a picked one, for a
+  /// file another app opened in pagestage.
+  Future<ImportOutcome> importPath(
+    String path, {
+    Future<bool> Function(String title)? confirmReplace,
+  });
+
   /// Deletes the book with its chapters, cast, scripts and audio.
   Future<void> deleteBook(String bookId);
 

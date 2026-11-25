@@ -89,11 +89,11 @@ void main() {
       ),
     ]);
     await tester.pump();
-    expect(find.text('导演中 0:14'), findsOneWidget);
+    expect(find.text('分配台词中 0:14'), findsOneWidget);
     // Its clock stops with it, leaving no timer behind.
     _progress(fakes, const []);
     await tester.pumpAndSettle();
-    expect(find.textContaining('导演中'), findsNothing);
+    expect(find.textContaining('分配台词中'), findsNothing);
   });
 
   testWidgets('a chapter being voiced shows which sentences wait', (
@@ -157,43 +157,50 @@ void main() {
     expect(find.text('配音中 0/2'), findsOneWidget);
   });
 
-  testWidgets('generating ahead starts from the first chapter without voice', (
+  /// The book's voice settings, then preparing chapters ahead from there.
+  Future<void> openPrepare(WidgetTester tester) async {
+    await tester.tap(find.text('AI 配音'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('提前准备章节…'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('preparing ahead starts from the first chapter without voice', (
     tester,
   ) async {
     final fakes = await _openBook(tester);
-    await tester.tap(find.text('提前生成'));
-    await tester.pumpAndSettle();
+    await openPrepare(tester);
     expect(find.text('第 2 章'), findsOneWidget);
     expect(find.text('第 6 章'), findsOneWidget);
 
     await tester.tap(find.text('到'));
     await tester.pumpAndSettle();
     final picker = find.byType(PsSheet).last;
-    // Only the profiled chapters are offered.
+    // Chapters not profiled yet are offered too: they are profiled first.
     expect(
       find.descendant(of: picker, matching: find.text('第9章')),
-      findsNothing,
+      findsOneWidget,
     );
     await tester.tap(find.descendant(of: picker, matching: find.text('第8章')));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('生成第 2–8 章'));
+    await tester.tap(find.text('准备第 2–8 章'));
     await tester.pumpAndSettle();
     expect(fakes.generation.prepares, [(_bookId, 2, 8)]);
-    expect(find.text('生成第 2–8 章'), findsNothing);
+    expect(find.text('准备第 2–8 章'), findsNothing);
   });
 
-  testWidgets('without a profiled chapter, generating ahead says why', (
+  testWidgets('a book not profiled at all can be prepared ahead', (
     tester,
   ) async {
     final fakes = await _openBook(
       tester,
       book: _book(profiled: 0, synthesized: 0),
     );
-    await tester.tap(find.text('提前生成'));
+    await openPrepare(tester);
+    expect(find.textContaining('先在演员表里建档'), findsNothing);
+    await tester.tap(find.text('准备第 1–5 章'));
     await tester.pumpAndSettle();
-    expect(find.text('建档范围内的章节才能生成。先在演员表里建档。'), findsOneWidget);
-    expect(find.textContaining('生成第'), findsNothing);
-    expect(fakes.generation.prepares, isEmpty);
+    expect(fakes.generation.prepares, [(_bookId, 1, 5)]);
   });
 }

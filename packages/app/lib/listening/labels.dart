@@ -13,9 +13,37 @@ abstract final class Labels {
         'audioFailed' => l.errorAudioFailed,
         'bookMissing' => l.errorBookMissing,
         'audioChanged' => l.errorAudioChanged,
-        'generationCancelled' => l.errorGenerationCancelled,
         _ => l.errorPlaybackStopped,
       };
+
+  /// The same, short enough for the mini player's one line.
+  static String listeningErrorShort(AppLocalizations l, String code) =>
+      switch (code) {
+        'systemVoiceUnavailable' => l.errorNoSystemVoiceShort,
+        'endOfBook' => l.endOfBook,
+        'chapterUnavailable' => l.errorChapterUnavailableShort,
+        'audioFailed' => l.errorAudioFailedShort,
+        'bookMissing' => l.errorBookMissingShort,
+        'audioChanged' => l.errorAudioChangedShort,
+        _ => l.errorPlaybackStoppedShort,
+      };
+
+  /// A profile's gender tag; empty when unknown, so the row is left out.
+  static String gender(AppLocalizations l, String gender) => switch (gender) {
+    'male' => l.genderMale,
+    'female' => l.genderFemale,
+    _ => '',
+  };
+
+  /// A profile's age band; empty when unknown.
+  static String ageGroup(AppLocalizations l, String age) => switch (age) {
+    'child' => l.ageChild,
+    'teen' => l.ageTeen,
+    'youngAdult' => l.ageYoungAdult,
+    'middleAged' => l.ageMiddleAged,
+    'senior' => l.ageSenior,
+    _ => '',
+  };
 
   /// The end of the book is news, not a failure.
   static bool isEndOfBook(String? code) => code == 'endOfBook';
@@ -30,6 +58,7 @@ abstract final class Labels {
         'edge' => 'Microsoft Edge',
         'bailian' => l.providerBailian,
         'device' => l.voiceEngineDevice,
+        'ming' => l.mingTitle,
         'system' => l.systemVoice,
         _ => provider!,
       };
@@ -65,6 +94,8 @@ abstract final class Labels {
         'responses' => l.protocolResponses,
         'beijing' => l.regionBeijing,
         'singapore' => l.regionSingapore,
+        'global' => l.regionGlobal,
+        'china' => l.regionChina,
         _ => option,
       };
 
@@ -85,7 +116,9 @@ abstract final class Labels {
         'rateLimited' => l.reasonRateLimited,
         'quotaExceeded' => l.reasonQuotaExceeded,
         'network' => l.reasonNetwork,
+        'localSynthesisFailed' => l.reasonLocalSynthesisFailed,
         'consentDeclined' => l.reasonConsentDeclined,
+        'consentNeeded' => l.reasonConsentNeeded,
         'invalidResponse' => l.reasonInvalidResponse,
         'requestRejected' => l.reasonRequestRejected,
         'schemaUnsupported' => l.reasonSchemaUnsupported,

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 /// Mono signed 16-bit PCM. WAV encoding is a transport/storage detail.
@@ -65,6 +66,45 @@ class PcmAudio {
           source.getInt16(i, Endian.little),
       ]),
     );
+  }
+
+  /// Converts the chapter mix to a common clock. Original voice clips keep
+  /// their native sampling rate for replay and cache reuse.
+  PcmAudio atSampleRate(int rate) {
+    if (rate == sampleRate) return this;
+    if (rate <= 0) throw ArgumentError.value(rate, 'rate');
+    final result = Int16List((samples.length * rate / sampleRate).round());
+    // Windowed-sinc interpolation with a low-pass cutoff for downsampling.
+    // The polyphase table keeps the inner loop independent of transcendental math.
+    const radius = 16, phases = 128;
+    final cutoff = math.min(1.0, rate / sampleRate);
+    final filters = List.generate(phases, (phase) {
+      final coefficients = Float64List(radius * 2);
+      var sum = 0.0;
+      for (var i = 0; i < coefficients.length; i++) {
+        final x = i - radius + 1 - phase / phases;
+        final sinc = x == 0
+            ? cutoff
+            : math.sin(math.pi * x * cutoff) / (math.pi * x);
+        coefficients[i] = sinc * (0.5 + 0.5 * math.cos(math.pi * x / radius));
+        sum += coefficients[i];
+      }
+      for (var i = 0; i < coefficients.length; i++) {
+        coefficients[i] /= sum;
+      }
+      return coefficients;
+    });
+    for (var i = 0; i < result.length; i++) {
+      final ticks = i * sampleRate;
+      final start = ticks ~/ rate - radius + 1;
+      final weights = filters[(ticks % rate) * phases ~/ rate];
+      var value = 0.0;
+      for (var j = 0; j < weights.length; j++) {
+        value += samples[(start + j).clamp(0, samples.length - 1)] * weights[j];
+      }
+      result[i] = value.round().clamp(-32768, 32767);
+    }
+    return PcmAudio(samples: result, sampleRate: rate);
   }
 
   Uint8List toWav() {

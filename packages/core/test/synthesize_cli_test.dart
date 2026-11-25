@@ -97,7 +97,7 @@ void main() {
         alice['speakerId'] as String,
         'minimax:English_expressive_narrator',
       ]);
-      final recast = await run(['synthesize', id, '1']);
+      final recast = await run(['synthesize', id, '1', '--mode', 'audiobook']);
       expect(recast['requests'], 1);
       expect(recast['cacheHits'], 3);
       expect(minimax.requests.last.text, contains('Hello!'));

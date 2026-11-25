@@ -50,7 +50,7 @@ void main() {
         changedChapters: const [4, 5],
       ),
     );
-    expect(find.text('《阿Q正传》已更新：新增 3 章，2 章内容有变化'), findsOneWidget);
+    expect(find.text('《阿Q正传》已更新：新增 3 章，另有 2 章内容更新'), findsOneWidget);
     // Still one entry: an update is not a second book.
     expect(find.byType(PsShelfItem), findsOneWidget);
     await _dismissToast(tester);

@@ -38,6 +38,7 @@ class Voice {
     required this.binding,
     this.samplePath,
     this.manuallySelected = false,
+    this.profileSelected = false,
     this.inheritedFromPersonaId,
   });
   final String id;
@@ -46,6 +47,7 @@ class Voice {
   final VoiceBinding binding;
   final String? samplePath;
   final bool manuallySelected;
+  final bool profileSelected;
   final String? inheritedFromPersonaId;
 
   Voice copyWith({
@@ -53,6 +55,7 @@ class Voice {
     VoiceBinding? binding,
     String? samplePath,
     bool? manuallySelected,
+    bool? profileSelected,
   }) => Voice(
     id: id,
     bookId: bookId,
@@ -60,6 +63,7 @@ class Voice {
     binding: binding ?? this.binding,
     samplePath: samplePath ?? this.samplePath,
     manuallySelected: manuallySelected ?? this.manuallySelected,
+    profileSelected: profileSelected ?? this.profileSelected,
     inheritedFromPersonaId: inheritedFromPersonaId,
   );
   Map<String, Object?> toJson() => {
@@ -69,6 +73,7 @@ class Voice {
     'binding': binding.toJson(),
     'samplePath': samplePath,
     'manuallySelected': manuallySelected,
+    if (profileSelected) 'profileSelected': true,
     'inheritedFromPersonaId': inheritedFromPersonaId,
   };
   factory Voice.fromJson(Map<String, Object?> json) => Voice(
@@ -80,6 +85,7 @@ class Voice {
     ),
     samplePath: json['samplePath'] as String?,
     manuallySelected: json['manuallySelected'] as bool? ?? false,
+    profileSelected: json['profileSelected'] as bool? ?? false,
     inheritedFromPersonaId: json['inheritedFromPersonaId'] as String?,
   );
 }

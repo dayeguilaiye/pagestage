@@ -4,6 +4,7 @@ import '../application/contracts.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import '../listening/labels.dart';
+import '../shelf/voice_sheet.dart';
 
 enum VoiceTab { presets, design }
 
@@ -276,7 +277,15 @@ class _VoicePageState extends State<VoicePage> {
     }
     if (presets == null) return const [_Loading()];
     if (presets.isEmpty) {
-      return [_Note(l.presetsEmpty)];
+      // Usually no voice service is on yet: the fix sits right here.
+      return [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: PsSpace.s5),
+          child: SetupGapBanner(gap: VoiceSetupGap.voiceEngine),
+        ),
+        const SizedBox(height: PsSpace.s3),
+        _Note(l.presetsEmpty),
+      ];
     }
     return [
       for (final option in presets)

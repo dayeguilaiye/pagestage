@@ -58,6 +58,9 @@ class FakeListening extends ValueNotifier<ListeningState> implements Listening {
   }
 
   @override
+  Future<void> useSystemVoice() async => calls.add('useSystemVoice');
+
+  @override
   void setSleepAfterChapter(bool enabled) {
     calls.add('setSleepAfterChapter');
     sleepAfterChapter.add(enabled);
@@ -298,6 +301,26 @@ class FakeProviders extends ValueNotifier<ProviderPreferences>
     _replace(engineId, (engine) => _with(engine, on: on));
   }
 
+  /// Where each engine sends book text; engines not listed send nothing.
+  final endpoints = <String, String>{};
+
+  @override
+  Future<String?> endpoint(String engineId) async => endpoints[engineId];
+
+  /// What [test] answers, by engine; absent engines answer fine.
+  final testResults = <String, String?>{};
+  final tests = <ConfigureCall>[];
+
+  @override
+  Future<String?> test(
+    String engineId, {
+    Map<String, String> values = const {},
+    Map<String, String> secrets = const {},
+  }) async {
+    tests.add(ConfigureCall(engineId, values, secrets));
+    return testResults[engineId];
+  }
+
   @override
   Future<void> selectLanguage(String engineId) async {
     selections.add(engineId);
@@ -318,10 +341,52 @@ class FakeConsents extends ValueNotifier<ConsentRequest?> implements Consents {
 
   final responses = <(int, bool)>[];
 
+  /// Agreements given; [request] answers [answer] for anything else.
+  final granted = <ConsentRecord>[];
+  final requests = <ConsentRequest>[];
+  final revoked = <ConsentRecord>[];
+  bool answer = true;
+
   @override
   void respond(int requestId, {required bool accepted}) {
     responses.add((requestId, accepted));
     if (value?.id == requestId) value = null;
+  }
+
+  @override
+  Future<bool> request({
+    String? bookTitle,
+    required String provider,
+    required String endpoint,
+    required String content,
+  }) async {
+    if (granted.any((r) => r.provider == provider && r.endpoint == endpoint)) {
+      return true;
+    }
+    requests.add(
+      ConsentRequest(
+        id: requests.length + 1,
+        bookTitle: bookTitle,
+        provider: provider,
+        endpoint: endpoint,
+        content: content,
+      ),
+    );
+    if (answer) {
+      granted.add(ConsentRecord(provider: provider, endpoint: endpoint));
+    }
+    return answer;
+  }
+
+  @override
+  Future<List<ConsentRecord>> records() async => List.of(granted);
+
+  @override
+  Future<void> revoke(ConsentRecord record) async {
+    revoked.add(record);
+    granted.removeWhere(
+      (r) => r.provider == record.provider && r.endpoint == record.endpoint,
+    );
   }
 }
 
@@ -396,7 +461,6 @@ class FakeGeneration extends ValueNotifier<GenerationState>
     implements Generation {
   FakeGeneration([super.value = const GenerationState()]);
 
-  final responses = <(int, GenerationChoice)>[];
   final saved = <GenerationPreferences>[];
   final resumes = <String>[];
   final modes = <String, BookPerformanceMode>{};
@@ -427,23 +491,70 @@ class FakeGeneration extends ValueNotifier<GenerationState>
   Future<void> savePreferences(GenerationPreferences preferences) async {
     if (saveFailure case final error?) throw error;
     saved.add(preferences);
-    value = GenerationState(
-      preferences: preferences,
-      request: value.request,
-      failures: value.failures,
+    value = GenerationState(preferences: preferences, failures: value.failures);
+  }
+
+  /// What [voice] reports, by book; others use AI voices as the default.
+  final voices = <String, BookVoice>{};
+  final aiChanges = <(String, bool)>[];
+  final stops = <String>[];
+  final profiles = <(String, int)>[];
+  final allows = <String>[];
+
+  /// What [allow] answers.
+  bool allowed = true;
+
+  @override
+  Future<BookVoice> voice(String bookId) async =>
+      voices[bookId] ??
+      BookVoice(
+        bookId: bookId,
+        ai: value.preferences.automatic,
+        enabled: value.preferences.enabled,
+      );
+
+  @override
+  Future<void> setAiVoice(String bookId, bool on) async {
+    aiChanges.add((bookId, on));
+    final old = await voice(bookId);
+    voices[bookId] = BookVoice(
+      bookId: bookId,
+      ai: on,
+      chosen: true,
+      enabled: old.enabled,
+      gap: old.gap,
+      sample: old.sample,
+      profiledThrough: old.profiledThrough,
+      chapterCount: old.chapterCount,
+      profileNeeded: old.profileNeeded,
     );
+    notifyListeners();
+  }
+
+  /// What [usage] reports.
+  var usageReport = const <BookUsage>[];
+
+  /// The example books.
+  var sampleIds = <String>{};
+
+  @override
+  Future<Set<String>> samples() async => sampleIds;
+
+  @override
+  Future<List<BookUsage>> usage() async => usageReport;
+
+  @override
+  Future<bool> allow(String bookId) async {
+    allows.add(bookId);
+    return allowed;
   }
 
   @override
-  void respond(int requestId, GenerationChoice choice) {
-    responses.add((requestId, choice));
-    if (value.request?.id == requestId) {
-      value = GenerationState(
-        preferences: value.preferences,
-        failures: value.failures,
-      );
-    }
-  }
+  Future<void> stopPreparing(String bookId) async => stops.add(bookId);
+
+  @override
+  Future<void> profileThrough(String bookId, int chapter) async =>
+      profiles.add((bookId, chapter));
 
   @override
   Future<BookPerformanceMode> mode(String bookId) async =>

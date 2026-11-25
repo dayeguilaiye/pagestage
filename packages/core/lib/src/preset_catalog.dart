@@ -8,6 +8,7 @@ class VoicePreset {
     required this.id,
     required this.binding,
     required this.languages,
+    this.displayName,
     this.gender = 'unknown',
     this.ageGroup = 'unknown',
     this.description = '',
@@ -21,6 +22,7 @@ class VoicePreset {
     this.tagProvenance = const {},
   });
   final String id;
+  final String? displayName;
   final VoiceBinding binding;
   final List<String> languages;
   final String gender;
@@ -37,6 +39,7 @@ class VoicePreset {
 
   Map<String, Object?> toJson() => {
     'id': id,
+    if (displayName != null) 'name': displayName,
     'binding': binding.toJson(),
     'languages': languages,
     'gender': gender,
@@ -58,8 +61,12 @@ class VoicePreset {
 final List<VoicePreset> defaultVoiceCatalog = List.unmodifiable(
   (jsonDecode(presetCatalogJson) as List).map((item) {
     final json = item as Map;
+    final label = json['providerLabel'] as String? ?? '';
     return VoicePreset(
       id: '${json['provider']}:${json['id']}',
+      // The provider's own name for the voice, such as 花甲奶奶; screens
+      // show it instead of the voice ID.
+      displayName: label.isEmpty ? null : label,
       binding: VoiceBinding(
         provider: json['provider'] as String,
         model: json['model'] as String,

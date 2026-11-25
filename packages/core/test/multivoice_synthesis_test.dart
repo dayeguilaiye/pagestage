@@ -11,6 +11,125 @@ void main() {
   );
   tearDown(() => temp.delete(recursive: true));
 
+  test('pairs spoken chunks across a whitespace-only tail on resume', () async {
+    final first = '文' * 48;
+    final chapter = Chapter(number: 1, title: '章', text: '$first\n　　下一句。');
+    final paired = _PairTts(limit: 48);
+    final synthesizer = Synthesizer(
+      adapters: {'minimax': paired},
+      cacheDirectory: temp,
+    );
+    Future<SynthesisResult> run() => synthesizer.synthesize(
+      chapter: chapter,
+      script: _script(chapter, [
+        const ScriptLine(
+          start: 0,
+          end: 51,
+          direction: Direction(speakerId: 'narrator'),
+        ),
+        const ScriptLine(
+          start: 51,
+          end: 55,
+          direction: Direction(speakerId: 'narrator'),
+        ),
+      ]),
+      language: 'zh',
+      voices: _voices,
+      outputPath: '${temp.path}/chapter.wav',
+    );
+    final result = await run();
+    expect(paired.calls, ['$first|下一句。']);
+    expect(result.utterances.last.end, chapter.text.length);
+    paired.calls.clear();
+    expect((await run()).cacheHits, result.utterances.length);
+    expect(paired.calls, isEmpty);
+  });
+
+  test(
+    'pairs adjacent directed voices and preserves independent cache hits and odd tails',
+    () async {
+      const chapter = Chapter(number: 1, title: 'I', text: 'A.B.C.');
+      final paired = _PairTts();
+      final script = _script(chapter, [
+        for (var i = 0; i < 3; i++)
+          ScriptLine(
+            start: i * 2,
+            end: i * 2 + 2,
+            direction: Direction(speakerId: i == 1 ? 'alice' : 'narrator'),
+          ),
+      ]);
+      final voices = {
+        'narrator': _voices['narrator']!,
+        'alice': const VoiceBinding(
+          provider: 'minimax',
+          model: 'paired',
+          voiceId: 'second',
+        ),
+      };
+      final synthesizer = Synthesizer(
+        adapters: {'minimax': paired},
+        cacheDirectory: temp,
+      );
+      Future<SynthesisResult> run() => synthesizer.synthesize(
+        chapter: chapter,
+        script: script,
+        language: 'en',
+        voices: voices,
+        outputPath: '${temp.path}/chapter.wav',
+      );
+      final first = await run();
+      expect(paired.calls, ['A.|B.', 'C.']);
+      expect(first.utterances.map((u) => u.speakerId), [
+        'narrator',
+        'alice',
+        'narrator',
+      ]);
+      expect(first.requests, 3);
+      await File(first.utterances.first.rawAudioPath).delete();
+      paired.calls.clear();
+      final replay = await run();
+      expect(replay.cacheHits, 2);
+      expect(paired.calls, ['A.']);
+    },
+  );
+
+  test(
+    'mixed voice sample rates keep individual source audio and chapter timing',
+    () async {
+      const chapter = Chapter(number: 1, title: 'I', text: 'A.B.');
+      final first = _FakeTts('minimax');
+      final second = _PairTts();
+      final result =
+          await Synthesizer(
+            adapters: {'minimax': first, 'bailian': second},
+          ).synthesize(
+            chapter: chapter,
+            script: _script(chapter, [
+              const ScriptLine(
+                start: 0,
+                end: 2,
+                direction: Direction(speakerId: 'narrator'),
+              ),
+              const ScriptLine(
+                start: 2,
+                end: 4,
+                direction: Direction(speakerId: 'alice'),
+              ),
+            ]),
+            language: 'en',
+            voices: _voices,
+            outputPath: '${temp.path}/mixed.wav',
+          );
+      expect(
+        PcmAudio.fromWav(
+          await File(result.utterances.last.audioPath).readAsBytes(),
+        ).sampleRate,
+        44100,
+      );
+      expect(result.duration, const Duration(milliseconds: 200));
+    },
+  );
+
   test(
     'passes performance directions and applies source-aware pauses',
     () async {
@@ -302,6 +421,47 @@ void main() {
     },
   );
 
+  for (final (name, direction) in [
+    ('pace', const Direction(speakerId: 'narrator', pace: Pace.slow)),
+    ('volume', const Direction(speakerId: 'narrator', volume: Volume.soft)),
+    (
+      'cue',
+      const Direction(
+        speakerId: 'narrator',
+        cues: [VocalCue(VocalCueKind.sigh)],
+      ),
+    ),
+  ]) {
+    test('merging narration preserves a change in $name', () async {
+      const chapter = Chapter(number: 1, title: 'I', text: 'A. B.');
+      final adapter = _FakeTts('minimax');
+      final result = await Synthesizer(adapters: {'minimax': adapter})
+          .synthesize(
+            chapter: chapter,
+            script: _script(chapter, [
+              const ScriptLine(
+                start: 0,
+                end: 3,
+                direction: Direction(speakerId: 'narrator'),
+              ),
+              ScriptLine(start: 3, end: 5, direction: direction),
+            ]),
+            language: 'en',
+            voices: _voices,
+            mergeAdjacentNarrator: true,
+            outputPath: '${temp.path}/chapter.wav',
+          );
+      expect(result.utterances.map((u) => u.lineIndices), [
+        [0],
+        [1],
+      ]);
+      expect(adapter.requests.map((r) => r.text), ['A. ', 'B.']);
+      expect(adapter.requests.last.delivery.pace, direction.pace);
+      expect(adapter.requests.last.delivery.volume, direction.volume);
+      expect(adapter.requests.last.delivery.cues, direction.cues);
+    });
+  }
+
   test(
     'rejects incomplete scripts and missing bindings before requesting audio',
     () async {
@@ -378,6 +538,7 @@ class _FakeTts implements TtsAdapter {
     emotions: Emotion.values.toSet(),
     intensity: true,
     instruction: true,
+    cues: VocalCueKind.values.toSet(),
   );
   @override
   Future<TtsAudio> synthesize(TtsRequest request) async {
@@ -386,5 +547,33 @@ class _FakeTts implements TtsAdapter {
       audio: PcmAudio(samples: Int16List.fromList(List.filled(240, 1200))),
       characters: request.text.runes.length,
     );
+  }
+}
+
+class _PairTts extends _FakeTts implements PairedTtsAdapter {
+  _PairTts({this.limit = 99}) : super('minimax');
+  final int limit;
+  final calls = <String>[];
+  @override
+  TtsCapabilities capabilitiesFor(VoiceBinding binding) => TtsCapabilities(
+    supportsPronunciation: false,
+    maxCharacters: limit,
+    pairedSynthesis: true,
+  );
+  TtsAudio _audio() =>
+      TtsAudio(audio: PcmAudio(samples: Int16List(441), sampleRate: 44100));
+  @override
+  Future<TtsAudio> synthesize(TtsRequest request) async {
+    calls.add(request.text);
+    return _audio();
+  }
+
+  @override
+  Future<(TtsAudio, TtsAudio)> synthesizePair(
+    TtsRequest first,
+    TtsRequest second,
+  ) async {
+    calls.add('${first.text}|${second.text}');
+    return (_audio(), _audio());
   }
 }

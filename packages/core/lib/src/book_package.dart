@@ -189,7 +189,10 @@ class BookPackages {
           });
         }
       }
-      addJson('book.json', book.toJson());
+      addJson('book.json', {
+        ...book.toJson(),
+        'sourcePath': p.basename(book.sourcePath),
+      });
       addJson('cast.json', cast.toJson());
       addJson('voices.json', {
         'voices': voices,
@@ -334,15 +337,39 @@ class BookPackages {
       if (existing != null && !replace) {
         throw BookPackageConflict(book.id, existing['title'] as String);
       }
+      final performanceJson = manifest['performance'] as Map? ?? const {};
+      final performance = Performance(
+        mode: PerformanceMode.values.byName(
+          performanceJson['mode'] as String? ?? 'audiobook',
+        ),
+        expressiveness: Expressiveness.values.byName(
+          performanceJson['expressiveness'] as String? ?? 'natural',
+        ),
+      );
+      final casting = voiceJson['casting'] as Map?;
+      final savedCasting = casting == null
+          ? null
+          : <String, Object?>{
+              'exclusiveCount': casting['exclusiveCount'] as int? ?? 20,
+              // Which engines to cast from is this device's choice.
+              'providers': null,
+              'exclusiveSpeakerIds':
+                  (casting['exclusiveSpeakerIds'] as List? ?? const [])
+                      .cast<String>()
+                      .toList(),
+              'warnings': const <String>[],
+            };
 
       final repository = AudioRepository(store);
       final directory = repository.bookDirectory(book.id);
       final installed = <ChapterAudio>[];
-      final written = <File>[];
+      await directory.parent.create(recursive: true);
+      final scratch = await directory.parent.createTemp('.package-');
+      final staged = await Directory(p.join(scratch.path, 'audio')).create();
+      final backup = Directory(p.join(scratch.path, 'previous'));
 
-      Future<void> install() async {
-        if (existing != null) await _clear(book.id, directory);
-        await directory.create(recursive: true);
+      // Read and verify every incoming file before touching the current book.
+      Future<void> prepare() async {
         for (final entry in (manifest['audio'] as List? ?? const [])) {
           final row = Map<String, Object?>.from(entry as Map);
           final name = row['file'] as String;
@@ -369,9 +396,7 @@ class BookPackages {
               )) {
             continue;
           }
-          final file = File(
-            p.join(directory.path, 'package-${p.basename(name)}'),
-          );
+          final file = File(p.join(staged.path, 'package-${p.basename(name)}'));
           final content = entries[name];
           if (content == null) continue;
           final sink = OutputFileStream(file.path);
@@ -380,7 +405,6 @@ class BookPackages {
           } finally {
             await sink.close();
           }
-          written.add(file);
           if ((await sha256.bind(file.openRead()).first).toString() !=
               row['sha256']) {
             throw const FormatException('Corrupt package audio.');
@@ -392,76 +416,80 @@ class BookPackages {
               mode: playlist.mode,
               scriptHash: playlist.scriptHash,
               complete: true,
-              path: file.path,
+              path: p.join(directory.path, p.basename(file.path)),
               imported: true,
               utterances: [
                 for (final utterance in playlist.utterances)
                   SynthesizedUtterance.fromJson({
                     ...utterance.toJson(),
-                    'audioPath': file.path,
-                    'rawAudioPath': file.path,
+                    'audioPath': p.join(directory.path, p.basename(file.path)),
+                    'rawAudioPath': p.join(
+                      directory.path,
+                      p.basename(file.path),
+                    ),
                     'cacheHit': false,
                   }),
               ],
             ),
           );
         }
-        final performance = manifest['performance'] as Map? ?? const {};
-        final casting = voiceJson['casting'] as Map?;
-        await store.transaction(() async {
-          await store.put('books', book.id, {
-            ...book.toJson(),
-            'sourcePath': 'package:${p.basename(path)}',
-            'importedAt':
-                existing?['importedAt'] ??
-                DateTime.now().microsecondsSinceEpoch,
-          });
-          await CastRepository(store).save(cast.copyWith(speakers: speakers));
-          for (final voice in voices) {
-            await store.put('voices', voice.id, voice.toJson());
+      }
+
+      Future<void> install() async {
+        var movedPrevious = false;
+        var movedIncoming = false;
+        try {
+          if (await directory.exists()) {
+            await directory.rename(backup.path);
+            movedPrevious = true;
           }
-          if (casting != null) {
-            // Which engines to cast from is this device's choice.
-            await store.put('casting', book.id, {
-              'exclusiveCount': casting['exclusiveCount'] as int? ?? 20,
-              'providers': null,
-              'exclusiveSpeakerIds':
-                  (casting['exclusiveSpeakerIds'] as List? ?? const [])
-                      .cast<String>(),
-              'warnings': const <String>[],
+          await staged.rename(directory.path);
+          movedIncoming = true;
+          await store.transaction(() async {
+            if (existing != null) await _clear(book.id);
+            await store.put('books', book.id, {
+              ...book.toJson(),
+              'sourcePath': 'package:${p.basename(path)}',
+              'importedAt':
+                  existing?['importedAt'] ??
+                  DateTime.now().microsecondsSinceEpoch,
             });
-          }
-          for (final script in scripts.values) {
-            await ScriptRepository(store).save(script);
-          }
-          await PerformanceRepository(store).save(
-            book.id,
-            Performance(
-              mode: PerformanceMode.values.byName(
-                performance['mode'] as String? ?? 'audiobook',
-              ),
-              expressiveness: Expressiveness.values.byName(
-                performance['expressiveness'] as String? ?? 'natural',
-              ),
-            ),
-          );
-          for (final chapterAudio in installed) {
-            await repository.save(chapterAudio);
-          }
-        });
+            await CastRepository(store).save(cast.copyWith(speakers: speakers));
+            for (final voice in voices) {
+              await store.put('voices', voice.id, voice.toJson());
+            }
+            if (savedCasting != null) {
+              await store.put('casting', book.id, savedCasting);
+            }
+            for (final script in scripts.values) {
+              await ScriptRepository(store).save(script);
+            }
+            await PerformanceRepository(store).save(book.id, performance);
+            for (final chapterAudio in installed) {
+              await repository.save(chapterAudio);
+            }
+          });
+        } catch (_) {
+          if (movedIncoming) await directory.delete(recursive: true);
+          if (movedPrevious) await backup.rename(directory.path);
+          rethrow;
+        }
+        // The committed database now refers only to the new audio directory.
+        if (await backup.exists()) await backup.delete(recursive: true);
       }
 
       try {
+        await prepare();
         if (existing != null && edit != null) {
           await edit(book.id, install);
         } else {
           await install();
         }
-      } catch (_) {
-        for (final file in written) {
-          if (await file.exists()) await file.delete();
+      } finally {
+        // Preserve a backup if restoring it failed at the filesystem boundary.
+        if (!await backup.exists() && await scratch.exists()) {
+          await scratch.delete(recursive: true);
         }
-        rethrow;
       }
       return BookPackageImport(
         book,
@@ -489,31 +517,28 @@ class BookPackages {
 
   /// Removes what an earlier copy of the book generated, keeping the
   /// reader's place and settings.
-  Future<void> _clear(String bookId, Directory directory) async {
-    if (await directory.exists()) await directory.delete(recursive: true);
-    await store.transaction(() async {
-      for (final collection in const [
-        'scripts',
-        'audio',
-        'voices',
-        'voiceCandidates',
-        'tasks',
-      ]) {
-        for (final row in await store.list(collection)) {
-          final owner = collection == 'voiceCandidates'
-              ? (row['voice'] as Map)['bookId']
-              : row['bookId'];
-          if (owner != bookId) continue;
-          final key = switch (collection) {
-            'scripts' => '$bookId:${row['chapterNumber']}',
-            'audio' => '$bookId:${row['chapter']}:${row['mode']}',
-            _ => row['id'] as String,
-          };
-          await store.delete(collection, key);
-        }
+  Future<void> _clear(String bookId) async {
+    for (final collection in const [
+      'scripts',
+      'audio',
+      'voices',
+      'voiceCandidates',
+      'tasks',
+    ]) {
+      for (final row in await store.list(collection)) {
+        final owner = collection == 'voiceCandidates'
+            ? (row['voice'] as Map)['bookId']
+            : row['bookId'];
+        if (owner != bookId) continue;
+        final key = switch (collection) {
+          'scripts' => '$bookId:${row['chapterNumber']}',
+          'audio' => '$bookId:${row['chapter']}:${row['mode']}',
+          _ => row['id'] as String,
+        };
+        await store.delete(collection, key);
       }
-      await store.delete('casting', bookId);
-    });
+    }
+    await store.delete('casting', bookId);
   }
 
   static Map<String, ArchiveFile> _entries(InputFileStream input) {

@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
+import 'package:flutter/foundation.dart';
 import 'package:pagestage_core/pagestage_core.dart';
 
 import '../playback/just_audio_engine.dart';
@@ -13,12 +14,14 @@ import 'voice_controller.dart';
 import 'audio_storage_controller.dart';
 import 'contracts.dart';
 import 'listening_controller.dart';
+import 'ming.dart';
 import 'listening_handler.dart';
 import 'package_controller.dart';
 import 'provider_store.dart';
 import 'system_speech.dart';
 
 export 'contracts.dart';
+export 'system_speech.dart' show SystemSpeech, SystemVoice;
 
 class AppServices {
   AppServices({
@@ -32,6 +35,8 @@ class AppServices {
     this.diagnostics,
     this.packages,
     this.scripts,
+    this.ming,
+    this.speech,
     Future<void> Function()? onClose,
   }) : _onClose = onClose;
   final Listening listening;
@@ -44,6 +49,10 @@ class AppServices {
   final Diagnostics? diagnostics;
   final Packages? packages;
   final Scripts? scripts;
+  final MingDevice? ming;
+
+  /// The phone's own voice, for choosing which of its voices reads.
+  final SystemSpeech? speech;
   final Future<void> Function()? _onClose;
   bool _closed = false;
 
@@ -52,16 +61,36 @@ class AppServices {
     Diagnostics? diagnostics,
     AppEngines? engines,
   }) async {
+    final ming = engines == null && Platform.isAndroid
+        ? await MingDevice.open()
+        : null;
+    if (ming != null) {
+      engines = AppEngines(
+        voice: TtsEngines([
+          ...standardTtsEngines.all.where((engine) => engine.id != 'device'),
+          MingTtsEngine(ming),
+        ]),
+      );
+    }
     final providers = await ProviderStore.open(
       storage.store,
       const PlatformSecretStore(),
       engines: engines,
     );
+    var ready = ming?.value.ready ?? false;
+    void updateMingReadiness() {
+      if (ming == null || ming.value.ready == ready) return;
+      ready = ming.value.ready;
+      unawaited(providers.refreshReadiness());
+    }
+
+    ming?.addListener(updateMingReadiness);
     final consents = ConsentBroker(storage.store);
+    final speech = PlatformSystemSpeech(AudioRepository(storage.store));
     final listening = ListeningController(
       store: storage.store,
       engine: JustAudioEngine(),
-      speech: PlatformSystemSpeech(AudioRepository(storage.store)),
+      speech: speech,
     );
     await listening.restoreSettings();
     final casts = await CastController.open(
@@ -74,10 +103,20 @@ class AppServices {
     final generation = await GenerationController.open(
       storage.store,
       casts.scheduler,
+      providers: providers,
     );
     listening.attachGeneration(generation);
     final pauses = casts.scheduler.events.listen((event) {
       final task = event.task;
+      if (Platform.isAndroid) {
+        debugPrintSynchronously(
+          'PageStageGeneration ${task.kind.name} chapter=${task.chapter} '
+          'state=${task.status.name} utterances=${task.completedUtterances}'
+          '${event.utterance == null ? '' : ' cached=${event.utterance!.cacheHit}'}'
+          '${task.provider == null ? '' : ' provider=${task.provider}'}'
+          '${task.reason == null ? '' : ' reason=${task.reason!.name}'}',
+        );
+      }
       if (task.status != TaskStatus.paused) return;
       unawaited(
         diagnostics?.recordPause(
@@ -153,6 +192,8 @@ class AppServices {
         storage.store,
         directory: Directory('${storage.directory.path}/exports'),
       ),
+      ming: ming,
+      speech: speech,
       scripts: ScriptController(
         storage.store,
         storage.library,
@@ -160,6 +201,8 @@ class AppServices {
             generation.prepare(bookId, first: chapter, through: chapter),
       ),
       onClose: () async {
+        ming?.removeListener(updateMingReadiness);
+        ming?.dispose();
         storage.library.editBook = null;
         await pauses.cancel();
         await interruptions.cancel();

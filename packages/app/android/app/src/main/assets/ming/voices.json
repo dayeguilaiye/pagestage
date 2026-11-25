@@ -1,0 +1,542 @@
+[
+  {
+    "id": "ps_douya",
+    "name": "豆芽",
+    "description": "小女孩，音高偏高，字头像小铃铛一样脆，句尾上挑，好奇心很重。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "child",
+    "styles": [
+      "bright",
+      "clear"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "cdb28422de0eb0f6fd2f8f1adf6b793c4017a591092261102fd4a8c51651aa02"
+  },
+  {
+    "id": "ps_mili",
+    "name": "米粒",
+    "description": "小女孩，嗓音细软，有一点鼻音，慢半拍才开口，像在认真藏一个秘密。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "child",
+    "styles": [
+      "gentle",
+      "sweet"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "57a3369c5869531bcaf3aaf074abbdee1b518ca12a7f0f6aa355cef812e98247"
+  },
+  {
+    "id": "ps_shitou",
+    "name": "石头",
+    "description": "小男孩，圆厚的童声，口齿朴实，一字一顿，有股倔劲。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "child",
+    "styles": [
+      "clear",
+      "calm"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "e9125e18e7bf6992c5407b55913622fd2363e92071d4dc50c42374134b56a188"
+  },
+  {
+    "id": "ps_doudou",
+    "name": "豆豆",
+    "description": "小男孩，轻薄尖亮的童嗓，说话连珠炮，重音会蹦起来，顽皮爱抢话。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "child",
+    "styles": [
+      "bright",
+      "humorous"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "5cd469b94db8e437a01f38ebeff821ea1553c196b2e61cd726966663f660d30d"
+  },
+  {
+    "id": "ps_chuzhi",
+    "name": "初枝",
+    "description": "少女，明亮靠前的共鸣，咬字很快，语调跳跃，想到什么就说什么。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "teen",
+    "styles": [
+      "bright",
+      "expressive"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "d39760712237aa15b367a16cd2dda34729028efc9ef9c42d9b04cbb5ad7bbc07"
+  },
+  {
+    "id": "ps_wanxing",
+    "name": "晚星",
+    "description": "少女，细而略带气声，音量轻，停顿多，句尾轻轻收住，内敛敏感。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "teen",
+    "styles": [
+      "gentle",
+      "calm"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "5279c57b14d05e03df817f1906bcdbb083ccf6338b9d63b0d54cf57019b7f789"
+  },
+  {
+    "id": "ps_qingque",
+    "name": "青雀",
+    "description": "少女，中低音，有一点沙，吐字短而干脆，直爽，带一点不服输的劲。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "teen",
+    "styles": [
+      "clear",
+      "authoritative"
+    ],
+    "narratorCandidate": false,
+    "designPrompt": "十七岁女生，音域中低，声音干涩微哑，靠口腔后部发声。像个短跑运动员，回答总是简短直接，收尾果断，个性利落。",
+    "speakerSha256": "dfb9fab3b844967e489c5d23a07e4e69e938b76852fc5005df18b681ea15b699"
+  },
+  {
+    "id": "ps_hechuan",
+    "name": "禾川",
+    "description": "少年，清亮单薄的中高音，语速平缓，咬字干净，像认真解释一道题。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "teen",
+    "styles": [
+      "clear",
+      "gentle"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "050ce985e3b4ed1146524617d9f29203fe48fa7114481e0614d45137a9ed21f4"
+  },
+  {
+    "id": "ps_xiaochi",
+    "name": "小驰",
+    "description": "少年，声音响亮微哑，气息冲在前面，说起来又快又带笑，热心好动。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "teen",
+    "styles": [
+      "bright",
+      "expressive"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "5b76e7271943461964465136e0111c703d29e77b1747454af742aae80ad86b43"
+  },
+  {
+    "id": "ps_qingsong",
+    "name": "青松",
+    "description": "少年，刚变声的中低音，带一点青涩的颗粒，话少，句末低低收住。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "teen",
+    "styles": [
+      "deep",
+      "calm"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "b2cd42886afb59e8b27ea6c57520ac831776ae1fbde8fc8c85eef2a0c9c98224"
+  },
+  {
+    "id": "ps_liuli",
+    "name": "琉璃",
+    "description": "青年女声，明亮清透，齿音利落，语速偏快，像思路敏捷的调查员。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "clear",
+      "bright"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "1ef0cec36fd702705ed8149cab6298bb3620542dc2da1348cf79e721ec6fb145"
+  },
+  {
+    "id": "ps_shuyu",
+    "name": "舒雨",
+    "description": "青年女声，绵软温润的中音，贴近耳边，自然换气，耐心又体贴。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "gentle",
+      "calm"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "fe716b9e33e1486d3b3a2efca8891730eeefa0bf4ebd10f5c3595bf37f0dd346"
+  },
+  {
+    "id": "ps_wutong",
+    "name": "梧桐",
+    "description": "青年女低音，胸腔共鸣厚实，音量收敛，吐字沉着，带疏离感。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "deep",
+      "calm"
+    ],
+    "narratorCandidate": false,
+    "designPrompt": "二十八岁女中低音，声线深暗，胸腔共鸣浓，有丝绒般的厚度。语速慢，音量轻，语气克制，距离感明显，说话的尾音平平落下。",
+    "speakerSha256": "7c12609f4fdbe793ccc723601c032b64bf3e846d45072382e49f7af03260e041"
+  },
+  {
+    "id": "ps_taozhi",
+    "name": "桃枝",
+    "description": "青年女声，声音圆甜，鼻腔共鸣鲜明，有笑意，轻快俏皮，擅长打趣。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "sweet",
+      "humorous"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "1206a5c7e07bd25e521a82a55315f1fe48afbae5e881766888bbaf799aa553f9"
+  },
+  {
+    "id": "ps_xubai",
+    "name": "叙白",
+    "description": "青年女声，中音清澈柔韧，字头分明，长句换气匀，温和克制，适合叙事。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "clear",
+      "calm",
+      "gentle"
+    ],
+    "narratorCandidate": true,
+    "speakerSha256": "4e31cb1377837f05e6e9fa9629a6f59e1c45afa87eae99626ec4068f358de437"
+  },
+  {
+    "id": "ps_chenshi",
+    "name": "晨石",
+    "description": "青年男中音，结实明亮，咬字短促有力，语速快，行动派，带干劲。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "bright",
+      "clear"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "55ac25b71d02b49e6b97b3d1077f845eb0c4396dd11d8106af151e8e70d9c6ff"
+  },
+  {
+    "id": "ps_songmo",
+    "name": "松墨",
+    "description": "青年男低音，胸腔共鸣深，声音暗而平滑，语速舒缓，情绪内收。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "deep",
+      "calm"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "66d46c7830447031933a4819087529c968957f2ccbb952ca682599c2bdf6867a"
+  },
+  {
+    "id": "ps_anfeng",
+    "name": "岸风",
+    "description": "青年男声，偏低而轻柔，有呼吸感，说话斯文，句间常留半拍。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "gentle",
+      "calm"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "309e25ccdfcd1578e00eb0d14925f7381d3553e78a9cc6ab8fd7bd24ac940873",
+    "designPrompt": "青年男声，偏高而轻柔，有呼吸感，说话斯文，句间常留半拍。"
+  },
+  {
+    "id": "ps_lumiao",
+    "name": "路遥",
+    "description": "青年男声，明亮靠鼻腔，有少许沙感，重音多变，语速活络，自带幽默感。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "humorous",
+      "expressive"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "6bd7034dc7d60d81c4031952327e0d353caf604f13f5a10844665b1c31ee4615"
+  },
+  {
+    "id": "ps_hengzhou",
+    "name": "衡舟",
+    "description": "青年男声，声底偏低，字音清晰，节奏均匀，像把事情娓娓道来的讲述者。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "youngAdult",
+    "styles": [
+      "clear",
+      "calm"
+    ],
+    "narratorCandidate": true,
+    "designPrompt": "三十岁男性播讲员，明净自然的中音，声带振动轻快，有清晰的口腔共鸣。像给听众读短篇故事，稳稳分出句子的层次，重音准确，节奏舒展。",
+    "speakerSha256": "9da78de0ffa0e2d8119e8798c6a9c0b2cfb108072dd9b2185c9a70ef3183bd5c"
+  },
+  {
+    "id": "ps_jinheng",
+    "name": "锦衡",
+    "description": "中年女声，中低音扎实，共鸣集中，语速适中，句句收得利落，有指挥感。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "middleAged",
+    "styles": [
+      "authoritative",
+      "clear"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "ee30598ac7c0c2567fcf34996db8173c3ca29b253e052a0f7e7e45d00b135c7f"
+  },
+  {
+    "id": "ps_nuanhe",
+    "name": "暖禾",
+    "description": "中年女声，声音浑圆温厚，带松弛的笑意，慢慢说话，有长辈的亲切感。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "middleAged",
+    "styles": [
+      "gentle",
+      "calm"
+    ],
+    "narratorCandidate": true,
+    "speakerSha256": "5076b962ecbfa98f3a1a0f7faefd72a0e9e0d2305176513c53cc4ded705d14c0"
+  },
+  {
+    "id": "ps_lamei",
+    "name": "腊梅",
+    "description": "中年女声，嗓子略沙，声音靠前、穿透力强，语速快，有爽朗的市井气。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "middleAged",
+    "styles": [
+      "expressive",
+      "bright"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "aee8f0926148b6387ff87e905035d112db9c75884529353eaff47c6e9e6beb5f"
+  },
+  {
+    "id": "ps_suyan",
+    "name": "素言",
+    "description": "中年女声，音色冷净，中音偏低，口齿极清楚，语调起伏小，适合冷静的旁白。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "middleAged",
+    "styles": [
+      "clear",
+      "calm"
+    ],
+    "narratorCandidate": true,
+    "designPrompt": "四十多岁的成熟女性纪录片播讲员，音质清冷干净，字头稍硬，中音清晰明亮，长句气流均匀，陈述事实时节奏非常平稳。像在安静的录音室近距离叙述。",
+    "speakerSha256": "e3a91247cae2311f5c82407a6e72638890629d23f6af21aafc163dc80a857aff"
+  },
+  {
+    "id": "ps_yanqiao",
+    "name": "岩峤",
+    "description": "中年男低音，声底宽厚，胸腔共鸣强，字落得重，说话有威严和分量。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "middleAged",
+    "styles": [
+      "deep",
+      "authoritative"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "6a0fc8a32820dff82c1e2c18bce641e50d9fbfc05443489cd80a2858810d264b"
+  },
+  {
+    "id": "ps_shulin",
+    "name": "书林",
+    "description": "中年男声，温润饱满，咬字舒展，停连有层次，像耐心讲故事的老师。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "middleAged",
+    "styles": [
+      "gentle",
+      "clear",
+      "calm"
+    ],
+    "narratorCandidate": true,
+    "speakerSha256": "b93e5a878460426576dd95c0473bb2af655b093100ee07eec91017f7c432aa40"
+  },
+  {
+    "id": "ps_laodu",
+    "name": "老杜",
+    "description": "中年男声，粗粝带沙，发音靠喉，话短、节奏紧，像直来直去的工匠。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "middleAged",
+    "styles": [
+      "deep",
+      "clear"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "3a81fd3fa88cfc8f6b366a9c94f7868b1c97477e4c1fec523f9d66ecd957119b"
+  },
+  {
+    "id": "ps_qiaosheng",
+    "name": "桥生",
+    "description": "中年男声，声底偏低，鼻腔共鸣明显，抑扬顿挫，话里常带一点诙谐。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "middleAged",
+    "styles": [
+      "humorous",
+      "expressive"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "74f34b989a3c10f5b26c6fe933f2e356df5e61d43ecfb1e8036426880e7d3403",
+    "designPrompt": "中年男声，音高稍高，鼻腔共鸣明显，抑扬顿挫，话里常带一点诙谐。"
+  },
+  {
+    "id": "ps_yinhua",
+    "name": "银花",
+    "description": "老年女声，声音细柔，有轻微颤音，字间留出气口，亲昵温柔。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "senior",
+    "styles": [
+      "gentle",
+      "sweet"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "b490dffe295d9d2941b23a7408ed429756e0fe6f1f90dc48373bcf31364922e4",
+    "designPrompt": "老年女声，偏高而细，有轻微颤音，字间留出气口，亲昵温柔。"
+  },
+  {
+    "id": "ps_shuangsang",
+    "name": "霜桑",
+    "description": "老年女低音，沙哑有颗粒，胸声结实，节奏慢而稳，像见过世面的当家人。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "ageGroup": "senior",
+    "styles": [
+      "deep",
+      "authoritative"
+    ],
+    "narratorCandidate": false,
+    "speakerSha256": "bead9853ce2230d702a72bcb0bb1ddfcff1b79d3f5dbe9aa24cb6406a6f553e5"
+  },
+  {
+    "id": "ps_gumu",
+    "name": "古木",
+    "description": "老年男低音，苍老浑厚，气息悠长，字与字之间有停顿，像回忆往事的长者。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "senior",
+    "styles": [
+      "deep",
+      "calm"
+    ],
+    "narratorCandidate": true,
+    "speakerSha256": "4efe99dbf8ca6cb38c25c2cecd228199df6018fb0a89378149e3e33ee62e0bca"
+  },
+  {
+    "id": "ps_zhuweng",
+    "name": "竹翁",
+    "description": "老年男声，声底偏低，音色带亮边，略带鼻音和颤动，节奏活泛，是个爱开玩笑的老先生。",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "ageGroup": "senior",
+    "styles": [
+      "humorous",
+      "bright"
+    ],
+    "narratorCandidate": false,
+    "designPrompt": "七十岁男性，像爱讲故事的老曲艺演员，嗓音细亮，音调偏高，带一点鼻腔颤鸣。说话有小波折，像笑着逗孙子，声音灵巧，句尾常往上扬。",
+    "speakerSha256": "3827d1bc07fbf388d85ca3b9b7889d6196b33c288acbeb86af22d555bb142300"
+  },
+  {
+    "id": "edge_xiaoxiao",
+    "description": "晓晓 · 普通话女声",
+    "languages": [
+      "zh"
+    ],
+    "gender": "female",
+    "legacy": true
+  },
+  {
+    "id": "edge_yunxi",
+    "description": "云希 · 普通话男声",
+    "languages": [
+      "zh"
+    ],
+    "gender": "male",
+    "legacy": true
+  }
+]

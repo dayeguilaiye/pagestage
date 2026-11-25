@@ -82,6 +82,31 @@ class MemorySpeech implements SystemSpeech {
     return 'offline-$bookId-${requests.length}.wav';
   }
 
+  final prefetched = <String>[];
+  final chosen = <(String, String?)>[];
+  final previews = <(String, String)>[];
+
+  @override
+  Future<void> prefetch(String bookId, String text, String language) async =>
+      prefetched.add(text);
+
+  @override
+  Future<List<SystemVoice>> voices(String language) async => [
+    SystemVoice(
+      name: language == 'zh' ? 'Tingting' : 'Samantha',
+      locale: language == 'zh' ? 'zh-CN' : 'en-US',
+      selected: true,
+    ),
+  ];
+
+  @override
+  Future<void> choose(String language, String? name) async =>
+      chosen.add((language, name));
+
+  @override
+  Future<void> preview(String language, String name) async =>
+      previews.add((language, name));
+
   @override
   Future<void> close() async {}
 }

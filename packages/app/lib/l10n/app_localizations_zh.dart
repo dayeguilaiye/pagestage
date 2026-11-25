@@ -39,7 +39,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get player => '播放器';
 
   @override
-  String get aiVoice => 'AI 合成';
+  String get aiVoice => 'AI 配音';
 
   @override
   String get nextLine => '下一句';
@@ -67,7 +67,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String chapterDirecting(String elapsed) {
-    return '导演中 $elapsed';
+    return '分配台词中 $elapsed';
   }
 
   @override
@@ -81,7 +81,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get prepareChapters => '提前生成';
+  String get prepareChapters => '提前准备章节';
 
   @override
   String get prepareFrom => '从';
@@ -91,23 +91,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get prepareNote =>
-      '先为这些章节导演、配音，听的时候直接播放。正文会发给你设置的大模型和配音服务；已经生成好的章节会跳过。';
+      '先为这些章节准备好配音，听的时候直接播放，也能离线听。正文会发给你设置的大模型和配音服务；已经准备好的章节会跳过。';
 
   @override
   String prepareRange(int first, int through) {
-    return '生成第 $first–$through 章';
+    return '准备第 $first–$through 章';
   }
 
   @override
   String prepareOne(int chapter) {
-    return '生成第 $chapter 章';
+    return '准备第 $chapter 章';
   }
 
   @override
-  String get prepareNeedsProfile => '建档范围内的章节才能生成。先在演员表里建档。';
-
-  @override
-  String get prepareFailed => '没能开始生成，请稍后再试。';
+  String get prepareFailed => '没能开始准备，请稍后再试。';
 
   @override
   String get shelfTitle => '书架';
@@ -166,7 +163,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String bookUpdated(String title, int added, int changed) {
-    return '《$title》已更新：新增 $added 章，$changed 章内容有变化';
+    return '《$title》已更新：新增 $added 章，另有 $changed 章内容更新';
   }
 
   @override
@@ -202,7 +199,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get deleteBookBody => '这本书的章节、演员表、剧本和音频都会删掉，不能恢复。';
+  String get deleteBookBody => '这本书的章节、角色、台词和音频都会删掉，不能恢复。';
 
   @override
   String get deleteBookConfirm => '删除这本书';
@@ -256,10 +253,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get playbackFixtureMissing => '请先准备本地播放素材，再运行播放原型。';
 
   @override
-  String get systemVoice => '系统朗读';
+  String get systemVoice => '系统声音';
 
   @override
-  String get systemVoiceNote => '这一章还没有生成配音，先用手机自带的声音朗读。';
+  String get systemVoiceNote => '这本书用手机自带的声音朗读。';
 
   @override
   String chapterNumber(int number) {
@@ -387,21 +384,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get providerBailian => '阿里云百炼';
 
   @override
-  String get cast => '演员表';
+  String get cast => '角色与声音';
 
   @override
-  String get castLoadFailed => '没能读取演员表';
+  String get castLoadFailed => '没能读取角色';
 
   @override
   String castMembers(int count) {
-    return '演员 · $count 位';
+    return '角色 · $count 位';
   }
 
   @override
-  String get castEmpty => '还没有演员。建档后，书里的说话人和他们的声音会列在这里。';
+  String get castEmpty => '还没有找到角色。开启 AI 配音后，听到哪里就分析到哪里，角色会陆续出现在这里。';
 
   @override
-  String get castEmptyWorking => '正在建档，找到的说话人会陆续出现在这里。';
+  String get castEmptyWorking => '正在分析角色，找到的会陆续出现在这里。';
 
   @override
   String get castProvisional => '暂定';
@@ -431,16 +428,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get profileEmpty => '还没有档案信息。';
 
   @override
-  String get profiling => '建档';
-
-  @override
-  String get chaptersProfiled => '章已建档';
+  String get profiling => '分析角色';
 
   @override
   String get statusQueued => '排队中';
 
   @override
-  String get statusRunning => '建档中';
+  String get statusRunning => '分析中';
 
   @override
   String get statusPaused => '已暂停';
@@ -450,16 +444,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String profilingQueuedTo(int chapter) {
-    return '排队中，将建档到第 $chapter 章';
+    return '排队中，将分析到第 $chapter 章';
   }
 
   @override
   String profilingRunningTo(int chapter) {
-    return '正在建档到第 $chapter 章';
+    return '正在分析到第 $chapter 章';
   }
 
   @override
-  String get profilingPausedTitle => '建档暂停了';
+  String get profilingPausedTitle => '角色分析暂停了';
 
   @override
   String profilingPausedBody(String provider, String reason) {
@@ -468,7 +462,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String resumeProfilingTo(int chapter) {
-    return '继续建档到第 $chapter 章';
+    return '继续分析到第 $chapter 章';
   }
 
   @override
@@ -480,41 +474,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chapterListSeparator => '、';
 
   @override
-  String get profilingActionFailed => '没能开始建档，请稍后再试。';
+  String get profilingActionFailed => '没能开始分析，请稍后再试。';
 
   @override
-  String get profiledWholeBook => '全书都已建档。';
+  String get profiledWholeBook => '全书的角色都分析好了。';
 
   @override
-  String get profileThrough => '建档到';
+  String get profileThrough => '分析到';
 
   @override
-  String get startProfiling => '开始建档';
+  String get startProfiling => '开始分析';
 
   @override
-  String get extendProfiling => '继续往后建档';
+  String get extendProfiling => '继续往后分析';
 
   @override
-  String get profilingNote =>
-      '建档会把所选章节的正文发给你设置的大模型，用来找出说话人、为他们挑选声音。发送前会先征得你的同意。';
+  String get profilingNote => '会把所选章节的正文发给你设置的大模型，用来找出角色、为他们挑选声音。';
 
   @override
-  String get reasonMissingKey => '还没有填写密钥，请到设置里补上';
+  String get reasonMissingKey => '还没有填写密钥';
 
   @override
-  String get reasonUnauthorized => '密钥无效或没有权限，请到设置里检查';
+  String get reasonUnauthorized => '密钥无效或没有权限';
 
   @override
-  String get reasonRateLimited => '请求太频繁，过一会儿再继续';
+  String get reasonRateLimited => '请求太频繁';
 
   @override
-  String get reasonQuotaExceeded => '账户额度用完了';
+  String get reasonQuotaExceeded => '账户额度用完了，充值后点「继续配音」';
 
   @override
-  String get reasonNetwork => '网络连接中断';
+  String get reasonNetwork => '网络连不上';
 
   @override
-  String get reasonConsentDeclined => '你取消了发送';
+  String get reasonConsentDeclined => '你没有同意发送正文';
 
   @override
   String get reasonInvalidResponse => '模型的回复格式不对，可以稍后继续或换个模型';
@@ -536,6 +529,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get reasonInterrupted => '应用关闭时中断了';
 
   @override
+  String get reasonLocalSynthesisFailed => '本机引擎未能合成这段配音';
+
+  @override
   String get reasonUnknown => '服务暂时不可用';
 
   @override
@@ -544,7 +540,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get consentChapterTextAndCast => '导演需要所选章节的正文和这本书的演员表，用来分配台词和声音。';
+  String get consentChapterTextAndCast => '为了分析角色、分配台词和配音，你听到的章节正文和书里的角色会发给它。';
 
   @override
   String get consentVoiceSample => '生成试听需要一段示例文本和角色的声音描述。';
@@ -562,7 +558,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get consentContentLabel => '内容';
 
   @override
-  String get consentChapterTextAndCastName => '章节正文与演员表';
+  String get consentChapterTextAndCastName => '章节正文与角色';
 
   @override
   String get consentVoiceSampleName => '声音样本文本';
@@ -577,34 +573,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get consentAccept => '同意并发送';
 
   @override
-  String generationTitle(String chapter) {
-    return '$chapter还没有配音';
-  }
-
-  @override
-  String get generationBody => '可以现在生成 AI 配音，边听边生成；也可以先用手机自带的声音朗读。';
-
-  @override
-  String generationOutOfRange(String chapter) {
-    return '$chapter还没有建档，暂时不能生成配音。把建档延伸到这一章后就可以生成；现在也可以先用手机自带的声音朗读。';
-  }
-
-  @override
-  String get generateNow => '生成配音';
-
-  @override
   String get useSystemVoice => '用系统声音朗读';
 
   @override
-  String extendProfilingTo(String chapter) {
-    return '把建档延伸到$chapter';
-  }
+  String get waitingForSynthesis => '正在准备 AI 配音，好了就开始';
 
   @override
-  String get waitingForSynthesis => '正在生成接下来的配音，好了就继续播放';
-
-  @override
-  String get generationPausedTitle => '配音生成暂停了';
+  String get generationPausedTitle => 'AI 配音暂停了';
 
   @override
   String get generationResumeFailed => '没能继续生成，请稍后再试';
@@ -615,34 +590,13 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get resumeGeneration => '继续生成';
+  String get resumeGeneration => '继续配音';
 
   @override
-  String get reasonVoiceUnavailable => '分配的声音已不可用，请在演员表里换一个';
+  String get reasonVoiceUnavailable => '分配的声音已不可用';
 
   @override
   String get errorAudioChanged => '音频已更新（清理过或换了声音），点播放重新准备。';
-
-  @override
-  String get errorGenerationCancelled => '已取消生成，点播放可以重新选择。';
-
-  @override
-  String get performanceMode => '演绎方式';
-
-  @override
-  String get modeAudiobook => '有声书';
-
-  @override
-  String get modeDrama => '广播剧';
-
-  @override
-  String get modeAudiobookNote => '旁白完整朗读原文，包括「他说」「她问道」这类提示。';
-
-  @override
-  String get modeDramaNote => '角色直接开口，跳过「他说」这类说话提示。';
-
-  @override
-  String get modeSaveFailed => '没能保存演绎方式，请再试一次';
 
   @override
   String get changeVoice => '换音色';
@@ -652,7 +606,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String changeVoiceTitle(String name) {
-    return '给$name换声音';
+    return '给「$name」换声音';
   }
 
   @override
@@ -682,7 +636,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get presetsLoadFailed => '没能读取预设音色';
 
   @override
-  String get presetsEmpty => '开启的声音引擎里没有适合这本书语言的预设音色。';
+  String get presetsEmpty => '开启的配音服务里没有适合这本书语言的声音。';
 
   @override
   String get designProvider => '设计服务商';
@@ -713,7 +667,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String voiceChanged(String name) {
-    return '已为$name换上新声音';
+    return '已为「$name」换上新声音';
   }
 
   @override
@@ -757,59 +711,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get setupTitle => '先配置大模型';
 
   @override
-  String get setupBody => '建档和导演要用你自己的大模型账户。';
+  String get setupBody => '分析角色和分配台词要用你自己的大模型账户。';
 
   @override
   String get setupAction => '配置大模型';
 
   @override
-  String get generationSection => '边听边生成';
+  String get generationSectionNote => '只在收听时进行，静默阅读不会触发。';
 
   @override
-  String get generationSectionNote =>
-      '只在收听时生效，静默阅读不会触发。合成提前量不会超过导演提前量，设为 0 即关闭。';
+  String get autoGenerate => '新书默认用 AI 配音';
 
   @override
-  String get autoGenerate => '自动生成配音';
-
-  @override
-  String get autoGenerateNote => '没有配音的章节直接生成，不再询问';
-
-  @override
-  String get directingAhead => '导演提前量';
-
-  @override
-  String get directingAheadNote => '先写好后面几章的剧本';
-
-  @override
-  String get synthesisAhead => '合成提前量';
-
-  @override
-  String get synthesisAheadNote => '先生成后面几章的配音';
+  String get autoGenerateNote => '每本书也可以在它的配音设置里单独开关。';
 
   @override
   String get aheadUnit => '章';
 
   @override
-  String get fewerDirectingAhead => '减少导演提前量';
-
-  @override
-  String get moreDirectingAhead => '增加导演提前量';
-
-  @override
-  String get fewerSynthesisAhead => '减少合成提前量';
-
-  @override
-  String get moreSynthesisAhead => '增加合成提前量';
-
-  @override
   String get generationSettingsFailed => '没能保存生成设置，请再试一次';
 
   @override
-  String get castingSection => '选角';
+  String get castingSection => '角色声音';
 
   @override
-  String get exclusiveVoices => '专属音色';
+  String get exclusiveVoices => '独享声音的角色数';
 
   @override
   String exclusiveVoicesValue(int count) {
@@ -817,10 +743,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get exclusiveVoicesNote => '台词最多的角色各有专属音色，其余共用群演音色。';
+  String get exclusiveVoicesNote => '台词最多的几个角色各有自己的声音，其余角色共用几种群演声音。';
 
   @override
-  String get exclusiveVoicesRecastNote => '修改后为已建档的书重新选角，换过或设计的音色不变。';
+  String get exclusiveVoicesRecastNote => '修改后会给已分析过的书重新分配声音；你换过或设计的声音不变。';
 
   @override
   String get fewerVoices => '减少专属音色';
@@ -829,21 +755,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get moreVoices => '增加专属音色';
 
   @override
-  String get recast => '重新选角';
+  String get recast => '重新分配声音';
 
   @override
   String recastDone(int count) {
-    return '已按 $count 个专属音色重新选角';
+    return '已按 $count 个独享声音重新分配';
   }
 
   @override
-  String get recastFailed => '没能重新选角，请再试一次';
+  String get recastFailed => '没能重新分配声音，请再试一次';
 
   @override
   String get appearanceSection => '外观';
 
   @override
-  String get storageSection => '存储';
+  String get storageSection => '存储与用量';
 
   @override
   String get storage => '存储空间';
@@ -881,13 +807,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get storageEmpty => '还没有占用空间的书';
 
   @override
-  String get storageCountNote => '按书统计正文、剧本、演员表和音频文件；数据库的索引和日志由所有书共用，不计入。';
+  String get storageCountNote => '按书统计正文、台词、角色和音频文件；数据库的索引和日志由所有书共用，不计入。';
 
   @override
   String get clearAudio => '清理音频';
 
   @override
-  String get clearAudioNote => '清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。';
+  String get clearAudioNote => '清理只删除生成的音频、试听和缓存；正文、台词和角色都会保留，之后播放时再按需重新配音。';
 
   @override
   String clearAudioTitle(String title) {
@@ -896,7 +822,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String clearAudioBody(String size) {
-    return '将释放 $size。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。';
+    return '将释放 $size。正文、台词和角色会保留；再听这本书时，会按需重新配音。';
   }
 
   @override
@@ -953,7 +879,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get licenses => '开源许可';
 
   @override
-  String get llmPageNote => '建档和导演都由它完成：找出说话人，决定每句台词由谁来念、用什么语气。';
+  String get llmPageNote => '它负责找出书里的角色、决定每句台词由谁来念、用什么语气。';
 
   @override
   String get connectionSection => '连接';
@@ -984,25 +910,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get modelsSection => '模型';
 
   @override
-  String get profileModel => '建档模型';
+  String get profileModel => '分析模型';
 
   @override
-  String get directorModel => '导演模型';
+  String get directorModel => '台词模型';
 
   @override
   String get modelHint => '模型名称';
 
   @override
-  String get sameAsProfileModel => '与建档模型相同';
+  String get sameAsProfileModel => '与分析模型相同';
 
   @override
-  String get modelsNote => '建档模型分析人物、挑选声音；导演模型逐句分配台词和语气，留空则与建档模型相同。';
+  String get modelsNote => '分析模型找出人物、挑选声音；台词模型逐句分配台词和语气，留空则与分析模型相同。';
 
   @override
   String get minimaxPageNote => '为角色配音，也可以按描述设计新音色。';
 
   @override
-  String get minimaxKeyNote => '使用 MiniMax 国际版（minimax.io）的密钥。';
+  String get minimaxKeyNote =>
+      '国内版密钥来自 minimaxi.com，国际版来自 minimax.io，两边的密钥不能混用。';
 
   @override
   String get bailianPageNote => '为角色配音。北京地域还可以按描述设计新音色。';
@@ -1047,7 +974,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteKeyTitle => '删除这个密钥？';
 
   @override
-  String get deleteLlmKeyBody => '删除后，建档和导演会暂停，直到重新填写密钥。';
+  String get deleteLlmKeyBody => '删除后，分析角色和分配台词会暂停，直到重新填写密钥；已配好的章节照常播放。';
 
   @override
   String get deleteVoiceKeyBody => '删除后，用这家服务商音色的角色无法生成配音，直到重新填写密钥或换音色。';
@@ -1065,7 +992,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get saved => '已保存';
 
   @override
-  String get saveFailed => '没能保存';
+  String get saveFailed => '没能保存，请再试一次';
 
   @override
   String get saveFailedBody => '设置没有改变。检查填写的内容后再试一次。';
@@ -1080,7 +1007,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get keepEditing => '继续编辑';
 
   @override
-  String get llmSection => '建档与导演';
+  String get llmSection => '分析角色与台词';
 
   @override
   String get voiceSection => '配音';
@@ -1104,10 +1031,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get turnOnEdge => '开启 Microsoft Edge';
 
   @override
-  String get reasonProviderDisabled => '这家配音服务商已在设置里关闭';
+  String get reasonProviderDisabled => '这家服务已在设置里关闭';
 
   @override
-  String get reasonNoVoiceProvider => '还没有开启配音服务商，请到设置里打开一个';
+  String get reasonNoVoiceProvider => '没有开启支持本书语言的配音服务';
 
   @override
   String offProviderTitle(String provider) {
@@ -1178,7 +1105,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get engineNotInstalledNote => '这个引擎在手机上直接运行，需要先安装它的模型。';
 
   @override
-  String get llmSectionNote => '没有大模型也能听：导入别人分享的剧本包或有声包，不需要再导演。';
+  String get llmSectionNote => '没有大模型也能听：导入别人分享的剧本包或有声包。';
 
   @override
   String get voiceSectionCloud => '配音 · 云端';
@@ -1187,7 +1114,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get voiceSectionDevice => '配音 · 本机';
 
   @override
-  String get voiceSectionDeviceNote => '本机引擎在手机上合成，正文不离开设备。';
+  String get voiceSectionDeviceNote => '本机引擎在手机上配音，正文不离开设备。';
 
   @override
   String get traitEmotion => '情绪';
@@ -1213,7 +1140,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get engineAbilities => '演出能力';
 
   @override
-  String get engineAbilitiesNote => '导演只写一份剧本。每个引擎演出它做得到的部分，做不到的换成接近的效果或省略。';
+  String get engineAbilitiesNote => '台词只写一份。每个配音服务演出它做得到的部分，做不到的换成接近的效果或省略。';
 
   @override
   String get engineAbilitiesPlain => '只分角色朗读';
@@ -1255,7 +1182,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get replaceBookBody => '书架上已经有这本书。导入会替换它的演员表、剧本和音频，收听进度保留。';
+  String get replaceBookBody => '书架上已经有这本书。导入会替换它的角色、台词和音频，收听进度保留。';
 
   @override
   String get replaceBookConfirm => '替换';
@@ -1273,7 +1200,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String shareScriptNote(int count) {
-    return '原文、演员表和 $count 章剧本。对方用自己的声音配音，不用再跑大模型。';
+    return '原文、角色和 $count 章台词。对方用自己的声音配音，不用再跑大模型。';
   }
 
   @override
@@ -1288,7 +1215,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareAudioNone => '还没有配好音的章节。';
 
   @override
-  String get shareNothing => '还没有可以分享的剧本。先为几章导演或配音。';
+  String get shareNothing => '还没有可以分享的内容。先听几章，等它们配好音。';
 
   @override
   String get sharePreparing => '正在打包…';
@@ -1303,37 +1230,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareLoadFailed => '没能读取这本书的剧本和音频';
 
   @override
-  String get expressiveness => '表现力';
+  String get expressiveness => '情绪';
 
   @override
-  String get expressivenessPlain => '平实';
+  String get expressivenessPlain => '平淡';
 
   @override
   String get expressivenessNatural => '自然';
 
   @override
-  String get expressivenessDramatic => '戏剧';
+  String get expressivenessDramatic => '夸张';
 
   @override
   String get expressivenessPlainNote => '只分角色朗读，不带情绪和语气词。';
 
   @override
-  String get expressivenessNaturalNote => '按导演写的情绪和语气演出。';
+  String get expressivenessNaturalNote => '按台词里的情绪和语气演。';
 
   @override
-  String get expressivenessDramaticNote => '情绪比导演写的再强一档。';
-
-  @override
-  String get expressivenessSaveFailed => '没能保存表现力，请再试一次';
+  String get expressivenessDramaticNote => '情绪再强一档。';
 
   @override
   String changeVoiceOf(String name) {
-    return '换$name的声音';
+    return '换「$name」的声音';
   }
 
   @override
   String reassignLine(String name) {
-    return '这句不是$name说的';
+    return '这句不是「$name」说的';
   }
 
   @override
@@ -1347,12 +1271,542 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String reassigned(String name) {
-    return '已改为$name';
+    return '已改为「$name」说的';
   }
 
   @override
   String get reassignFailed => '没能修改，请再试一次';
 
   @override
-  String get speakersLoadFailed => '没能读取演员表';
+  String get speakersLoadFailed => '没能读取角色';
+
+  @override
+  String get mingTitle => 'Ming 离线配音';
+
+  @override
+  String get mingPending => '待初始化';
+
+  @override
+  String get mingDescription => '内置 32 种普通话音色，覆盖儿童到老年，也有适合旁白的声音。初始化一次即可使用全部音色。';
+
+  @override
+  String get mingBeforeInit => '首次使用请初始化，并保持应用在前台。';
+
+  @override
+  String get mingReady => '初始化完成，可以配音。';
+
+  @override
+  String get mingCopying => '正在复制并校验模型文件…';
+
+  @override
+  String mingCompiling(String module) {
+    return '正在准备$module…';
+  }
+
+  @override
+  String get mingPrefill => '文本预填充';
+
+  @override
+  String get mingStep => '单句语言模型';
+
+  @override
+  String get mingFlow => '单句语音生成';
+
+  @override
+  String get mingAgg => '声学特征聚合';
+
+  @override
+  String get mingDec => '音频解码';
+
+  @override
+  String get mingFlowPair => '双句语音生成';
+
+  @override
+  String get mingStepPair => '双句语言模型';
+
+  @override
+  String get mingStorageError => '模型文件准备失败。请检查剩余空间后重试。';
+
+  @override
+  String get mingInitError => '模块初始化中断，可从已完成的进度继续。';
+
+  @override
+  String get mingInitialize => '初始化';
+
+  @override
+  String get mingRetry => '继续初始化';
+
+  @override
+  String get mingPreview => '试听双人对话';
+
+  @override
+  String get mingActionError => '操作未完成，请再试一次。';
+
+  @override
+  String get fallbackNote => 'AI 配音没能及时准备好，这一章先用系统声音，下一章自动换回。';
+
+  @override
+  String get systemVoiceForNowNote => 'AI 配音暂时用不了，这一章先用系统声音朗读。';
+
+  @override
+  String get turnOnAiVoice => '开启 AI 配音';
+
+  @override
+  String waitingWithStatus(String status) {
+    return '正在准备本章：$status';
+  }
+
+  @override
+  String get listenWithSystemVoice => '先用系统声音听';
+
+  @override
+  String get miniWaiting => '正在准备 AI 配音…';
+
+  @override
+  String get listenFromStart => '从头再听';
+
+  @override
+  String get errorNoSystemVoiceShort => '手机上没有朗读声音';
+
+  @override
+  String get errorChapterUnavailableShort => '这一章打不开';
+
+  @override
+  String get errorAudioFailedShort => '这一段播放不了';
+
+  @override
+  String get errorBookMissingShort => '这本书已不在书架上';
+
+  @override
+  String get errorAudioChangedShort => '音频已更新，点播放继续';
+
+  @override
+  String get errorPlaybackStoppedShort => '播放停了，点播放重试';
+
+  @override
+  String get chapterProfiling => '分析角色中';
+
+  @override
+  String get chapterListening => '正在听';
+
+  @override
+  String get chapterVoiced => '已有 AI 配音';
+
+  @override
+  String get generationPausedNote => '暂停期间用系统声音朗读，收听不受影响。';
+
+  @override
+  String profilingPausedLine(String provider, String reason) {
+    return '分析角色 · $provider：$reason';
+  }
+
+  @override
+  String checkProviderSettings(String provider) {
+    return '检查$provider设置';
+  }
+
+  @override
+  String get resumeAfterFixNote => '改好后会自动继续。';
+
+  @override
+  String get retryNow => '立即重试';
+
+  @override
+  String get retryingSoon => '稍后会自动重试。';
+
+  @override
+  String get reviewAndAgree => '查看并同意';
+
+  @override
+  String get chooseVoices => '去换声音';
+
+  @override
+  String get useSystemVoiceForBook => '这本书改用系统声音';
+
+  @override
+  String get reasonConsentNeeded => '还没同意把正文发给它';
+
+  @override
+  String consentSetupTitle(String provider) {
+    return '允许把书的正文发给$provider？';
+  }
+
+  @override
+  String get consentScopeNote => '同意一次，所有书都按这个设置发送；随时可以在 设置 › 隐私 里撤回。';
+
+  @override
+  String get consentAgree => '同意';
+
+  @override
+  String get listeningSection => '收听';
+
+  @override
+  String get aiVoicesEnabled => 'AI 配音';
+
+  @override
+  String get aiVoicesEnabledNote => '关闭后所有书都用系统声音，不会再发送任何正文。';
+
+  @override
+  String get prepareAheadSetting => '提前准备';
+
+  @override
+  String get prepareAheadSettingNote => '听书时先准备好后面几章；设为 0 只准备正在听的一章。';
+
+  @override
+  String get fewerAhead => '少准备一章';
+
+  @override
+  String get moreAhead => '多准备一章';
+
+  @override
+  String get voiceSettings => '配音设置';
+
+  @override
+  String get voiceSettingsFailed => '没能读取这本书的配音设置';
+
+  @override
+  String get aiVoiceForBook => 'AI 多角色配音';
+
+  @override
+  String get aiVoiceForBookNote =>
+      '每个角色用不同的声音，听到哪里准备到哪里。正文会发给你在设置里配置的服务商；关闭后用系统声音，已配好的章节照常播放。';
+
+  @override
+  String get aiVoicesOffEverywhere => 'AI 配音已在设置里关闭';
+
+  @override
+  String get openSettings => '去设置';
+
+  @override
+  String get readDialogueTags => '念出「他说」这类提示';
+
+  @override
+  String get readDialogueTagsNote => '关闭后角色直接开口，跳过说话提示，更像广播剧。';
+
+  @override
+  String get performanceChangeNote =>
+      '改动只影响这本书。已配好的章节会在下次收听时按新设置重新配音，会再次调用配音服务；正在播放的这一章先听完。';
+
+  @override
+  String get prepareAhead => '提前准备章节…';
+
+  @override
+  String get prepareAheadNote => '比如出门前先准备好，离线也能听。';
+
+  @override
+  String get stopPreparing => '停止准备';
+
+  @override
+  String get stopPreparingNote => '取消排队中的章节；正在听的时候，接下来的一两章仍会准备。';
+
+  @override
+  String get castShort => '角色';
+
+  @override
+  String get castRowNote => '每个角色是谁、用什么声音';
+
+  @override
+  String get sampleVoicedTitle => '示例书已经配好音';
+
+  @override
+  String get sampleVoicedBody => '它的设置不能更改。导入你自己的书，就能用自己的服务商配音。';
+
+  @override
+  String get voiceStatusSample => '示例 · 已配好音';
+
+  @override
+  String get voiceStatusTurnOn => '开启 AI 多角色配音';
+
+  @override
+  String voiceStatusReadyThrough(int chapter) {
+    return '已准备到第 $chapter 章';
+  }
+
+  @override
+  String voiceStatusVoicedCount(int count) {
+    return '已配好 $count 章';
+  }
+
+  @override
+  String get voiceStatusAsYouListen => '听到哪里准备到哪里';
+
+  @override
+  String get gapLanguageModelTitle => '还差一个大模型账户';
+
+  @override
+  String get gapLanguageModelBody => 'AI 配音要先用大模型分析角色、分配台词。设置好之前用系统声音朗读。';
+
+  @override
+  String get gapVoiceTitle => '还差一个配音服务';
+
+  @override
+  String get gapVoiceBody => '至少开启一家配音服务。Microsoft Edge 免费，不用密钥。';
+
+  @override
+  String profileNeededTitle(int chapter) {
+    return '从第 $chapter 章用 AI 配音，要先分析前面的角色';
+  }
+
+  @override
+  String profileNeededBody(int from, int through) {
+    return '这会把第 $from–$through 章的正文发给大模型，可能要一段时间；在那之前用系统声音朗读。';
+  }
+
+  @override
+  String get profileNeededAction => '开始分析';
+
+  @override
+  String get jumpToChapter => '跳到…';
+
+  @override
+  String get profilingNotStarted => '还没有分析角色';
+
+  @override
+  String profilingStatusLine(int chapter, int count) {
+    return '已分析到第 $chapter 章 · 共 $count 章';
+  }
+
+  @override
+  String get profilingAuto => '听到哪里分析到哪里，不用手动操作。';
+
+  @override
+  String get profileMore => '提前分析更多章节…';
+
+  @override
+  String laterCharacters(int count) {
+    return '后面章节登场的 $count 位角色';
+  }
+
+  @override
+  String get showLaterCharacters => '显示（可能剧透）';
+
+  @override
+  String get hideLaterCharacters => '收起';
+
+  @override
+  String get profileFirstChapter => '登场';
+
+  @override
+  String get genderMale => '男';
+
+  @override
+  String get genderFemale => '女';
+
+  @override
+  String get ageChild => '儿童';
+
+  @override
+  String get ageTeen => '少年';
+
+  @override
+  String get ageYoungAdult => '青年';
+
+  @override
+  String get ageMiddleAged => '中年';
+
+  @override
+  String get ageSenior => '老年';
+
+  @override
+  String get startupFailedTitle => 'pagestage 没能打开';
+
+  @override
+  String get startupFailedBody =>
+      '书和设置都还在。可以再试一次；如果反复出现，请导出诊断报告发给我们，报告里没有书的内容和密钥。';
+
+  @override
+  String get keysUnavailableTitle => '读取不到保存的密钥';
+
+  @override
+  String get keysUnavailableBody =>
+      '系统钥匙串暂时不可用，AI 配音先用不了；书照常可以读，也能用系统声音听。重启手机后再试，或重新填写密钥。';
+
+  @override
+  String get regionGlobal => '国际版';
+
+  @override
+  String get regionChina => '国内版';
+
+  @override
+  String get presetSection => '服务商';
+
+  @override
+  String get presetService => '用哪家的大模型';
+
+  @override
+  String get presetBailian => '阿里云百炼（通义千问）';
+
+  @override
+  String get presetCustom => '自定义';
+
+  @override
+  String get presetCustomNote =>
+      '兼容 OpenAI 接口、支持结构化输出（JSON Schema）的服务都可以，自己填写地址和模型。';
+
+  @override
+  String presetConsoleNote(String console) {
+    return '地址、协议和推荐模型已填好，只需在 $console 创建一个 API Key 粘贴到下面。';
+  }
+
+  @override
+  String get shareBailianKey => '同时用这个密钥开启百炼配音';
+
+  @override
+  String get shareBailianKeyNote => '百炼的同一个密钥也能配音（北京地域），不用再填一次。';
+
+  @override
+  String get testConnection => '测试连接';
+
+  @override
+  String get testConnectionNote => '用一次很小的请求试试能不能用，不会发送书的内容。';
+
+  @override
+  String get testConnectionOk => '连接正常，可以使用。';
+
+  @override
+  String get testUnauthorized => '密钥不对或没有权限：检查是否复制完整，地域或国内版/国际版是否选对。';
+
+  @override
+  String get testSchemaUnsupported =>
+      '这个模型不支持结构化输出（JSON Schema）。换一个支持的模型，或选上面的预设。';
+
+  @override
+  String get testRequestRejected => '服务商拒绝了请求：检查接口地址和模型名称是否正确。';
+
+  @override
+  String get testQuota => '账户余额不足，充值后再试。';
+
+  @override
+  String get testMissing => '还缺密钥或模型名称。';
+
+  @override
+  String get testRateLimited => '请求太频繁，过一会儿再试。';
+
+  @override
+  String get testNetwork => '连不上：检查网络和接口地址。';
+
+  @override
+  String get usage => '用量';
+
+  @override
+  String get usageRowNote => '每本书用了多少大模型和配音额度';
+
+  @override
+  String get usageNote => '数字来自服务商自己的回报，按它们的单位计；具体费用以服务商账单为准。';
+
+  @override
+  String get usageEmpty => '还没有用过任何付费服务。';
+
+  @override
+  String get usageLoadFailed => '没能读取用量';
+
+  @override
+  String get usageEarlier => '早期用量（未按书记录）';
+
+  @override
+  String get usageDeletedBook => '已删除的书';
+
+  @override
+  String usageTokens(String provider, String count) {
+    return '$provider $count tokens';
+  }
+
+  @override
+  String usageCharacters(String provider, String count) {
+    return '$provider $count 字';
+  }
+
+  @override
+  String get usageNothingBilled => '没有计费用量';
+
+  @override
+  String get privacy => '隐私';
+
+  @override
+  String get privacyRowNote => '书的正文会发给谁，随时可以撤回';
+
+  @override
+  String get privacyIntro =>
+      '书只存在这台手机上。开启 AI 配音后，你听到的章节正文和书里的角色会发给你设置的大模型和配音服务，用来分析角色、分配台词和配音；密钥加密保存在本机，只发给对应的服务商。用系统声音朗读时，什么都不会发送。';
+
+  @override
+  String get consentsSection => '已同意发送正文的服务';
+
+  @override
+  String get consentsNote => '撤回后，需要它的 AI 配音会暂停，用系统声音朗读，直到你再次同意。';
+
+  @override
+  String get consentsEmpty => '还没有同意发送给任何服务';
+
+  @override
+  String get revokeConsent => '撤回';
+
+  @override
+  String get consentRevoked => '已撤回';
+
+  @override
+  String get privacyLoadFailed => '没能读取';
+
+  @override
+  String get systemVoicePageNote => '没有 AI 配音的书和章节用它朗读。点一下试听并选用。';
+
+  @override
+  String get systemVoiceRowNote => '没有 AI 配音时用手机自带的声音朗读，可以选一个更好听的。';
+
+  @override
+  String get systemVoiceChinese => '中文';
+
+  @override
+  String get systemVoiceEnglish => '英文';
+
+  @override
+  String get systemVoiceNone => '没有可用的声音';
+
+  @override
+  String get systemVoiceDownloadNote =>
+      '在系统设置 › 辅助功能 › 朗读内容 › 声音 里下载「增强」或「高品质」语音，听起来会自然很多。';
+
+  @override
+  String get voiceQualityEnhanced => '增强';
+
+  @override
+  String get voiceQualityPremium => '高品质';
+
+  @override
+  String get continueListening => '继续听';
+
+  @override
+  String get sampleBookMeta => '示例 · 已配好音';
+
+  @override
+  String get importFailedDismiss => '知道了';
+
+  @override
+  String bookUpdatedAdded(String title, int added) {
+    return '《$title》新增了 $added 章';
+  }
+
+  @override
+  String bookUpdatedChanged(String title, int changed) {
+    return '《$title》有 $changed 章内容更新';
+  }
+
+  @override
+  String get chapterShort => '章';
+
+  @override
+  String get lineShort => '句';
+
+  @override
+  String bookUsageLine(String summary) {
+    return '本书已用：$summary。数字来自服务商的回报。';
+  }
+
+  @override
+  String auditionNeedsProvider(String provider) {
+    return '试听要用到$provider，它还没设置好';
+  }
+
+  @override
+  String get auditionNeedsProviderBody => '这个声音在已配好的章节里还没出现过，需要用它现场生成一段。';
 }

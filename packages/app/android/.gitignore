@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Pinned model and vendor binaries staged for the Android distribution.
+ming_*/src/main/assets/ming/
+app/src/main/jniLibs/arm64-v8a/

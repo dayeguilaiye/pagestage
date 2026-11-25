@@ -91,7 +91,7 @@ class ProviderRequestQueue {
 }
 
 /// Applies the shared queue at the paid operation boundary, before HTTP work.
-class ScheduledTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
+class ScheduledTtsAdapter implements PairedTtsAdapter, VoiceDesignAdapter {
   ScheduledTtsAdapter(this.delegate, this.queue);
   final TtsAdapter delegate;
   final ProviderRequestQueue queue;
@@ -106,6 +106,14 @@ class ScheduledTtsAdapter implements TtsAdapter, VoiceDesignAdapter {
   @override
   Future<TtsAudio> synthesize(TtsRequest request) =>
       queue.run(() => delegate.synthesize(request));
+
+  @override
+  Future<(TtsAudio, TtsAudio)> synthesizePair(
+    TtsRequest first,
+    TtsRequest second,
+  ) => queue.run(
+    () => (delegate as PairedTtsAdapter).synthesizePair(first, second),
+  );
 
   @override
   Future<DesignedVoice> design(VoiceDesignRequest request) {

@@ -84,6 +84,51 @@ void main() {
     },
   );
 
+  test('synthesis can ask for its chapters to be profiled first', () async {
+    // Cast on demand from the voices in use, as the app's catalog does.
+    final s = scheduler = await Scheduler.open(
+      store: store,
+      profileLlm: profile,
+      directorLlm: director,
+      ttsAdapters: {'minimax': tts},
+      voiceCatalog: () async => [
+        for (final preset in defaultVoiceCatalog)
+          if (preset.binding.provider == 'minimax') preset,
+      ],
+    );
+    await expectLater(
+      s.enqueue(book.id, TaskKind.synthesize, first: 2, through: 2),
+      throwsStateError,
+    );
+    await s.enqueue(
+      book.id,
+      TaskKind.synthesize,
+      first: 2,
+      through: 2,
+      profile: true,
+    );
+    await s.idle;
+    expect(profile.chapters, [1, 2]);
+    expect(director.chapters, [2]);
+    expect((await AudioRepository(store).get(book.id, 2))!.complete, isTrue);
+  });
+
+  test('listening lookahead profiles ahead when asked', () async {
+    await Profiler(store, profile).profile(book, throughChapter: 1);
+    await Casting(store).recommend(book, providers: {'minimax'});
+    profile.chapters.clear();
+    final s = await open();
+    await s.reportListening(book.id, chapter: 1);
+    await s.idle;
+    expect(director.chapters, isEmpty, reason: 'lookahead stops at profiling');
+    await s.reportListening(book.id, chapter: 1, profile: true);
+    await s.idle;
+    expect(profile.chapters, [2, 3]);
+    expect(director.chapters, [2, 3]);
+    expect((await AudioRepository(store).get(book.id, 2))!.complete, isTrue);
+    await s.reportListening(null);
+  });
+
   test('profiling resumes chapter checkpoints after recreation', () async {
     var s = await open();
     s.events.listen((event) {

@@ -163,7 +163,15 @@ void main() {
       progress: 0.5,
     );
     await pumpApp(tester, MemoryBookshelf(books: [_book]), fakes);
-    expect(find.text('听到第 2 章'), findsOneWidget);
+    // On the cover, and on the card that carries on listening.
+    expect(
+      find.descendant(
+        of: find.byType(PsShelfItem),
+        matching: find.text('听到第 2 章'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byKey(const ValueKey('continueListening')), findsOneWidget);
     final item = tester.widget<PsShelfItem>(find.byType(PsShelfItem));
     expect(item.progress, 0.5);
 
@@ -185,7 +193,7 @@ void main() {
     fakes.listening.value = _playing();
     await tester.pumpAndSettle();
     expect(find.byType(PsMiniPlayer), findsOneWidget);
-    expect(find.text('AI 合成'), findsOneWidget);
+    expect(find.text('AI 配音'), findsOneWidget);
 
     await tester.tap(find.byTooltip('暂停'));
     await tester.tap(find.byTooltip('下一句'));
@@ -282,11 +290,11 @@ void main() {
       error: 'systemVoiceUnavailable',
     );
     await pumpApp(tester, MemoryBookshelf(books: [_book]), fakes);
-    expect(find.text('系统朗读'), findsOneWidget);
+    expect(find.text('系统声音'), findsOneWidget);
 
     await tester.tap(find.byType(PsMiniPlayer));
     await tester.pumpAndSettle();
-    expect(find.text('系统朗读'), findsOneWidget);
+    expect(find.text('系统声音'), findsOneWidget);
     expect(find.textContaining('没有可用的朗读声音'), findsOneWidget);
     expect(find.text('systemVoiceUnavailable'), findsNothing);
     // Without a known duration the player counts sentences, not time.
@@ -311,7 +319,7 @@ void main() {
       fakes,
       locale: const Locale('en'),
     );
-    expect(find.text('AI voice'), findsOneWidget);
+    expect(find.text('AI voices'), findsOneWidget);
     await tester.tap(find.byType(PsMiniPlayer));
     await tester.pumpAndSettle();
     expect(find.text('NOW LISTENING'), findsOneWidget);

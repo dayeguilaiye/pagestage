@@ -31,6 +31,15 @@ class MiniMaxEngine implements TtsEngine {
   const MiniMaxEngine();
   static const _endpoint = 'https://api.minimax.io/v1';
 
+  /// Keys from MiniMax's mainland platform (minimaxi.com) only work there.
+  static const _chinaEndpoint = 'https://api.minimaxi.com/v1';
+
+  /// The address for the account's region unless a base URL is set.
+  static String _regional(ProviderConfiguration config, TtsEngine engine) =>
+      engineValue(config, engine, 'region') == 'china'
+      ? _chinaEndpoint
+      : _endpoint;
+
   @override
   String get id => 'minimax';
   @override
@@ -39,11 +48,16 @@ class MiniMaxEngine implements TtsEngine {
   int get requestsPerMinute => 12;
   @override
   List<EngineField> get fields => const [
+    EngineField.choice(
+      'region',
+      ['global', 'china'],
+      environmentVariable: 'MINIMAX_REGION',
+      fallback: 'global',
+    ),
     EngineField.secret('key', environmentVariable: 'MINIMAX_API_KEY'),
     EngineField.text(
       'baseUrl',
       environmentVariable: 'MINIMAX_BASE_URL',
-      fallback: _endpoint,
       advanced: true,
     ),
     EngineField.text(
@@ -58,7 +72,7 @@ class MiniMaxEngine implements TtsEngine {
       fieldsReadiness(config, this);
   @override
   Uri? endpoint(ProviderConfiguration config) =>
-      _baseUrl(config, this, _endpoint);
+      _baseUrl(config, this, _regional(config, this));
   @override
   List<VoicePreset> presets(ProviderConfiguration config) => _presetsOf(id);
   @override
@@ -76,7 +90,7 @@ class MiniMaxEngine implements TtsEngine {
     if (key == null) _invalid(id);
     final adapter = MiniMaxTtsAdapter(
       apiKey: key,
-      baseUrl: _baseUrl(config, this, _endpoint),
+      baseUrl: _baseUrl(config, this, _regional(config, this)),
       usageLedger: usageLedger,
     );
     return (adapter: adapter, close: adapter.close);

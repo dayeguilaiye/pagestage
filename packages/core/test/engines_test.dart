@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:pagestage_core/pagestage_core.dart';
@@ -71,13 +73,18 @@ class _DeviceAdapter implements TtsAdapter {
 }
 
 class _Runtime implements LocalLlmRuntime {
-  _Runtime(this.installed);
+  _Runtime(this.installed, [this.endpoint]);
+  final Uri? endpoint;
+  var starts = 0;
   @override
   final bool installed;
   @override
   String get model => 'pocket-llm';
   @override
-  Future<Uri> start() async => Uri.parse('http://127.0.0.1:9/v1');
+  Future<Uri> start() async {
+    starts++;
+    return endpoint ?? Uri.parse('http://127.0.0.1:9/v1');
+  }
 }
 
 void main() {
@@ -200,6 +207,67 @@ void main() {
   });
 
   group('language engines', () {
+    test(
+      'a device runtime serves structured completion over loopback',
+      () async {
+        final server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+        final runtime = _Runtime(
+          true,
+          Uri.parse('http://127.0.0.1:${server.port}/v1'),
+        );
+        final received = server.first.then((request) async {
+          final body =
+              jsonDecode(await utf8.decoder.bind(request).join()) as Map;
+          request.response.headers.set('content-type', 'text/event-stream');
+          request.response.write(
+            'data: ${jsonEncode({
+              'choices': [
+                {
+                  'finish_reason': 'stop',
+                  'delta': {
+                    'content': jsonEncode({'ready': true}),
+                  },
+                },
+              ],
+            })}\n\ndata: [DONE]\n\n',
+          );
+          await request.response.close();
+          return (request.uri.path, body);
+        });
+        try {
+          final engine = DeviceLlmEngine(runtime: runtime);
+          final response = await engine
+              .open(_config(), LlmRole.director)
+              .complete(
+                const LlmRequest(
+                  system: 'Return structured data.',
+                  user: 'Local chapter text.',
+                  schemaName: 'probe',
+                  schema: {
+                    'type': 'object',
+                    'properties': {
+                      'ready': {'type': 'boolean'},
+                    },
+                  },
+                ),
+              )
+              .timeout(const Duration(seconds: 5));
+          expect(response.data, {'ready': true});
+          final (path, body) = await received;
+          expect(runtime.starts, 1);
+          expect(path, '/v1/chat/completions');
+          expect(body['model'], runtime.model);
+          expect((body['messages'] as List).last, {
+            'role': 'user',
+            'content': 'Local chapter text.',
+          });
+          expect((body['response_format'] as Map)['type'], 'json_schema');
+        } finally {
+          await server.close(force: true);
+        }
+      },
+    );
+
     test('the configuration selects the engine in use', () {
       final cloud = _config({
         'llm': {'key': 'k', 'profileModel': 'm'},

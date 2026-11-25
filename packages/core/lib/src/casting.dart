@@ -42,7 +42,12 @@ class Casting {
   Future<Voice> getVoice(String voiceId) async {
     final json = await store.get('voices', voiceId);
     if (json == null) throw StateError('Voice not found.');
-    return Voice.fromJson(json);
+    final voice = Voice.fromJson(json);
+    final sample = voice.samplePath;
+    // A sample saved before the app's container moved is found again.
+    return sample == null
+        ? voice
+        : voice.copyWith(samplePath: relocatePath(store, sample));
   }
 
   Future<CastingResult> getCasting(String bookId) async {
@@ -70,23 +75,44 @@ class Casting {
     Set<String>? providers,
     bool preserveExisting = false,
     bool replaceOutsideProviders = false,
-  }) async {
-    final previous = preserveExisting ? await getCasting(book.id) : null;
-    return _recommend(
+  }) => store.transaction(
+    () => _recommend(
       book,
       exclusiveCount: exclusiveCount,
       providers: providers,
-      fixedExclusiveIds: previous?.exclusiveSpeakerIds,
+      preserveExisting: preserveExisting,
       replaceOutsideProviders: replaceOutsideProviders,
+    ),
+  );
+
+  /// Completes the newly saved profile inside its checkpoint transaction.
+  Future<Cast> bindProfileVoices(
+    Book book,
+    Cast cast,
+    Map<String, String> choices,
+  ) async {
+    if (catalog.isEmpty || cast.speakers.every((s) => s.voiceId != null)) {
+      return cast;
+    }
+    final options = await store.get('casting', book.id);
+    final settings = options ?? await store.get('settings', 'casting');
+    final result = await _recommend(
+      book,
+      exclusiveCount: settings?['exclusiveCount'] as int? ?? 20,
+      providers: catalog.map((p) => p.binding.provider).toSet(),
+      preserveExisting: options != null,
+      profileChoices: choices,
     );
+    return result.cast;
   }
 
   Future<CastingResult> _recommend(
     Book book, {
     required int exclusiveCount,
     Set<String>? providers,
-    Set<String>? fixedExclusiveIds,
+    bool preserveExisting = false,
     bool replaceOutsideProviders = false,
+    Map<String, String>? profileChoices,
   }) async {
     if (exclusiveCount < 0) {
       throw const FormatException('Exclusive count must be non-negative.');
@@ -114,9 +140,11 @@ class Casting {
         .map((preset) => _bindingKey(preset.binding))
         .toSet();
     bool preserveAutomatic(Speaker speaker, Voice voice) =>
-        fixedExclusiveIds != null ||
+        profileChoices != null ||
+        preserveExisting ||
         (eligibleBindings.contains(_bindingKey(voice.binding)) &&
-            _inheritsPersona(previous.cast, speaker, voice));
+            (voice.profileSelected ||
+                _inheritsPersona(previous.cast, speaker, voice)));
     final ranked =
         previous.cast.speakers
             .where((s) => s.kind == SpeakerKind.character)
@@ -125,9 +153,9 @@ class Casting {
             final count = b.dialogueCount.compareTo(a.dialogueCount);
             return count == 0 ? a.id.compareTo(b.id) : count;
           });
-    final exclusiveIds =
-        fixedExclusiveIds ??
-        ranked.take(exclusiveCount).map((s) => s.id).toSet();
+    final exclusiveIds = preserveExisting
+        ? previous.exclusiveSpeakerIds
+        : ranked.take(exclusiveCount).map((s) => s.id).toSet();
     final voices = <String, Voice>{...previous.voices};
     // Voices of providers no longer allowed are recast, even ones chosen by
     // hand or designed; every other voice is kept as it would be.
@@ -152,16 +180,52 @@ class Casting {
       ...speakers.where((s) => s.kind == SpeakerKind.persona),
       ...ranked.where((s) => exclusiveIds.contains(s.id)),
     ];
-    final manualKeys = voices.values
-        .where((v) => v.manuallySelected || v.binding.designed)
-        .map((v) => _bindingKey(v.binding))
-        .toSet();
+    final extras =
+        speakers.where((s) => !uniqueSpeakers.any((u) => u.id == s.id)).toList()
+          ..sort((a, b) => a.id.compareTo(b.id));
+    if (profileChoices != null && profileChoices.isNotEmpty) {
+      final byId = {for (final preset in candidates) preset.id: preset};
+      final priority = uniqueSpeakers.map((s) => s.id).toSet();
+      final holders = <String, List<Speaker>>{};
+      for (final speaker in speakers) {
+        final bound = voices[speaker.id];
+        if (bound != null) {
+          (holders[_bindingKey(bound.binding)] ??= []).add(speaker);
+        }
+      }
+      for (final speaker in [...uniqueSpeakers, ...extras]) {
+        final preset = byId[profileChoices[speaker.id]];
+        if (preset == null || voices.containsKey(speaker.id)) continue;
+        final sharing = holders[_bindingKey(preset.binding)] ??= [];
+        if (sharing.any(
+          (other) =>
+              priority.contains(other.id) ||
+              priority.contains(speaker.id) ||
+              other.chapters.any(speaker.chapters.contains),
+        )) {
+          continue;
+        }
+        voices[speaker.id] = _voice(
+          book,
+          speaker,
+          preset,
+        ).copyWith(profileSelected: true);
+        sharing.add(speaker);
+      }
+    }
+    bool keep(Speaker speaker, Voice? voice) =>
+        voice != null &&
+        (voice.manuallySelected ||
+            voice.binding.designed ||
+            preserveAutomatic(speaker, voice));
+    final fixedKeys = {
+      for (final speaker in speakers)
+        if (keep(speaker, voices[speaker.id]))
+          _bindingKey(voices[speaker.id]!.binding),
+    };
     for (final speaker in uniqueSpeakers) {
       var voice = voices[speaker.id];
-      if (voice != null &&
-          (voice.manuallySelected ||
-              voice.binding.designed ||
-              preserveAutomatic(speaker, voice))) {
+      if (voice != null && keep(speaker, voice)) {
         if (!reserved.add(_bindingKey(voice.binding)) &&
             !_inheritsPersona(previous.cast, speaker, voice)) {
           warnings.add(
@@ -176,15 +240,15 @@ class Casting {
         if (match != 0) return match;
         final usedA =
             reserved.contains(_bindingKey(a.binding)) ||
-            manualKeys.contains(_bindingKey(a.binding));
+            fixedKeys.contains(_bindingKey(a.binding));
         final usedB =
             reserved.contains(_bindingKey(b.binding)) ||
-            manualKeys.contains(_bindingKey(b.binding));
+            fixedKeys.contains(_bindingKey(b.binding));
         if (usedA != usedB) return usedA ? 1 : -1;
         return a.id.compareTo(b.id);
       });
       if (reserved.contains(_bindingKey(available.first.binding)) ||
-          manualKeys.contains(_bindingKey(available.first.binding))) {
+          fixedKeys.contains(_bindingKey(available.first.binding))) {
         warnings.add(
           'Best matching preset is shared for ${speaker.id}; you can change it with cast set.',
         );
@@ -193,19 +257,10 @@ class Casting {
       voices[speaker.id] = voice;
       reserved.add(_bindingKey(voice.binding));
     }
-    final extras =
-        speakers.where((s) => !uniqueSpeakers.any((u) => u.id == s.id)).toList()
-          ..sort((a, b) => a.id.compareTo(b.id));
-    final allocatedExtras = <Speaker>[];
+    final allocatedExtras = extras.where((s) => keep(s, voices[s.id])).toList();
     for (final speaker in extras) {
       final old = voices[speaker.id];
-      if (old != null &&
-          (old.manuallySelected ||
-              old.binding.designed ||
-              preserveAutomatic(speaker, old))) {
-        allocatedExtras.add(speaker);
-        continue;
-      }
+      if (keep(speaker, old)) continue;
       final pool = [...candidates];
       int overlaps(VoicePreset voice) => allocatedExtras
           .where(
@@ -255,17 +310,17 @@ class Casting {
           .map((speaker) => speaker.copyWith(voiceId: voices[speaker.id]!.id))
           .toList(),
     );
-    await store.transaction(() async {
-      for (final voice in voices.values) {
-        await store.put('voices', voice.id, voice.toJson());
+    for (final entry in voices.entries) {
+      if (!identical(entry.value, previous.voices[entry.key])) {
+        await store.put('voices', entry.value.id, entry.value.toJson());
       }
-      await CastRepository(store).save(cast);
-      await store.put('casting', book.id, {
-        'exclusiveCount': exclusiveCount,
-        'providers': providers?.toList(),
-        'exclusiveSpeakerIds': exclusiveIds.toList(),
-        'warnings': warnings,
-      });
+    }
+    await CastRepository(store).save(cast);
+    await store.put('casting', book.id, {
+      'exclusiveCount': exclusiveCount,
+      'providers': providers?.toList(),
+      'exclusiveSpeakerIds': exclusiveIds.toList(),
+      'warnings': warnings,
     });
     return CastingResult(
       cast: cast,
@@ -300,10 +355,10 @@ class Casting {
     if (voice.bookId != book.id) {
       throw StateError('Voice belongs to another book.');
     }
-    final cast = await CastRepository(store).get(book.id);
-    final speaker = cast.speaker(speakerId);
     final selected = voice.copyWith(manuallySelected: true);
     await store.transaction(() async {
+      final cast = await CastRepository(store).get(book.id);
+      final speaker = cast.speaker(speakerId);
       await store.put('voices', selected.id, selected.toJson());
       await CastRepository(store).save(
         cast.copyWith(
@@ -404,15 +459,16 @@ class Casting {
       await CastRepository(store).save(cast);
     }
     if (current.cast.speakers.any((speaker) => speaker.voiceId == null)) {
+      // A book profiled as listening reached it may not have been cast
+      // yet; it is cast from the voices in use, as a first casting would.
       final options = await store.get('casting', book.id);
-      if (options == null) {
-        throw StateError('Recommend a cast before synthesis.');
-      }
-      current = await _recommend(
-        book,
-        exclusiveCount: options['exclusiveCount'] as int,
-        providers: (options['providers'] as List?)?.cast<String>().toSet(),
-        fixedExclusiveIds: current.exclusiveSpeakerIds,
+      current = await store.transaction(
+        () => _recommend(
+          book,
+          exclusiveCount: options?['exclusiveCount'] as int? ?? 20,
+          providers: (options?['providers'] as List?)?.cast<String>().toSet(),
+          preserveExisting: true,
+        ),
       );
     } else {
       current = await getCasting(book.id);

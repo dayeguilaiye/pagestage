@@ -65,6 +65,7 @@ PsIconButton _button(WidgetTester tester, String label) =>
     );
 
 void main() {
+  extrasMain();
   group('engines', () {
     testWidgets('a new reader is asked for a language model first', (
       tester,
@@ -108,28 +109,17 @@ void main() {
       expect(find.text('免费，无需密钥 · 语速音高'), findsOneWidget);
     });
 
-    testWidgets('engines not offered yet are listed but cannot be used', (
-      tester,
-    ) async {
+    testWidgets('engines not offered yet are left out', (tester) async {
       final fakes = await _open(
         tester,
         Fakes(providers: FakeProviders(_ready())),
       );
-      // The on-device language model: named, tagged, and going nowhere.
-      expect(find.text('本机大模型'), findsOneWidget);
-      await tester.tap(find.byKey(const ValueKey('provider-llm-device')));
-      await tester.pumpAndSettle();
-      expect(find.text('接口地址'), findsNothing);
-      expect(find.byKey(const ValueKey('use-llm-device')), findsNothing);
+      // Nothing teases what cannot be used: no on-device model, no switch.
+      expect(find.text('本机大模型'), findsNothing);
+      expect(find.byKey(const ValueKey('provider-llm-device')), findsNothing);
+      expect(find.byKey(const ValueKey('switch-device')), findsNothing);
       // With one usable engine there is no choice to show.
       expect(find.text('使用中'), findsNothing);
-
-      await _reveal(tester, find.byKey(const ValueKey('switch-device')));
-      expect(find.text('配音 · 本机'), findsOneWidget);
-      expect(_switch(tester, 'device').onChanged, isNull);
-      await tester.tap(find.text('本机语音'));
-      await tester.pumpAndSettle();
-      expect(find.text('演出能力'), findsNothing);
       expect(fakes.providers.switches, isEmpty);
     });
 
@@ -302,7 +292,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('保存'));
       await tester.pumpAndSettle();
-      expect(find.text('没能保存'), findsOneWidget);
+      expect(find.text('没能保存，请再试一次'), findsOneWidget);
       expect(find.text('接口地址'), findsOneWidget);
       // Nothing of the cause reaches the screen.
       expect(find.textContaining('sk-secret'), findsNothing);
@@ -440,7 +430,7 @@ void main() {
     expect(find.textContaining('新加坡'), findsOneWidget);
   });
 
-  group('generate while listening', () {
+  group('AI voices while listening', () {
     Future<Fakes> openWith(
       WidgetTester tester, [
       GenerationPreferences prefs = const GenerationPreferences(),
@@ -450,50 +440,57 @@ void main() {
         Fakes(generation: FakeGeneration(GenerationState(preferences: prefs))),
       );
       // The whole group, from its header down, on screen.
-      await _reveal(tester, find.text('合成提前量'));
-      await tester.ensureVisible(find.text('边听边生成'));
+      await _reveal(tester, find.byKey(const ValueKey('aiVoicesEnabled')));
+      await tester.ensureVisible(find.text('收听'));
       await tester.pumpAndSettle();
       return fakes;
     }
 
-    testWidgets('the whole row turns automatic generation on', (tester) async {
+    testWidgets('the whole row turns the default for new books off', (
+      tester,
+    ) async {
       final fakes = await openWith(tester);
-      await tester.tap(find.text('自动生成配音'));
+      await tester.tap(find.text('新书默认用 AI 配音'));
       await tester.pumpAndSettle();
-      expect(fakes.generation.saved.single.automatic, isTrue);
+      expect(fakes.generation.saved.single.automatic, isFalse);
       expect(
         tester.widget<Switch>(find.byKey(const ValueKey('autoGenerate'))).value,
-        isTrue,
+        isFalse,
       );
     });
 
-    testWidgets('each lookahead carries the other along', (tester) async {
+    testWidgets('one lookahead prepares chapters ahead', (tester) async {
       final fakes = await openWith(tester);
-      await tester.tap(find.byTooltip('增加合成提前量'));
+      await tester.tap(find.byTooltip('多准备一章'));
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('增加合成提前量'));
-      await tester.pumpAndSettle();
-      expect(fakes.generation.saved.last.synthesis, 3);
-      expect(fakes.generation.saved.last.directing, 3);
-
-      await tester.tap(find.byTooltip('减少导演提前量'));
-      await tester.pumpAndSettle();
-      expect(fakes.generation.saved.last.directing, 2);
+      expect(fakes.generation.saved.last.ahead, 2);
       expect(fakes.generation.saved.last.synthesis, 2);
-      expect(find.text('2 章'), findsNWidgets(2));
+      expect(fakes.generation.saved.last.directing, 3);
+      expect(find.text('2 章'), findsOneWidget);
+      await tester.tap(find.byTooltip('少准备一章'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('少准备一章'));
+      await tester.pumpAndSettle();
+      expect(fakes.generation.saved.last.ahead, 0);
+      expect(fakes.generation.saved.last.directing, 0);
     });
 
-    testWidgets('lookaheads stop at 0 and 20', (tester) async {
-      await openWith(
-        tester,
-        const GenerationPreferences(directing: 20, synthesis: 0),
-      );
-      expect(_button(tester, '增加导演提前量').onPressed, isNull);
-      expect(_button(tester, '减少合成提前量').onPressed, isNull);
-      expect(_button(tester, '减少导演提前量').onPressed, isNotNull);
-      expect(_button(tester, '增加合成提前量').onPressed, isNotNull);
-      expect(find.text('20 章'), findsOneWidget);
-      expect(find.text('0 章'), findsOneWidget);
+    testWidgets('the lookahead stops at 0 and 10', (tester) async {
+      await openWith(tester, const GenerationPreferences(ahead: 10));
+      expect(_button(tester, '多准备一章').onPressed, isNull);
+      expect(_button(tester, '少准备一章').onPressed, isNotNull);
+      expect(find.text('10 章'), findsOneWidget);
+    });
+
+    testWidgets('AI voices off hides what only applies to them', (
+      tester,
+    ) async {
+      final fakes = await openWith(tester);
+      await tester.tap(find.byKey(const ValueKey('aiVoicesEnabled')));
+      await tester.pumpAndSettle();
+      expect(fakes.generation.saved.single.enabled, isFalse);
+      expect(find.byKey(const ValueKey('autoGenerate')), findsNothing);
+      expect(find.byKey(const ValueKey('ahead')), findsNothing);
     });
 
     testWidgets('a failed save says so', (tester) async {
@@ -509,7 +506,7 @@ void main() {
     testWidgets('recasting waits until it is asked for', (tester) async {
       final fakes = await _open(tester);
       await _tap(tester, find.byKey(const ValueKey('exclusiveVoices')));
-      final recast = find.widgetWithText(PsButton, '重新选角');
+      final recast = find.widgetWithText(PsButton, '重新分配声音');
       expect(tester.widget<PsButton>(recast).onPressed, isNull);
 
       await tester.tap(find.byTooltip('增加专属音色'));
@@ -520,7 +517,7 @@ void main() {
       await tester.tap(recast);
       await tester.pumpAndSettle();
       expect(fakes.casts.exclusiveCount, 21);
-      expect(find.text('已按 21 个专属音色重新选角'), findsOneWidget);
+      expect(find.text('已按 21 个独享声音重新分配'), findsOneWidget);
       expect(find.text('21 个'), findsOneWidget);
     });
 
@@ -530,9 +527,9 @@ void main() {
       await _tap(tester, find.byKey(const ValueKey('exclusiveVoices')));
       await tester.tap(find.byTooltip('减少专属音色'));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(PsButton, '重新选角'));
+      await tester.tap(find.widgetWithText(PsButton, '重新分配声音'));
       await tester.pumpAndSettle();
-      expect(find.text('没能重新选角，请再试一次'), findsOneWidget);
+      expect(find.text('没能重新分配声音，请再试一次'), findsOneWidget);
       expect(fakes.casts.exclusiveCount, 20);
     });
   });
@@ -666,5 +663,120 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Set up a language model first'), findsOneWidget);
     expect(find.byType(SettingsPage), findsOneWidget);
+  });
+}
+
+/// Presets, testing a connection, agreeing while setting up, privacy and
+/// usage: the parts of settings that keep the reader out of trouble.
+void extrasMain() {
+  group('setting a language model up', () {
+    Future<Fakes> openLlm(WidgetTester tester, [Fakes? fakes]) async {
+      fakes = await _open(tester, fakes);
+      await _tap(tester, find.byKey(const ValueKey('provider-llm')));
+      return fakes;
+    }
+
+    testWidgets('a preset fills the address, protocol and model', (
+      tester,
+    ) async {
+      final fakes = await openLlm(tester);
+      await tester.tap(find.byKey(const ValueKey('llmPreset')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('DeepSeek').last);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('platform.deepseek.com'), findsOneWidget);
+      await tester.enterText(find.byKey(const ValueKey('key-llm')), 'sk-test');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+      final save = fakes.providers.configures.single;
+      expect(save.values['baseUrl'], 'https://api.deepseek.com');
+      expect(save.values['api'], 'responses');
+      expect(save.values['profileModel'], 'deepseek-flash');
+    });
+
+    testWidgets('testing says what is wrong before anything is saved', (
+      tester,
+    ) async {
+      final fakes = Fakes(providers: FakeProviders(_ready()));
+      fakes.providers.testResults['llm'] = 'schemaUnsupported';
+      await openLlm(tester, fakes);
+      await _tap(tester, find.byKey(const ValueKey('testConnection')));
+      expect(find.textContaining('不支持结构化输出'), findsOneWidget);
+      expect(fakes.providers.configures, isEmpty);
+      fakes.providers.testResults['llm'] = null;
+      await _tap(tester, find.byKey(const ValueKey('testConnection')));
+      expect(find.text('连接正常，可以使用。'), findsOneWidget);
+    });
+
+    testWidgets('saving asks once to send text to that address', (
+      tester,
+    ) async {
+      final fakes = Fakes(providers: FakeProviders(_ready()));
+      fakes.providers.endpoints['llm'] = 'https://api.deepseek.com/v1';
+      await openLlm(tester, fakes);
+      await tester.tap(find.text('更换'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('key-llm')), 'sk-new');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('保存'));
+      await tester.pumpAndSettle();
+      expect(fakes.consents.requests.single.provider, 'llm');
+      expect(fakes.consents.requests.single.bookTitle, isNull);
+    });
+  });
+
+  testWidgets('turning a voice engine on asks to send it text first', (
+    tester,
+  ) async {
+    final fakes = Fakes(providers: FakeProviders(_ready()));
+    fakes.providers.endpoints['edge'] = 'wss://speech.platform.bing.com';
+    fakes.consents.answer = false;
+    await _open(tester, fakes);
+    await _reveal(tester, find.byKey(const ValueKey('switch-edge')));
+    await tester.tap(find.byKey(const ValueKey('switch-edge')));
+    await tester.pumpAndSettle();
+    expect(fakes.consents.requests, hasLength(1));
+    expect(fakes.providers.switches, isEmpty);
+    fakes.consents.answer = true;
+    await tester.tap(find.byKey(const ValueKey('switch-edge')));
+    await tester.pumpAndSettle();
+    expect(fakes.providers.switches, [('edge', true)]);
+  });
+
+  testWidgets('privacy lists agreements and withdraws one', (tester) async {
+    final fakes = Fakes();
+    fakes.consents.granted.add(
+      const ConsentRecord(
+        provider: 'minimax',
+        endpoint: 'https://api.minimax.io/v1',
+      ),
+    );
+    await _open(tester, fakes);
+    await _tap(tester, find.byKey(const ValueKey('privacy')));
+    expect(find.text('MiniMax'), findsOneWidget);
+    expect(find.text('api.minimax.io'), findsOneWidget);
+    await tester.tap(find.text('撤回'));
+    await tester.pumpAndSettle();
+    expect(fakes.consents.revoked.single.provider, 'minimax');
+    expect(find.text('还没有同意发送给任何服务'), findsOneWidget);
+  });
+
+  testWidgets('usage shows what each book used, in the providers’ units', (
+    tester,
+  ) async {
+    final fakes = Fakes();
+    fakes.generation.usageReport = const [
+      BookUsage(
+        bookId: 'memory-1',
+        tokens: 123456,
+        characters: {'minimax': 8400},
+        requests: 9,
+      ),
+    ];
+    await _open(tester, fakes);
+    await _tap(tester, find.byKey(const ValueKey('usage')));
+    expect(find.text('大模型 12.3 万 tokens · MiniMax 8400 字'), findsOneWidget);
+    expect(find.textContaining('¥'), findsNothing);
   });
 }

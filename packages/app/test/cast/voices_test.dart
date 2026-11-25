@@ -48,7 +48,7 @@ Future<Fakes> _openCast(WidgetTester tester, FakeVoices voices) async {
   await pumpApp(tester, MemoryBookshelf(books: [_book]), fakes);
   await tester.tap(find.widgetWithText(PsShelfItem, '阿Q正传'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('演员表'));
+  await tester.tap(find.text('角色'));
   await tester.pumpAndSettle();
   return fakes;
 }
@@ -96,7 +96,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(voices.selectedPresets, [(_bookId, 'zhao', 'p1')]);
     expect(find.byType(VoicePage), findsNothing);
-    expect(find.text('已为赵太爷换上新声音'), findsOneWidget);
+    expect(find.text('已为「赵太爷」换上新声音'), findsOneWidget);
     await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
   });

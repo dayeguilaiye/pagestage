@@ -146,6 +146,47 @@ void main() {
     });
   }
   test(
+    'directed cues follow the aligned words and survive persistence',
+    () async {
+      final book = novel('  “算了😀。”  \n');
+      final llm = FakeDirectorLlm([
+        response([
+          {
+            ...line('“算了😀。”', 'lin', emotion: 'sad'),
+            'pace': 'slow',
+            'volume': 'soft',
+            'cues': [
+              {'kind': 'sigh', 'position': 'before'},
+              {'kind': 'sob', 'position': 'after'},
+            ],
+          },
+        ]),
+      ]);
+      await Director(store, llm).direct(book, 1);
+      final saved = (await ScriptRepository(store).get(book.id, 1))!;
+      final directed = saved.lines.single;
+      expect(directed.textIn(book.chapter(1).text), book.chapter(1).text);
+      expect(directed.direction.pace, Pace.slow);
+      expect(directed.direction.volume, Volume.soft);
+      final delivery = Delivery.lower(
+        directed.direction,
+        const TtsCapabilities(
+          maxCharacters: 100,
+          supportsPronunciation: false,
+          cues: {VocalCueKind.sigh, VocalCueKind.sob},
+        ),
+      );
+      expect(
+        delivery.inline(
+          directed.textIn(book.chapter(1).text),
+          (kind) => '[${kind.name}]',
+        ),
+        '  [sigh]“算了😀。”[sob]  \n',
+      );
+    },
+  );
+
+  test(
     'directs source ranges and persists model, prompt and performance flags',
     () async {
       final book = novel('他说：\n“你好！”\n作者的话。');
@@ -440,6 +481,52 @@ void main() {
       'lin',
       'lin',
     ]);
+  });
+  test(
+    'a passage the provider refuses is narrated, the rest directed',
+    () async {
+      final book = novel('第一段。\n\n第二段。');
+      final result = await Director(
+        store,
+        FakeDirectorLlm([
+          const ProviderException(
+            provider: 'llm',
+            kind: ProviderErrorKind.invalidResponse,
+            code: LlmFailure.contentFilter,
+          ),
+          response([line('第二段。', 'lin')]),
+        ]),
+        chunkCharacters: 6,
+      ).direct(book, 1);
+      final text = book.chapter(1).text;
+      final refused = result.script.lines
+          .where((l) => l.textIn(text).contains('第一段'))
+          .single;
+      expect(refused.direction.speakerId, 'narrator');
+      expect(
+        result.script.lines
+            .where((l) => l.textIn(text).contains('第二段'))
+            .single
+            .direction
+            .speakerId,
+        'lin',
+      );
+    },
+  );
+  test('a key or quota failure still stops directing', () async {
+    final book = novel('第一段。');
+    await expectLater(
+      Director(
+        store,
+        FakeDirectorLlm([
+          const ProviderException(
+            provider: 'llm',
+            kind: ProviderErrorKind.invalidKey,
+          ),
+        ]),
+      ).direct(book, 1),
+      throwsA(isA<ProviderException>()),
+    );
   });
   test('unprofiled chapters never reach the provider', () async {
     await CastRepository(store).save(Cast(bookId: 'novel'));

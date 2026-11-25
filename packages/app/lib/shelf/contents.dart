@@ -43,16 +43,25 @@ class TableOfContents {
 
   /// [progress] holds this book's chapters under way, by chapter number;
   /// every other chapter is drawn at rest, without a mark.
+  /// The list item showing chapter [index], for scrolling to it.
+  int itemOf(int index) =>
+      _items.indexWhere((item) => item.chapter == index).clamp(0, length);
+
+  /// [current] is the index of the chapter being listened to; [voiced]
+  /// holds the chapter numbers whose AI voices are ready.
   Widget build(
     BuildContext context,
     int item, {
     required ValueChanged<int> onChapter,
     int? current,
+    bool playing = false,
+    Set<int> voiced = const {},
     Map<int, ChapterProgress> progress = const {},
   }) {
     final (:volume, :chapter) = _items[item];
     if (volume != null) return _VolumeHeader(volume);
     final entry = chapters[chapter!];
+    final l = AppLocalizations.of(context);
     return ProgressClock(
       progress: progress[entry.number],
       builder: (context, status) => PsChapterRow(
@@ -61,6 +70,10 @@ class TableOfContents {
         status: status?.status,
         statusLabel: status?.label,
         current: chapter == current,
+        playing: chapter == current && playing,
+        currentLabel: l.chapterListening,
+        voiced: voiced.contains(entry.number),
+        voicedLabel: l.chapterVoiced,
         onTap: () => onChapter(chapter),
       ),
     );
@@ -89,6 +102,10 @@ ProgressStatus? progressStatus(
   ChapterStage.queued => (
     status: PsChapterStatus.queued,
     label: l.chapterQueued,
+  ),
+  ChapterStage.profiling => (
+    status: PsChapterStatus.queued,
+    label: l.chapterProfiling,
   ),
   ChapterStage.directing => (
     status: PsChapterStatus.working,

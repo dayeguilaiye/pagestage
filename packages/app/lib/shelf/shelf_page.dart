@@ -11,7 +11,9 @@ import '../settings/settings_page.dart';
 import 'book_page.dart';
 import 'bookshelf.dart';
 import 'delete_book.dart';
+import 'import_feedback.dart';
 import 'reading_settings.dart';
+import 'share_sheet.dart';
 
 /// The books the reader has imported, in a grid of covers.
 class ShelfPage extends StatefulWidget {
@@ -47,6 +49,9 @@ class _ShelfPageState extends State<ShelfPage> {
   /// The book and chapter last heard, to refresh its bookmark on change.
   (String?, int)? _heard;
 
+  /// The bundled examples, labelled as such on their covers.
+  var _samples = <String>{};
+
   @override
   void initState() {
     super.initState();
@@ -75,13 +80,21 @@ class _ShelfPageState extends State<ShelfPage> {
 
   Future<void> _load() async {
     final load = ++_loads;
+    final generation = AppScope.servicesOf(context)?.generation;
     try {
       final books = await widget.bookshelf.books();
       final bookmarks = await _bookmarksOf(books);
+      Set<String> samples = const {};
+      try {
+        samples = await generation?.samples() ?? const {};
+      } catch (_) {
+        // Unlabelled, an example is still a book.
+      }
       if (!mounted || load != _loads) return;
       setState(() {
         _books = books;
         _bookmarks = bookmarks;
+        _samples = samples;
         _loadFailed = false;
       });
     } catch (_) {
@@ -160,74 +173,17 @@ class _ShelfPageState extends State<ShelfPage> {
       if (mounted) setState(() => _importing = false);
     }
     if (!mounted) return;
-    switch (outcome) {
-      case BookImported(:final book):
-        showPsToast(context, l.bookImported(book.title));
-      case BookUpdated(
-        :final book,
-        :final addedChapters,
-        :final changedChapters,
-      ):
-        showPsToast(
-          context,
-          addedChapters == 0 && changedChapters.isEmpty
-              ? l.bookUnchanged(book.title)
-              : l.bookUpdated(
-                  book.title,
-                  addedChapters,
-                  changedChapters.length,
-                ),
-        );
-      case PackageImported(
-        :final book,
-        :final scriptChapters,
-        :final audioChapters,
-      ):
-        showPsToast(
-          context,
-          audioChapters == 0
-              ? l.packageImported(book.title, scriptChapters)
-              : l.packageImportedAudio(
-                  book.title,
-                  scriptChapters,
-                  audioChapters,
-                ),
-        );
-      case ImportCancelled():
-        break;
-      case final ImportFailed failure:
-        setState(() => _failure = failure);
+    if (outcome case final ImportFailed failure) {
+      setState(() => _failure = failure);
+    } else if (importedMessage(l, outcome) case final message?) {
+      showPsToast(context, message);
     }
   }
 
   /// A package for a book already on the shelf takes its place only once
   /// the reader agrees.
-  Future<bool> _confirmReplace(String title) async {
-    if (!mounted) return false;
-    final l = AppLocalizations.of(context);
-    final replace = await showDialog<bool>(
-      context: context,
-      builder: (context) => PsDialog(
-        title: l.replaceBookTitle(title),
-        body: Text(l.replaceBookBody),
-        actions: [
-          PsButton(
-            label: l.replaceBookConfirm,
-            variant: PsButtonVariant.primary,
-            expand: true,
-            onPressed: () => Navigator.pop(context, true),
-          ),
-          PsButton(
-            label: l.cancel,
-            variant: PsButtonVariant.ghost,
-            expand: true,
-            onPressed: () => Navigator.pop(context, false),
-          ),
-        ],
-      ),
-    );
-    return replace ?? false;
-  }
+  Future<bool> _confirmReplace(String title) async =>
+      mounted && await confirmReplaceBook(context, title);
 
   void _open(ShelfBook book) {
     Navigator.of(context).push(
@@ -245,16 +201,99 @@ class _ShelfPageState extends State<ShelfPage> {
     final l = AppLocalizations.of(context);
     final box = item.findRenderObject()! as RenderBox;
     final cover = box.localToGlobal(Offset.zero) & box.size;
+    final services = AppScope.servicesOf(context);
+    final packages = services?.packages;
     final choice = await showPsMenu(
       context,
       anchor: Rect.fromLTWH(cover.left, cover.top + 24, cover.width, 0),
       items: [
+        if (services != null)
+          PsMenuItem(#listen, l.startListening, icon: PsIcons.play),
+        if (packages != null)
+          PsMenuItem(#share, l.shareBook, icon: PsIcons.share),
         PsMenuItem(#delete, l.deleteBook, icon: PsIcons.trash, danger: true),
       ],
     );
-    if (choice == #delete && mounted) {
-      await deleteBook(context, widget.bookshelf, book);
+    if (!mounted) return;
+    switch (choice) {
+      case #listen:
+        await services!.listening.open(book.id);
+      case #share:
+        await showShareSheet(context, book: book, packages: packages!);
+      case #delete:
+        await deleteBook(context, widget.bookshelf, book);
     }
+  }
+
+  /// The book heard most recently, unless it is the one already docked in
+  /// the player: one tap carries on where the listener stopped.
+  Widget? _continue(List<ShelfBook> books, AppLocalizations l) {
+    final listening = _listening;
+    if (listening == null || listening.value.bookId != null) return null;
+    final heard =
+        [
+          for (final book in books)
+            if (_bookmarks[book.id] case final bookmark?) (book, bookmark),
+        ]..sort((a, b) {
+          final at = DateTime.fromMicrosecondsSinceEpoch(0, isUtc: true);
+          return (b.$2.listenedAt ?? at).compareTo(a.$2.listenedAt ?? at);
+        });
+    final (book, bookmark) = heard.firstOrNull ?? (null, null);
+    if (book == null || bookmark == null) return null;
+    final p = context.ps;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(PsSpace.s5, 0, PsSpace.s5, PsSpace.s6),
+      child: Material(
+        color: p.paperRaised,
+        borderRadius: BorderRadius.circular(PsRadius.md),
+        child: InkWell(
+          key: const ValueKey('continueListening'),
+          borderRadius: BorderRadius.circular(PsRadius.md),
+          onTap: () => _open(book),
+          child: Padding(
+            padding: const EdgeInsets.all(PsSpace.s3),
+            child: Row(
+              spacing: PsSpace.s3,
+              children: [
+                ExcludeSemantics(
+                  child: PsBookCover(
+                    title: book.title,
+                    width: 40,
+                    chinese: book.language != BookLanguage.english,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 2,
+                    children: [
+                      Text(
+                        l.continueListening,
+                        style: PsType.caption.copyWith(color: p.ink2),
+                      ),
+                      Text(
+                        book.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: PsType.rowTitle.copyWith(color: p.ink),
+                      ),
+                      Text(
+                        l.listenedTo(bookmark.chapter),
+                        style: PsType.subhead.copyWith(color: p.ink2),
+                      ),
+                    ],
+                  ),
+                ),
+                PsPlayButton(
+                  playing: false,
+                  onPressed: () => listening.open(book.id),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -291,7 +330,7 @@ class _ShelfPageState extends State<ShelfPage> {
                 )
               else
                 PsIconButton(
-                  icon: PsIcons.import,
+                  icon: PsIcons.plus,
                   label: l.importBook,
                   onPressed: _import,
                 ),
@@ -340,6 +379,8 @@ class _ShelfPageState extends State<ShelfPage> {
                     ),
                   )
                 else if (books != null) ...[
+                  if (_continue(books, l) case final card?)
+                    SliverToBoxAdapter(child: card),
                   SliverToBoxAdapter(
                     child: _SectionHeader(l.shelfAll(books.length)),
                   ),
@@ -359,28 +400,7 @@ class _ShelfPageState extends State<ShelfPage> {
   }
 
   Widget _failureBanner(ImportFailed failure, AppLocalizations l) {
-    final (title, body) = switch (failure.reason) {
-      ImportFailure.unsupportedFormat => (
-        l.importUnsupportedTitle(failure.fileName),
-        l.importUnsupportedBody,
-      ),
-      ImportFailure.drmProtected => (
-        l.importDrmTitle(failure.fileName),
-        l.importDrmBody,
-      ),
-      ImportFailure.empty => (
-        l.importEmptyTitle(failure.fileName),
-        l.importEmptyBody,
-      ),
-      ImportFailure.unreadable => (
-        l.importUnreadableTitle(failure.fileName),
-        l.importUnreadableBody,
-      ),
-      ImportFailure.invalidPackage => (
-        l.importPackageInvalidTitle(failure.fileName),
-        l.importPackageInvalidBody,
-      ),
-    };
+    final (title, body) = importFailureText(l, failure);
     return Padding(
       padding: const EdgeInsets.fromLTRB(PsSpace.s5, 0, PsSpace.s5, PsSpace.s6),
       child: PsBanner(
@@ -442,7 +462,9 @@ class _ShelfPageState extends State<ShelfPage> {
                     title: book.title,
                     width: cover,
                     progress: bookmark?.progress,
-                    meta: bookmark == null
+                    meta: _samples.contains(book.id)
+                        ? l.sampleBookMeta
+                        : bookmark == null
                         ? l.chapterCount(book.chapterCount)
                         : l.listenedTo(bookmark.chapter),
                     onTap: () => _open(book),

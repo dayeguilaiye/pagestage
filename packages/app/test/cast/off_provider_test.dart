@@ -52,7 +52,7 @@ Future<Fakes> _openBook(WidgetTester tester, Fakes fakes) async {
 
 Future<Fakes> _openCast(WidgetTester tester, Fakes fakes) async {
   await _openBook(tester, fakes);
-  await tester.tap(find.text('演员表'));
+  await tester.tap(find.text('角色'));
   await tester.pumpAndSettle();
   return fakes;
 }
@@ -178,7 +178,7 @@ void main() {
         findsOneWidget,
       );
       // Other pauses keep their own banner.
-      expect(find.text('配音生成暂停了'), findsOneWidget);
+      expect(find.text('AI 配音暂停了'), findsOneWidget);
       expect(find.textContaining('账户额度用完了'), findsOneWidget);
 
       await tester.tap(find.text('打开 MiniMax'));

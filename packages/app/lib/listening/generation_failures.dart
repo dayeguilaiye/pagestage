@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
 import '../application/contracts.dart';
+import '../cast/cast_page.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import 'app_scope.dart';
+import '../settings/open_settings.dart';
 import 'labels.dart';
 import 'off_provider_banner.dart';
 
@@ -91,25 +93,90 @@ class _GenerationFailuresState extends State<GenerationFailures> {
     );
   }
 
+  Future<void> _openCast(BuildContext context) async {
+    final scope = AppScope.of(context);
+    final services = scope.services;
+    if (services == null) return;
+    try {
+      final book = (await scope.bookshelf.books())
+          .where((b) => b.id == widget.bookId)
+          .firstOrNull;
+      if (book == null || !context.mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => CastPage(services: services, book: book),
+        ),
+      );
+    } catch (_) {
+      // The book has gone; nothing to fix.
+    }
+  }
+
+  /// Says what stopped, that listening goes on in the system voice, and
+  /// offers the one action that fixes this reason: a settings page for a
+  /// key, waiting for a network error, agreeing for consent.
   Widget _paused(
     BuildContext context,
     Generation generation,
     List<GenerationFailure> failures,
   ) {
     final l = AppLocalizations.of(context);
+    final first = failures.first;
+    final lines = [
+      for (final f in failures)
+        f.profiling
+            ? l.profilingPausedLine(
+                Labels.provider(l, f.provider),
+                Labels.pauseReason(l, f.reason),
+              )
+            : l.generationPausedLine(
+                l.chapterNumber(f.chapter),
+                Labels.provider(l, f.provider),
+                Labels.pauseReason(l, f.reason),
+              ),
+    ];
+    final providers = AppScope.servicesOf(context)?.providers;
+    final engine = first.provider == 'llm'
+        ? providers?.value.language?.id ?? 'llm'
+        : first.provider;
+    void resume() => _resume(generation);
+    final (
+      String label,
+      VoidCallback action,
+      String? note,
+    ) = switch (first.reason) {
+      'missingKey' ||
+      'unauthorized' ||
+      'requestRejected' ||
+      'schemaUnsupported' ||
+      'providerDisabled' ||
+      'engineNotInstalled' ||
+      'engineUnavailable' => (
+        l.checkProviderSettings(Labels.inline(l, first.provider)),
+        () => openEngine(context, engine),
+        l.resumeAfterFixNote,
+      ),
+      'rateLimited' || 'network' => (l.retryNow, resume, l.retryingSoon),
+      'consentNeeded' || 'consentDeclined' => (l.reviewAndAgree, resume, null),
+      'voiceUnavailable' => (
+        l.chooseVoices,
+        () => _openCast(context),
+        l.resumeAfterFixNote,
+      ),
+      _ => (l.resumeGeneration, resume, null),
+    };
     return PsBanner(
       tone: _resumeFailed ? PsBannerTone.danger : PsBannerTone.amber,
       title: _resumeFailed ? l.generationResumeFailed : l.generationPausedTitle,
-      body: [
-        for (final f in failures)
-          l.generationPausedLine(
-            l.chapterNumber(f.chapter),
-            Labels.provider(l, f.provider),
-            Labels.pauseReason(l, f.reason),
-          ),
-      ].join('\n'),
-      actionLabel: l.resumeGeneration,
-      onAction: _resuming ? null : () => _resume(generation),
+      body: [...lines, ?note, l.generationPausedNote].join('\n'),
+      actionLabel: label,
+      onAction: _resuming ? null : action,
+      secondaryActionLabel: first.reason == 'quotaExceeded'
+          ? l.useSystemVoiceForBook
+          : null,
+      onSecondaryAction: first.reason == 'quotaExceeded'
+          ? () => generation.setAiVoice(widget.bookId, false)
+          : null,
     );
   }
 }

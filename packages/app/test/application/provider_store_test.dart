@@ -106,7 +106,7 @@ void main() {
     expect(minimax.status, EngineStatus.needsSetup);
     // On from the start: nothing is sent until its key is stored.
     expect(minimax.on, isTrue);
-    expect(minimax.settings.map((s) => s.name), ['key']);
+    expect(minimax.settings.map((s) => s.name), ['region', 'key']);
     expect(minimax.traits, {
       EngineTrait.emotion,
       EngineTrait.vocalCues,

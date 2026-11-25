@@ -8,8 +8,9 @@ import '../l10n/app_localizations.dart';
 import '../listening/chapter_picker.dart';
 import 'bookshelf.dart';
 
-/// Chooses a range of profiled chapters to direct and voice before
-/// listening. Their progress then shows in the contents and the text.
+/// Chooses a range of chapters to voice before listening, such as before a
+/// trip. Characters not found yet are found first. Progress then shows in
+/// the contents and the text.
 Future<void> showPrepareSheet(
   BuildContext context, {
   required ShelfBook book,
@@ -37,11 +38,8 @@ class _PrepareSheet extends StatefulWidget {
 }
 
 class _PrepareSheetState extends State<_PrepareSheet> {
-  /// Only profiled chapters can be directed.
-  late final _profiled = [
-    for (final chapter in widget.chapters)
-      if (chapter.state != ChapterState.unprofiled) chapter,
-  ];
+  /// Every chapter can be prepared; those not profiled are profiled first.
+  late final _profiled = widget.chapters;
 
   /// Indices into [_profiled]: from the first chapter not yet voiced, five
   /// chapters on.
@@ -111,10 +109,7 @@ class _PrepareSheetState extends State<_PrepareSheet> {
       subtitle: widget.book.title,
       onClose: () => Navigator.pop(context),
       child: _profiled.isEmpty
-          ? Padding(
-              padding: const EdgeInsets.only(bottom: PsSpace.s4),
-              child: Text(l.prepareNeedsProfile, style: note),
-            )
+          ? const SizedBox.shrink()
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [

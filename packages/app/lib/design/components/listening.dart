@@ -283,21 +283,14 @@ class _PsPassageState extends State<PsPassage>
     }
 
     final lines = widget.paragraphs[pi];
+    String? cue;
     for (var li = 0; li < lines.length; li++) {
       final line = lines[li];
       final start = offset;
+      // The speaker hangs in the margin beside the spotlight, so the text
+      // itself never moves as the spotlight does.
       if (line.current && line.speaker != null && widget.cue) {
-        final cue = _Cue(line.speaker!, p);
-        spans.add(
-          WidgetSpan(alignment: PlaceholderAlignment.middle, child: cue),
-        );
-        placeholders.add(
-          PlaceholderDimensions(
-            size: cue.size,
-            alignment: PlaceholderAlignment.middle,
-          ),
-        );
-        offset += 1;
+        cue ??= line.speaker;
       }
       TapGestureRecognizer? tap;
       final onLineTap = widget.onLineTap;
@@ -335,6 +328,7 @@ class _PsPassageState extends State<PsPassage>
       placeholders: placeholders,
       spot: spot,
       spotKey: spotLine == null ? null : '$pi:$spotLine',
+      cue: cue == null ? null : _Cue(cue, p),
       color: p.spotlight,
       // The book's language, not the interface's, picks the glyph forms.
       locale: widget.english ? const Locale('en') : const Locale('zh', 'CN'),
@@ -346,51 +340,50 @@ class _PsPassageState extends State<PsPassage>
   }
 }
 
+/// Who speaks the spotlit line, set in the margin beside its first line:
+/// stacked like a seal's inscription for Chinese names, turned on its side
+/// for Latin ones. It takes no room in the text.
 class _Cue extends StatelessWidget {
-  _Cue(this.speaker, this.p) : size = _measure(speaker);
+  const _Cue(this.speaker, this.p);
 
   final String speaker;
   final PsPalette p;
-  final Size size;
 
-  static final _style = PsType.style(
-    PsFonts.sans,
-    11,
-    17,
-    FontWeight.w600,
-    letterSpacing: 0.22,
-  );
-  static const _gap = 7.0;
+  /// The margin it may use, beside the text.
+  static const width = 14.0;
+  static const _gap = 6.0;
 
-  static Size _measure(String speaker) {
-    final tp = TextPainter(
-      text: TextSpan(text: speaker, style: _style),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    final size = Size(tp.width + 10 + _gap, 17);
-    tp.dispose();
-    return size;
-  }
+  static final _style = PsType.style(PsFonts.sans, 10, 12, FontWeight.w600);
+
+  /// How far left of the text it starts.
+  static double get offset => width + _gap;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.fromSize(
-      size: size,
-      child: Padding(
-        padding: const EdgeInsets.only(right: _gap),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: p.vermilionSoft,
-            borderRadius: BorderRadius.circular(3),
-          ),
-          child: Center(
-            child: Text(
-              speaker,
-              textScaler: TextScaler.noScaling,
-              style: _style.copyWith(color: p.vermilion),
-            ),
-          ),
-        ),
+    final name = speaker.characters.length > 5
+        ? '${speaker.characters.take(4)}…'
+        : speaker;
+    final style = _style.copyWith(color: p.vermilion);
+    return ExcludeSemantics(
+      child: SizedBox(
+        width: width,
+        child: psHasCjk(name)
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final glyph in name.characters)
+                    Text(glyph, textScaler: TextScaler.noScaling, style: style),
+                ],
+              )
+            : RotatedBox(
+                quarterTurns: 3,
+                child: Text(
+                  name,
+                  maxLines: 1,
+                  textScaler: TextScaler.noScaling,
+                  style: style,
+                ),
+              ),
       ),
     );
   }
@@ -408,12 +401,16 @@ class _SpotlitText extends StatelessWidget {
     required this.locale,
     required this.align,
     required this.inflate,
+    this.cue,
   });
 
   final TextSpan span;
   final List<PlaceholderDimensions> placeholders;
   final TextRange? spot;
   final String? spotKey;
+
+  /// Set in the margin level with the spotlight's first line.
+  final _Cue? cue;
   final Color color;
   final Locale locale;
   final TextAlign align;
@@ -446,7 +443,7 @@ class _SpotlitText extends StatelessWidget {
           ),
         );
         tp.dispose();
-        return TweenAnimationBuilder<double>(
+        final spotlit = TweenAnimationBuilder<double>(
           key: ValueKey(spotKey),
           tween: Tween(begin: 0, end: 1),
           duration: PsMotion.base,
@@ -460,6 +457,15 @@ class _SpotlitText extends StatelessWidget {
             child: child,
           ),
           child: text,
+        );
+        final cue = this.cue;
+        if (cue == null || rects.isEmpty) return spotlit;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            spotlit,
+            Positioned(left: -_Cue.offset, top: rects.first.top, child: cue),
+          ],
         );
       },
     );

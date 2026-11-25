@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import '../application/app_services.dart';
 import '../cast/cast_page.dart';
@@ -7,14 +10,15 @@ import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import '../listening/app_scope.dart';
 import '../listening/generation_failures.dart';
+import '../listening/chapter_picker.dart';
 import '../listening/player.dart';
 import 'bookshelf.dart';
 import 'contents.dart';
 import 'delete_book.dart';
-import 'prepare_sheet.dart';
 import 'reader_page.dart';
 import 'reading_settings.dart';
 import 'share_sheet.dart';
+import 'voice_sheet.dart';
 
 /// One book: its cover and title over the table of contents.
 class BookPage extends StatefulWidget {
@@ -45,13 +49,14 @@ class _BookPageState extends State<BookPage> {
   ListeningBookmark? _bookmark;
   var _opening = false;
 
-  /// How the book is performed; null until loaded or without generation.
-  BookPerformanceMode? _mode;
-  BookExpressiveness? _expressiveness;
+  /// Where the book stands with its AI voices; null until loaded or
+  /// without generation.
+  BookVoice? _voice;
+  Timer? _voiceReload;
 
-  /// Which of the two could not be saved.
-  var _modeFailed = false;
-  var _expressivenessFailed = false;
+  /// Scrolled to the chapter being listened to once, on arrival.
+  var _revealed = false;
+  final _contentsKey = GlobalKey();
 
   @override
   void initState() {
@@ -66,8 +71,10 @@ class _BookPageState extends State<BookPage> {
     final services = AppScope.servicesOf(context);
     if (services == _services && _loads > 0) return;
     _services?.listening.removeListener(_onListening);
+    _services?.generation?.removeListener(_onGeneration);
     _services = services;
     services?.listening.addListener(_onListening);
+    services?.generation?.addListener(_onGeneration);
     _load();
   }
 
@@ -75,20 +82,59 @@ class _BookPageState extends State<BookPage> {
   void dispose() {
     widget.bookshelf.removeListener(_load);
     _services?.listening.removeListener(_onListening);
+    _services?.generation?.removeListener(_onGeneration);
+    _voiceReload?.cancel();
     _scroll.dispose();
     super.dispose();
+  }
+
+  /// Generation reports every voiced line; the voice row needs no more
+  /// than a refresh every second or two.
+  void _onGeneration() {
+    _voiceReload ??= Timer(const Duration(milliseconds: 1500), () {
+      _voiceReload = null;
+      _loadVoice();
+    });
+  }
+
+  Future<void> _loadVoice() async {
+    final generation = _services?.generation;
+    if (generation == null) return;
+    try {
+      final voice = await generation.voice(widget.book.id);
+      if (mounted) setState(() => _voice = voice);
+    } catch (_) {
+      // Without it the row stays as it was.
+    }
   }
 
   bool _active = false;
 
   /// Rebuilds when this book starts or stops being the one open for
-  /// listening, and refreshes the bookmark then.
+  /// listening, or moves to another chapter, and refreshes the bookmark.
   void _onListening() {
-    final active = _services!.listening.value.bookId == widget.book.id;
-    if (active == _active) return;
-    setState(() => _active = active);
+    final state = _services!.listening.value;
+    final active = state.bookId == widget.book.id;
+    final chapter = active ? state.chapter : null;
+    final playing = active && state.playing;
+    if (active == _active &&
+        chapter == _listeningChapter &&
+        playing == _playing) {
+      return;
+    }
+    setState(() {
+      _active = active;
+      _listeningChapter = chapter;
+      _playing = playing;
+    });
     _loadBookmark();
   }
+
+  int? _listeningChapter;
+  var _playing = false;
+
+  /// The chapter number heard last, or being heard.
+  int? get _currentChapter => _listeningChapter ?? _bookmark?.chapter;
 
   Future<void> _loadBookmark() async {
     try {
@@ -128,9 +174,12 @@ class _BookPageState extends State<BookPage> {
   Future<void> _load() async {
     final load = ++_loads;
     if (_services != null) {
-      _active = _services!.listening.value.bookId == widget.book.id;
+      final state = _services!.listening.value;
+      _active = state.bookId == widget.book.id;
+      _listeningChapter = _active ? state.chapter : null;
+      _playing = _active && state.playing;
       _loadBookmark();
-      _loadMode();
+      _loadVoice();
     }
     try {
       final chapters = await widget.bookshelf.chapters(widget.book.id);
@@ -139,6 +188,7 @@ class _BookPageState extends State<BookPage> {
         _contents = TableOfContents(chapters);
         _loadFailed = false;
       });
+      WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
     } catch (_) {
       // Deleted from under the page: the shelf takes over once we pop.
       if (!mounted || load != _loads) return;
@@ -165,12 +215,53 @@ class _BookPageState extends State<BookPage> {
     );
   }
 
-  void _prepare() => showPrepareSheet(
+  /// Scrolls the contents, once, so the chapter being listened to shows.
+  void _reveal({int? chapter, bool force = false}) {
+    final contents = _contents;
+    final target = chapter ?? _currentChapter;
+    if (!mounted || contents == null || target == null) return;
+    if (_revealed && !force) return;
+    final index = contents.chapters.indexWhere((c) => c.number == target);
+    final header = _contentsKey.currentContext?.findRenderObject();
+    if (index < 0 || header is! RenderBox || !_scroll.hasClients) return;
+    _revealed = true;
+    // Near the top already: leave the cover in view.
+    if (index < 4 && !force) return;
+    final top = RenderAbstractViewport.of(
+      header,
+    ).getOffsetToReveal(header, 0).offset;
+    final offset =
+        top +
+        header.size.height +
+        contents.offsetOf(index) -
+        MediaQuery.sizeOf(context).height / 3;
+    _scroll.jumpTo(offset.clamp(0, _scroll.position.maxScrollExtent));
+  }
+
+  Future<void> _jump() async {
+    final contents = _contents;
+    if (contents == null) return;
+    final l = AppLocalizations.of(context);
+    final current = contents.chapters.indexWhere(
+      (c) => c.number == _currentChapter,
+    );
+    final index = await pickChapter(
+      context,
+      title: l.jumpToChapter,
+      subtitle: widget.book.title,
+      chapters: contents.chapters,
+      current: current < 0 ? null : current,
+    );
+    if (index != null && mounted) {
+      _reveal(chapter: contents.chapters[index].number, force: true);
+    }
+  }
+
+  void _openVoice() => showVoiceSheet(
     context,
     book: widget.book,
-    chapters: _contents!.chapters,
-    generation: _services!.generation!,
-  );
+    chapters: _contents?.chapters ?? const [],
+  ).then((_) => _loadVoice());
 
   Future<void> _menu(BuildContext button) async {
     final l = AppLocalizations.of(context);
@@ -282,6 +373,7 @@ class _BookPageState extends State<BookPage> {
                   SliverToBoxAdapter(child: _actions(l, p)),
                 SliverToBoxAdapter(
                   child: Padding(
+                    key: _contentsKey,
                     padding: const EdgeInsets.fromLTRB(
                       PsSpace.s5,
                       0,
@@ -299,13 +391,13 @@ class _BookPageState extends State<BookPage> {
                             ),
                           ),
                         ),
-                        if (_services?.generation != null)
+                        if (contents != null && contents.chapters.length > 30)
                           PsButton(
-                            label: l.prepareChapters,
-                            icon: PsIcons.voice,
+                            label: l.jumpToChapter,
+                            icon: PsIcons.list,
                             small: true,
                             variant: PsButtonVariant.ghost,
-                            onPressed: contents == null ? null : _prepare,
+                            onPressed: _jump,
                           )
                         else
                           // Keeps the heading's height without the button.
@@ -318,6 +410,13 @@ class _BookPageState extends State<BookPage> {
                   _ContentsList(
                     contents: contents,
                     bookId: book.id,
+                    current: () {
+                      final i = contents.chapters.indexWhere(
+                        (c) => c.number == _currentChapter,
+                      );
+                      return i < 0 ? null : i;
+                    }(),
+                    playing: _playing,
                     progress: _services?.generation?.progress,
                     onChapter: _read,
                   )
@@ -354,7 +453,6 @@ class _BookPageState extends State<BookPage> {
         : bookmark == null
         ? l.startListening
         : l.resumeListening(bookmark.chapter);
-    final mode = _mode;
     return Padding(
       padding: const EdgeInsets.fromLTRB(PsSpace.s5, 0, PsSpace.s5, PsSpace.s8),
       child: Column(
@@ -374,185 +472,57 @@ class _BookPageState extends State<BookPage> {
                 ),
               ),
               PsButton(
-                label: l.cast,
+                label: l.castShort,
                 onPressed: _contents == null ? null : _openCast,
               ),
             ],
           ),
+          if (_voice case final voice?)
+            Padding(
+              padding: const EdgeInsets.only(top: PsSpace.s3),
+              child: VoiceStatusRow(
+                voice: voice,
+                chapters: _contents?.chapters ?? const [],
+                current: _currentChapter ?? 1,
+                onTap: _openVoice,
+              ),
+            ),
+          if (_voice?.profileNeeded case final chapter?)
+            Padding(
+              padding: const EdgeInsets.only(top: PsSpace.s3),
+              child: ProfileNeededBanner(
+                bookId: widget.book.id,
+                chapter: chapter,
+                profiledThrough: _voice!.profiledThrough,
+                onDone: _loadVoice,
+              ),
+            ),
           GenerationFailures(
             bookId: widget.book.id,
             padding: const EdgeInsets.only(top: PsSpace.s4),
           ),
-          if (mode != null) ...[
-            const SizedBox(height: PsSpace.s5),
-            _performance(l, p, mode),
-          ],
         ],
       ),
     );
   }
-
-  /// How the book is performed: whether dialogue tags are read, and how
-  /// much of the director's emotion the voices give. Both apply to the
-  /// whole book and to every engine.
-  Widget _performance(
-    AppLocalizations l,
-    PsPalette p,
-    BookPerformanceMode mode,
-  ) {
-    final expressiveness = _expressiveness ?? BookExpressiveness.natural;
-    final label = PsType.subhead.copyWith(
-      color: p.ink,
-      fontWeight: FontWeight.w500,
-    );
-    final failed = _modeFailed || _expressivenessFailed;
-    TableRow row(String name, Widget control) => TableRow(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(right: PsSpace.s3),
-          child: Text(name, style: label),
-        ),
-        control,
-      ],
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Table(
-          columnWidths: const {0: IntrinsicColumnWidth(), 1: FlexColumnWidth()},
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children: [
-            row(
-              l.performanceMode,
-              PsSegmentedControl<BookPerformanceMode>(
-                expand: true,
-                small: true,
-                value: mode,
-                onChanged: _setMode,
-                segments: [
-                  PsSegment(BookPerformanceMode.audiobook, l.modeAudiobook),
-                  PsSegment(BookPerformanceMode.drama, l.modeDrama),
-                ],
-              ),
-            ),
-            const TableRow(
-              children: [
-                SizedBox(height: PsSpace.s3),
-                SizedBox(height: PsSpace.s3),
-              ],
-            ),
-            row(
-              l.expressiveness,
-              PsSegmentedControl<BookExpressiveness>(
-                key: const ValueKey('expressiveness'),
-                expand: true,
-                small: true,
-                value: expressiveness,
-                onChanged: _setExpressiveness,
-                segments: [
-                  PsSegment(BookExpressiveness.plain, l.expressivenessPlain),
-                  PsSegment(
-                    BookExpressiveness.natural,
-                    l.expressivenessNatural,
-                  ),
-                  PsSegment(
-                    BookExpressiveness.dramatic,
-                    l.expressivenessDramatic,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: PsSpace.s2),
-        Text(
-          _modeFailed
-              ? l.modeSaveFailed
-              : _expressivenessFailed
-              ? l.expressivenessSaveFailed
-              : '${mode == BookPerformanceMode.audiobook ? l.modeAudiobookNote : l.modeDramaNote}'
-                    '${l.localeName.startsWith('zh') ? '' : ' '}'
-                    '${switch (expressiveness) {
-                      BookExpressiveness.plain => l.expressivenessPlainNote,
-                      BookExpressiveness.natural => l.expressivenessNaturalNote,
-                      BookExpressiveness.dramatic => l.expressivenessDramaticNote,
-                    }}',
-          style: PsType.caption.copyWith(
-            color: failed ? p.danger : p.ink2,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _loadMode() async {
-    final generation = _services?.generation;
-    if (generation == null) return;
-    try {
-      final mode = await generation.mode(widget.book.id);
-      final expressiveness = await generation.expressiveness(widget.book.id);
-      if (mounted) {
-        setState(() {
-          _mode = mode;
-          _expressiveness = expressiveness;
-        });
-      }
-    } catch (_) {
-      // Without a stored performance the controls stay hidden.
-    }
-  }
-
-  Future<void> _setMode(BookPerformanceMode mode) async {
-    final previous = _mode;
-    if (mode == previous) return;
-    setState(() {
-      _mode = mode;
-      _modeFailed = false;
-    });
-    try {
-      await _services!.generation!.setMode(widget.book.id, mode);
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _mode = previous;
-          _modeFailed = true;
-        });
-      }
-    }
-  }
-
-  Future<void> _setExpressiveness(BookExpressiveness value) async {
-    final previous = _expressiveness;
-    if (value == previous) return;
-    setState(() {
-      _expressiveness = value;
-      _expressivenessFailed = false;
-    });
-    try {
-      await _services!.generation!.setExpressiveness(widget.book.id, value);
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _expressiveness = previous;
-          _expressivenessFailed = true;
-        });
-      }
-    }
-  }
 }
 
-/// The chapters, marked while any of them is being generated.
+/// The chapters: the one being listened to, those with AI voices ready,
+/// and those being prepared.
 class _ContentsList extends StatelessWidget {
   const _ContentsList({
     required this.contents,
     required this.bookId,
     required this.progress,
     required this.onChapter,
+    this.current,
+    this.playing = false,
   });
 
   final TableOfContents contents;
   final String bookId;
+  final int? current;
+  final bool playing;
 
   /// Null without generation, as in the gallery.
   final ValueListenable<GenerationProgress>? progress;
@@ -561,15 +531,130 @@ class _ContentsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = this.progress;
+    final voiced = {
+      for (final chapter in contents.chapters)
+        if (chapter.state == ChapterState.synthesized) chapter.number,
+    };
     Widget list(Map<int, ChapterProgress> chapters) => SliverList.builder(
       itemCount: contents.length,
-      itemBuilder: (context, i) =>
-          contents.build(context, i, onChapter: onChapter, progress: chapters),
+      itemBuilder: (context, i) => contents.build(
+        context,
+        i,
+        onChapter: onChapter,
+        current: current,
+        playing: playing,
+        voiced: voiced,
+        progress: chapters,
+      ),
     );
     if (progress == null) return list(const {});
     return ValueListenableBuilder(
       valueListenable: progress,
       builder: (context, value, _) => list(bookProgress(value, bookId)),
+    );
+  }
+}
+
+/// One line under the listen button: which voice reads this book and how
+/// far its AI voices are ready, or what they still need. Opens the book's
+/// voice settings.
+class VoiceStatusRow extends StatelessWidget {
+  const VoiceStatusRow({
+    super.key,
+    required this.voice,
+    required this.chapters,
+    required this.current,
+    required this.onTap,
+  });
+
+  final BookVoice voice;
+  final List<ChapterEntry> chapters;
+
+  /// The chapter heard last, from which readiness is counted.
+  final int current;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final p = context.ps;
+    final voiced = {
+      for (final c in chapters)
+        if (c.state == ChapterState.synthesized) c.number,
+    };
+    var through = current - 1;
+    while (voiced.contains(through + 1)) {
+      through++;
+    }
+    final (String title, String detail, bool warn) = switch (voice) {
+      BookVoice(sample: true) => (l.aiVoice, l.voiceStatusSample, false),
+      BookVoice(ai: false) => (l.systemVoice, l.voiceStatusTurnOn, false),
+      BookVoice(enabled: false) => (
+        l.systemVoice,
+        l.aiVoicesOffEverywhere,
+        true,
+      ),
+      BookVoice(gap: VoiceSetupGap.languageModel) => (
+        l.systemVoice,
+        l.gapLanguageModelTitle,
+        true,
+      ),
+      BookVoice(gap: VoiceSetupGap.voiceEngine) => (
+        l.systemVoice,
+        l.gapVoiceTitle,
+        true,
+      ),
+      _ when through >= current => (
+        l.aiVoice,
+        l.voiceStatusReadyThrough(through),
+        false,
+      ),
+      _ when voiced.isNotEmpty => (
+        l.aiVoice,
+        l.voiceStatusVoicedCount(voiced.length),
+        false,
+      ),
+      _ => (l.aiVoice, l.voiceStatusAsYouListen, false),
+    };
+    return Semantics(
+      button: true,
+      label: '$title, $detail',
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(PsRadius.md),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: PsSpace.s2),
+          child: Row(
+            spacing: PsSpace.s2,
+            children: [
+              PsIcon(
+                PsIcons.voice,
+                size: 18,
+                color: warn ? p.vermilion : p.ink2,
+              ),
+              Text(
+                title,
+                style: PsType.subhead.copyWith(
+                  color: p.ink,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  detail,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: PsType.subhead.copyWith(
+                    color: warn ? p.vermilion : p.ink2,
+                  ),
+                ),
+              ),
+              PsIcon(PsIcons.chevronRight, size: 18, color: p.ruleStrong),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

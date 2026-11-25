@@ -21,7 +21,7 @@ class SynthesizeCommand extends Command<void> {
       ..addOption(
         'mode',
         allowed: ['audiobook', 'drama'],
-        defaultsTo: 'audiobook',
+        help: 'Performance mode; defaults to the book\'s saved choice.',
       )
       ..addOption(
         'expressiveness',
@@ -34,7 +34,7 @@ class SynthesizeCommand extends Command<void> {
         'merge-narrator',
         defaultsTo: false,
         help:
-            'Join adjacent narrator lines with the same emotion and intensity.',
+            'Join adjacent narrator lines with matching performance and no cues.',
       )
       ..addOption('output', help: 'Destination chapter WAV path.');
   }
@@ -65,7 +65,20 @@ class SynthesizeCommand extends Command<void> {
     if (script.sourceTextHash != chapter.textHash) {
       throw StateError('Direct the updated chapter before synthesis.');
     }
-    final mode = PerformanceMode.values.byName(argResults!['mode'] as String);
+    final performances = PerformanceRepository(context.store);
+    var performance = await performances.get(book.id);
+    if (argResults!['mode'] case final String chosen) {
+      performance = performance.copyWith(
+        mode: PerformanceMode.values.byName(chosen),
+      );
+    }
+    if (argResults!['expressiveness'] case final String chosen) {
+      performance = performance.copyWith(
+        expressiveness: Expressiveness.values.byName(chosen),
+      );
+    }
+    await performances.save(book.id, performance);
+    final mode = performance.mode;
     String? skipped(ScriptLine line) => line.isNonStory
         ? 'nonStory'
         : mode == PerformanceMode.drama && line.isDialogueTag
@@ -81,14 +94,6 @@ class SynthesizeCommand extends Command<void> {
       argResults!['config'] as String?,
       environment: context.environment,
     );
-    final performances = PerformanceRepository(context.store);
-    var performance = await performances.get(book.id);
-    if (argResults!['expressiveness'] case final String chosen) {
-      performance = performance.copyWith(
-        expressiveness: Expressiveness.values.byName(chosen),
-      );
-      await performances.save(book.id, performance);
-    }
     final bindings = await Casting(
       context.store,
       catalog: standardTtsEngines.catalog(config),

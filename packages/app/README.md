@@ -35,6 +35,8 @@ CI 使用固定测试签名，后续安装包可覆盖升级并保留应用数�
 
 ## 书架
 
+书架支持导入 `.pagestage` 剧本包和有声包，书页菜单支持导出分享。设置页按注册表列出语言引擎及云端、本机配音引擎；书页可调整表现力，正文台词菜单可换声音或修订说话人。扩展接口和桌面导出命令见[引擎与书籍包](../../docs/engines-and-packages.md)。
+
 `lib/shelf/` 是书架、目录和正文三屏。页面只通过两个接口取数据：
 
 - `Bookshelf`：书的列表、导入（弹出文件选择器）、删除、章节列表和状态、按段落给出的正文。书和章节状态变化时通知监听者。
@@ -60,6 +62,8 @@ CI 使用固定测试签名，后续安装包可覆盖升级并保留应用数�
 - 组件自带的文案（播放、旁白、章节状态等）也走本地化，所以组件要放在带 `AppLocalizations.delegate` 的 `MaterialApp` 里。
 - `PsPassage` 点台词只回调 `onLineTap`，由调用方弹出「从这里播放」菜单，不直接改变播放位置。
 
+应用图标沿用 `PsMark` 的「 」造型和浅色主题的纸色、墨色与朱红色。Android 提供各密度 PNG、自适应图标和单色主题图层，iOS 提供 AppIcon 目录所需的全部尺寸。矢量稿位于 `assets/branding/app_icon.svg`；在 macOS 上从仓库根目录运行 `swift packages/app/tool/generate_app_icons.swift` 可重新生成全部资源。
+
 ## 字体
 
 `assets/fonts/` 打包了四套字体，均为 SIL Open Font License，许可文本在同一目录，启动时注册到 `LicenseRegistry`：
@@ -75,6 +79,14 @@ CI 使用固定测试签名，后续安装包可覆盖升级并保留应用数�
 
 ## 诊断
 
+Android 真机连上 ADB 后，运行下面的命令，再点「继续生成」。`PageStageGeneration` 记录章节、任务状态、已完成段数和缓存命中。`PageStageMing` 记录本机合成的输入字数、输出采样数、耗时和失败位置。release 安装包也会输出这些日志。命令先显示系统缓冲区内的近期记录，再持续跟踪新日志。
+
+```sh
+adb logcat -v time -s flutter:I PageStageMing:I
+```
+
+macOS 默认安装的 Android SDK 可直接用 `"$HOME/Library/Android/sdk/platform-tools/adb"` 调用上面的 `adb`。
+
 `DiagnosticLog` 提供报告生成与系统分享接口。日志保存在 App 私有目录，单份上限 128 KiB，轮转保留两份。报告包含应用版本、系统版本、固定错误类别、Dart 源码位置和系统崩溃数值摘要。异常消息、key、书籍正文、原生堆栈原文和任意平台字符串均不写入报告；应用不自动上传。
 
 Android 11 / API 30 起从 `ApplicationExitInfo` 读取历史崩溃与 ANR。iOS 14 起订阅 MetricKit 并读取系统保留的历史诊断；系统决定报告交付时间，报告可在后续启动或导出时补入日志。`Diagnostics.feedback()` 提供打开本仓库新建 Issue 页面的接口。
@@ -89,6 +101,22 @@ Android 11 / API 30 起从 `ApplicationExitInfo` 读取历史崩溃与 ANR。iOS
 dart run packages/app/tool/build_examples.dart --source-dir .pagestage/examples-v5
 ```
 
-示例书为《阿Q正传》和 *Pride and Prejudice* 各第 1 章。源目录需具备两本书的演员表，以及首章当前 `director-v5` 剧本和完整 CLI 合成结果；打包脚本从书库中选取首章正文、剧本和音频。脚本按 64 kbps 单声道 AAC-LC 压缩，输出 M4A 和包含实际总字节数、时长的 `assets/examples/manifest.json`；macOS 使用 `afconvert`，其他系统使用 `ffmpeg`，打包本身不调用服务商。
+示例书为《阿Q正传》和 *Pride and Prejudice* 各第 1 章。源目录需具备两本书的演员表，以及首章当前导演提示词版本的剧本和完整 CLI 合成结果；打包脚本从书库中选取首章正文、剧本和音频。脚本按 64 kbps 单声道 AAC-LC 压缩，输出 M4A 和包含实际总字节数、时长的 `assets/examples/manifest.json`；macOS 使用 `afconvert`，其他系统使用 `ffmpeg`，打包本身不调用服务商。
 
 素材生成记录、分发条款核对、实际格式与体积、离线及模拟器验证见 [示例书资源](../../docs/bundled-examples.md)，对应 [#35](https://github.com/dayeguilaiye/pagestage/issues/35)。
+
+## Android 的 Ming 离线配音
+
+骁龙 8 Gen 3（SM8650）版通过三个随安装交付的资源包携带模型。带 Ming 的发行物是 Android App Bundle 或由它生成的设备 APK 集，仓库现有的单 APK 构建用于轻量发行。首次使用时，打开设置里的「配音 · 本机」→「Ming 离线配音」并点击「初始化」。设置页显示当前模块、按小米 14 Ultra 实测耗时加权的百分比和已完成项数。准备完成后，所有角色共用同一组图。模型包提供 32 个普通话预设，覆盖五个年龄段，其中 6 个也适合旁白。建档模型根据音色描述为角色选择预设，选择随演员表保存。模型使用 10 步、双句矩阵合批，同一批的两句可分别使用不同音色和情绪。单句和奇数尾句使用原版单句图。
+
+在仓库根目录准备已转换的模型与 Qualcomm 运行库，然后构建 Android App Bundle。脚本按清单校验大小与 SHA-256。可用 `--models` 和 `--qnn-libs` 指定已取得的文件目录。
+
+```sh
+python3 packages/app/tool/stage_ming_android.py
+cd packages/app
+flutter build appbundle --release --target-platform android-arm64
+```
+
+用 Android bundletool 的 `build-apks` 为设备生成签名 APK 集，然后用 `install-apks` 一并安装主程序和资源包。原地更新沿用既有签名和递增的版本号。真机校准数据见[首次初始化记录](../../experiments/ming_tts_lab/VERIFICATION.md#pagestage-ming-init)。
+
+预设音色独立登记在 [voices.json](android/app/src/main/assets/ming/voices.json)。添加随包音色时，使用相同的 CAMPPlus 编码器和说话人投影层为参考录音提取一次 896 维 FP32 特征，保存为同目录的 `<id>.bin` 并登记元数据。已发布的音色 ID 绑定到登记的特征 SHA-256。新声线使用新 ID，旧书可继续使用原有特征。音色目录独立于编译缓存版本，已初始化的设备可以直接复用七张图。 桌面生成工具位于 `experiments/tools/build_ming_voice_library.py`，使用本地 Ming 权重和 `--output` 指定的目录保存普通话样音。用 `experiments/tools/review_ming_voice_library.py --output <同一目录>` 可生成按年龄分组的试听页，并核对转写、音高和说话人特征相似度。

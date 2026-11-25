@@ -39,7 +39,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get player => 'Player';
 
   @override
-  String get aiVoice => 'AI voice';
+  String get aiVoice => 'AI voices';
 
   @override
   String get nextLine => 'Next line';
@@ -67,7 +67,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String chapterDirecting(String elapsed) {
-    return 'Directing $elapsed';
+    return 'Assigning lines $elapsed';
   }
 
   @override
@@ -81,7 +81,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get prepareChapters => 'Generate ahead';
+  String get prepareChapters => 'Prepare chapters';
 
   @override
   String get prepareFrom => 'From';
@@ -91,24 +91,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prepareNote =>
-      'Direct and voice these chapters now, so they play straight away when you listen. Their text goes to your language model and voice provider; chapters already done are skipped.';
+      'Prepares these chapters now, so they play straight away, even offline. Their text goes to your language model and voice service; chapters already done are skipped.';
 
   @override
   String prepareRange(int first, int through) {
-    return 'Generate chapters $first–$through';
+    return 'Prepare chapters $first–$through';
   }
 
   @override
   String prepareOne(int chapter) {
-    return 'Generate chapter $chapter';
+    return 'Prepare chapter $chapter';
   }
 
   @override
-  String get prepareNeedsProfile =>
-      'Only profiled chapters can be generated. Profile them in the cast first.';
-
-  @override
-  String get prepareFailed => 'Couldn’t start generating. Try again later.';
+  String get prepareFailed => 'Couldn’t start preparing. Try again later.';
 
   @override
   String get shelfTitle => 'Bookshelf';
@@ -230,7 +226,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteBookBody =>
-      'Its chapters, cast, scripts and audio will be deleted. You can’t undo this.';
+      'Its chapters, characters, lines and audio will be deleted. You can’t undo this.';
 
   @override
   String get deleteBookConfirm => 'Delete book';
@@ -288,8 +284,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get systemVoice => 'System voice';
 
   @override
-  String get systemVoiceNote =>
-      'This chapter has no generated voices yet, so your phone’s own voice is reading it.';
+  String get systemVoiceNote => 'Your phone’s own voice reads this book.';
 
   @override
   String chapterNumber(int number) {
@@ -427,29 +422,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get providerBailian => 'Alibaba Cloud Bailian';
 
   @override
-  String get cast => 'Cast';
+  String get cast => 'Characters & voices';
 
   @override
-  String get castLoadFailed => 'Couldn’t load the cast';
+  String get castLoadFailed => 'Couldn’t load the characters';
 
   @override
   String castMembers(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count speakers',
-      one: '1 speaker',
+      other: '$count characters',
+      one: '1 character',
     );
     return '$_temp0';
   }
 
   @override
   String get castEmpty =>
-      'No cast yet. Once the book is profiled, its speakers and their voices appear here.';
+      'No characters found yet. With AI voices on, they’re found as you listen and appear here.';
 
   @override
   String get castEmptyWorking =>
-      'Profiling. Speakers appear here as they are found.';
+      'Finding the characters. They appear here as they’re found.';
 
   @override
   String get castProvisional => 'Provisional';
@@ -479,16 +474,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileEmpty => 'No profile details yet.';
 
   @override
-  String get profiling => 'Profiling';
-
-  @override
-  String get chaptersProfiled => 'chapters profiled';
+  String get profiling => 'Finding characters';
 
   @override
   String get statusQueued => 'Queued';
 
   @override
-  String get statusRunning => 'Profiling';
+  String get statusRunning => 'Working';
 
   @override
   String get statusPaused => 'Paused';
@@ -498,16 +490,16 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String profilingQueuedTo(int chapter) {
-    return 'Queued to profile through chapter $chapter';
+    return 'Queued to find characters through chapter $chapter';
   }
 
   @override
   String profilingRunningTo(int chapter) {
-    return 'Profiling through chapter $chapter';
+    return 'Finding characters through chapter $chapter';
   }
 
   @override
-  String get profilingPausedTitle => 'Profiling paused';
+  String get profilingPausedTitle => 'Finding characters paused';
 
   @override
   String profilingPausedBody(String provider, String reason) {
@@ -516,7 +508,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String resumeProfilingTo(int chapter) {
-    return 'Resume profiling to chapter $chapter';
+    return 'Resume through chapter $chapter';
   }
 
   @override
@@ -528,43 +520,42 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chapterListSeparator => ', ';
 
   @override
-  String get profilingActionFailed =>
-      'Couldn’t start profiling. Try again later.';
+  String get profilingActionFailed => 'Couldn’t start. Try again later.';
 
   @override
-  String get profiledWholeBook => 'The whole book is profiled.';
+  String get profiledWholeBook => 'Every character in the book is found.';
 
   @override
-  String get profileThrough => 'Profile through';
+  String get profileThrough => 'Find through';
 
   @override
-  String get startProfiling => 'Start profiling';
+  String get startProfiling => 'Start';
 
   @override
-  String get extendProfiling => 'Profile further';
+  String get extendProfiling => 'Find further';
 
   @override
   String get profilingNote =>
-      'Profiling sends the chosen chapters’ text to your language model to find the speakers and choose their voices. You’ll be asked before anything is sent.';
+      'Sends the chosen chapters’ text to your language model to find the characters and choose their voices.';
 
   @override
-  String get reasonMissingKey => 'No key yet. Add one in Settings';
+  String get reasonMissingKey => 'No key yet';
 
   @override
-  String get reasonUnauthorized =>
-      'The key is invalid or lacks permission. Check it in Settings';
+  String get reasonUnauthorized => 'The key is invalid or lacks permission';
 
   @override
-  String get reasonRateLimited => 'Too many requests. Resume in a little while';
+  String get reasonRateLimited => 'Too many requests';
 
   @override
-  String get reasonQuotaExceeded => 'The account has run out of credit';
+  String get reasonQuotaExceeded =>
+      'The account is out of credit. Top up, then resume';
 
   @override
-  String get reasonNetwork => 'The connection dropped';
+  String get reasonNetwork => 'No connection';
 
   @override
-  String get reasonConsentDeclined => 'You cancelled sending';
+  String get reasonConsentDeclined => 'You didn’t agree to send the text';
 
   @override
   String get reasonInvalidResponse =>
@@ -590,6 +581,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reasonInterrupted => 'Interrupted when the app closed';
 
   @override
+  String get reasonLocalSynthesisFailed =>
+      'The on-device engine could not synthesize this passage';
+
+  @override
   String get reasonUnknown => 'The service is unavailable for now';
 
   @override
@@ -599,7 +594,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get consentChapterTextAndCast =>
-      'Directing needs the chosen chapters’ text and the book’s cast to assign lines and voices.';
+      'To find the characters, assign lines and voice them, the text of the chapters you listen to and the book’s characters are sent to it.';
 
   @override
   String get consentVoiceSample =>
@@ -619,7 +614,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get consentContentLabel => 'Content';
 
   @override
-  String get consentChapterTextAndCastName => 'Chapter text and cast';
+  String get consentChapterTextAndCastName => 'Chapter text and characters';
 
   @override
   String get consentVoiceSampleName => 'Voice sample text';
@@ -634,36 +629,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get consentAccept => 'Agree and send';
 
   @override
-  String generationTitle(String chapter) {
-    return '$chapter has no voices yet';
-  }
-
-  @override
-  String get generationBody =>
-      'Generate AI voices now and keep listening while they’re made, or have your phone’s own voice read it for now.';
-
-  @override
-  String generationOutOfRange(String chapter) {
-    return '$chapter hasn’t been profiled, so its voices can’t be generated yet. Extend profiling to this chapter first, or have your phone’s own voice read it for now.';
-  }
-
-  @override
-  String get generateNow => 'Generate voices';
-
-  @override
   String get useSystemVoice => 'Use the system voice';
 
   @override
-  String extendProfilingTo(String chapter) {
-    return 'Extend profiling to $chapter';
-  }
-
-  @override
   String get waitingForSynthesis =>
-      'Generating the next voices — playback continues when they’re ready';
+      'Preparing AI voices — playback starts when they’re ready';
 
   @override
-  String get generationPausedTitle => 'Voice generation paused';
+  String get generationPausedTitle => 'AI voices paused';
 
   @override
   String get generationResumeFailed =>
@@ -675,39 +648,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get resumeGeneration => 'Resume generating';
+  String get resumeGeneration => 'Resume';
 
   @override
   String get reasonVoiceUnavailable =>
-      'The assigned voice is no longer available. Choose another in the cast';
+      'The assigned voice is no longer available';
 
   @override
   String get errorAudioChanged =>
       'The audio has changed (cleared or a new voice). Tap play to prepare it again.';
-
-  @override
-  String get errorGenerationCancelled =>
-      'Generating was cancelled. Tap play to choose again.';
-
-  @override
-  String get performanceMode => 'Performance';
-
-  @override
-  String get modeAudiobook => 'Audiobook';
-
-  @override
-  String get modeDrama => 'Drama';
-
-  @override
-  String get modeAudiobookNote =>
-      'The narrator reads everything, including tags like “he said”.';
-
-  @override
-  String get modeDramaNote =>
-      'Characters speak for themselves; tags like “he said” are skipped.';
-
-  @override
-  String get modeSaveFailed => 'Couldn’t save the performance style. Try again';
 
   @override
   String get changeVoice => 'Change voice';
@@ -717,7 +666,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String changeVoiceTitle(String name) {
-    return 'A new voice for $name';
+    return 'A new voice for “$name”';
   }
 
   @override
@@ -748,7 +697,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get presetsEmpty =>
-      'No preset voices from the engines that are on suit this book’s language.';
+      'No voice service that is on has voices for this book’s language.';
 
   @override
   String get designProvider => 'Design with';
@@ -781,7 +730,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String voiceChanged(String name) {
-    return '$name has a new voice';
+    return '“$name” has a new voice';
   }
 
   @override
@@ -826,61 +775,34 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get setupBody =>
-      'Profiling and directing run on your own language model account.';
+      'Finding characters and assigning lines run on your own language model account.';
 
   @override
   String get setupAction => 'Set up the language model';
 
   @override
-  String get generationSection => 'Generate while listening';
-
-  @override
   String get generationSectionNote =>
-      'Applies only while you listen; reading silently never triggers it. Synthesis never runs further ahead than directing; 0 turns it off.';
+      'Only while you listen; reading silently never triggers it.';
 
   @override
-  String get autoGenerate => 'Generate voices automatically';
+  String get autoGenerate => 'Use AI voices for new books';
 
   @override
   String get autoGenerateNote =>
-      'Chapters without voices are generated without asking';
-
-  @override
-  String get directingAhead => 'Direct ahead';
-
-  @override
-  String get directingAheadNote => 'Writes the scripts of the next chapters';
-
-  @override
-  String get synthesisAhead => 'Synthesize ahead';
-
-  @override
-  String get synthesisAheadNote => 'Voices the next chapters';
+      'Each book can also be switched in its own voice settings.';
 
   @override
   String get aheadUnit => 'ch';
-
-  @override
-  String get fewerDirectingAhead => 'Direct fewer chapters ahead';
-
-  @override
-  String get moreDirectingAhead => 'Direct more chapters ahead';
-
-  @override
-  String get fewerSynthesisAhead => 'Synthesize fewer chapters ahead';
-
-  @override
-  String get moreSynthesisAhead => 'Synthesize more chapters ahead';
 
   @override
   String get generationSettingsFailed =>
       'Couldn’t save generation settings. Try again';
 
   @override
-  String get castingSection => 'Casting';
+  String get castingSection => 'Character voices';
 
   @override
-  String get exclusiveVoices => 'Exclusive voices';
+  String get exclusiveVoices => 'Characters with their own voice';
 
   @override
   String exclusiveVoicesValue(int count) {
@@ -889,11 +811,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get exclusiveVoicesNote =>
-      'The characters with the most lines each get a voice of their own; everyone else shares the extras’ voices.';
+      'The characters with the most lines each get their own voice; the rest share a few extras’ voices.';
 
   @override
   String get exclusiveVoicesRecastNote =>
-      'Books already profiled are recast. Voices you changed or designed stay.';
+      'Books already analysed get their voices reassigned. Voices you changed or designed stay.';
 
   @override
   String get fewerVoices => 'Fewer exclusive voices';
@@ -902,27 +824,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get moreVoices => 'More exclusive voices';
 
   @override
-  String get recast => 'Recast';
+  String get recast => 'Reassign voices';
 
   @override
   String recastDone(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count exclusive voices',
-      one: '1 exclusive voice',
+      other: '$count voices of their own',
+      one: '1 voice of its own',
     );
-    return 'Recast with $_temp0';
+    return 'Reassigned with $_temp0';
   }
 
   @override
-  String get recastFailed => 'Couldn’t recast. Try again';
+  String get recastFailed => 'Couldn’t reassign voices. Try again';
 
   @override
   String get appearanceSection => 'Appearance';
 
   @override
-  String get storageSection => 'Storage';
+  String get storageSection => 'Storage and usage';
 
   @override
   String get storage => 'Storage';
@@ -961,14 +883,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get storageCountNote =>
-      'Counted per book: its text, scripts, cast and audio files. The database’s index and log are shared by all books and aren’t counted.';
+      'Counted per book: its text, lines, characters and audio files. The database’s index and log are shared by all books and aren’t counted.';
 
   @override
   String get clearAudio => 'Clear audio';
 
   @override
   String get clearAudioNote =>
-      'Clearing removes only generated audio, samples and the synthesis cache. Text, scripts and cast stay; audio is made again when you next listen.';
+      'Clearing removes only generated audio, samples and the cache. Text, lines and characters stay; voices are made again when you next listen.';
 
   @override
   String clearAudioTitle(String title) {
@@ -977,7 +899,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String clearAudioBody(String size) {
-    return 'This frees $size. The text, scripts and cast stay; audio is synthesized again when you next listen.';
+    return 'This frees $size. The text, lines and characters stay; voices are made again when you next listen.';
   }
 
   @override
@@ -1038,7 +960,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get llmPageNote =>
-      'It profiles and directs: finds the speakers and decides who reads each line, and how.';
+      'It finds the book’s characters and decides who reads each line, and how.';
 
   @override
   String get connectionSection => 'Connection';
@@ -1070,20 +992,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modelsSection => 'Models';
 
   @override
-  String get profileModel => 'Profiling model';
+  String get profileModel => 'Character model';
 
   @override
-  String get directorModel => 'Directing model';
+  String get directorModel => 'Lines model';
 
   @override
   String get modelHint => 'Model name';
 
   @override
-  String get sameAsProfileModel => 'Same as profiling model';
+  String get sameAsProfileModel => 'Same as the character model';
 
   @override
   String get modelsNote =>
-      'The profiling model studies the characters and picks voices; the directing model assigns each line and its delivery. Leave it blank to use the profiling model.';
+      'The character model studies the characters and picks voices; the lines model assigns each line and its delivery. Leave it blank to use the character model.';
 
   @override
   String get minimaxPageNote =>
@@ -1091,7 +1013,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get minimaxKeyNote =>
-      'Use a key from MiniMax’s international platform (minimax.io).';
+      'Mainland keys come from minimaxi.com, international ones from minimax.io; each only works on its own platform.';
 
   @override
   String get bailianPageNote =>
@@ -1139,7 +1061,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteLlmKeyBody =>
-      'Profiling and directing pause until you add a key again.';
+      'Finding characters and assigning lines pause until you add a key again; chapters already voiced still play.';
 
   @override
   String get deleteVoiceKeyBody =>
@@ -1158,7 +1080,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saved => 'Saved';
 
   @override
-  String get saveFailed => 'Couldn’t save';
+  String get saveFailed => 'Couldn’t save. Try again.';
 
   @override
   String get saveFailedBody =>
@@ -1174,7 +1096,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keepEditing => 'Keep editing';
 
   @override
-  String get llmSection => 'Profiling and directing';
+  String get llmSection => 'Characters and lines';
 
   @override
   String get voiceSection => 'Voices';
@@ -1201,11 +1123,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reasonProviderDisabled =>
-      'This voice provider is switched off in Settings';
+      'This service is switched off in Settings';
 
   @override
   String get reasonNoVoiceProvider =>
-      'No voice provider is on. Turn one on in Settings';
+      'No voice service for this book’s language is on';
 
   @override
   String offProviderTitle(String provider) {
@@ -1279,7 +1201,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get llmSectionNote =>
-      'You can listen without a language model: import a script or audio package someone shared, and nothing needs directing again.';
+      'You can listen without a language model: import a script or audio package someone shared.';
 
   @override
   String get voiceSectionCloud => 'Voices · Cloud';
@@ -1322,7 +1244,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get engineAbilitiesNote =>
-      'The director writes one script. Each engine performs what it can, and replaces or leaves out the rest.';
+      'Lines are written once. Each voice service performs what it can and replaces or leaves out the rest.';
 
   @override
   String get engineAbilitiesPlain => 'Distinct voices only';
@@ -1380,7 +1302,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get replaceBookBody =>
-      'This book is already on your shelf. Importing replaces its cast, scripts and audio, and keeps your place.';
+      'This book is already on your shelf. Importing replaces its characters, lines and audio, and keeps your place.';
 
   @override
   String get replaceBookConfirm => 'Replace';
@@ -1401,10 +1323,10 @@ class AppLocalizationsEn extends AppLocalizations {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count directed chapters',
-      one: '1 directed chapter',
+      other: '$count chapters of lines',
+      one: '1 chapter of lines',
     );
-    return 'The text, the cast and $_temp0. They voice it with their own engines, with no language model needed.';
+    return 'The text, the characters and $_temp0. They voice it with their own services, with no language model needed.';
   }
 
   @override
@@ -1426,7 +1348,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareNothing =>
-      'There are no scripts to share yet. Direct or voice a few chapters first.';
+      'Nothing to share yet. Listen to a few chapters so they get voiced first.';
 
   @override
   String get sharePreparing => 'Packing…';
@@ -1442,40 +1364,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareLoadFailed => 'Couldn’t read this book’s scripts and audio';
 
   @override
-  String get expressiveness => 'Expression';
+  String get expressiveness => 'Emotion';
 
   @override
-  String get expressivenessPlain => 'Plain';
+  String get expressivenessPlain => 'Even';
 
   @override
   String get expressivenessNatural => 'Natural';
 
   @override
-  String get expressivenessDramatic => 'Dramatic';
+  String get expressivenessDramatic => 'Heightened';
 
   @override
   String get expressivenessPlainNote =>
       'Distinct voices reading evenly, without emotion or vocal sounds.';
 
   @override
-  String get expressivenessNaturalNote => 'Performed as the director wrote it.';
+  String get expressivenessNaturalNote =>
+      'Performed with the emotion the lines call for.';
 
   @override
-  String get expressivenessDramaticNote =>
-      'Emotions one step stronger than directed.';
-
-  @override
-  String get expressivenessSaveFailed =>
-      'Couldn’t save the expression. Try again.';
+  String get expressivenessDramaticNote => 'Emotions one step stronger.';
 
   @override
   String changeVoiceOf(String name) {
-    return 'Change $name’s voice';
+    return 'Change the voice of “$name”';
   }
 
   @override
   String reassignLine(String name) {
-    return 'This isn’t $name';
+    return 'Not said by “$name”';
   }
 
   @override
@@ -1490,12 +1408,588 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String reassigned(String name) {
-    return 'Now spoken by $name';
+    return 'Now said by “$name”';
   }
 
   @override
   String get reassignFailed => 'Couldn’t change the speaker. Try again.';
 
   @override
-  String get speakersLoadFailed => 'Couldn’t load the cast';
+  String get speakersLoadFailed => 'Couldn’t load the characters';
+
+  @override
+  String get mingTitle => 'Ming offline voices';
+
+  @override
+  String get mingPending => 'Initialization required';
+
+  @override
+  String get mingDescription =>
+      'Includes 32 Mandarin voices, from children to older adults, with options for narration. One initialization prepares every voice.';
+
+  @override
+  String get mingBeforeInit =>
+      'Initialize before first use and keep PageStage in the foreground.';
+
+  @override
+  String get mingReady => 'Initialization complete. The voices are ready.';
+
+  @override
+  String get mingCopying => 'Copying and verifying the model files…';
+
+  @override
+  String mingCompiling(String module) {
+    return 'Preparing $module…';
+  }
+
+  @override
+  String get mingPrefill => 'text prefill';
+
+  @override
+  String get mingStep => 'single-line language model';
+
+  @override
+  String get mingFlow => 'single-line speech generation';
+
+  @override
+  String get mingAgg => 'acoustic aggregation';
+
+  @override
+  String get mingDec => 'audio decoder';
+
+  @override
+  String get mingFlowPair => 'two-line speech generation';
+
+  @override
+  String get mingStepPair => 'two-line language model';
+
+  @override
+  String get mingStorageError =>
+      'Could not prepare the model files. Check free space and try again.';
+
+  @override
+  String get mingInitError =>
+      'Initialization stopped. Resume from the last completed module.';
+
+  @override
+  String get mingInitialize => 'Initialize';
+
+  @override
+  String get mingRetry => 'Resume initialization';
+
+  @override
+  String get mingPreview => 'Preview two voices';
+
+  @override
+  String get mingActionError => 'The action could not be completed. Try again.';
+
+  @override
+  String get fallbackNote =>
+      'AI voices weren’t ready in time, so the system voice reads this chapter. The next one switches back.';
+
+  @override
+  String get systemVoiceForNowNote =>
+      'AI voices can’t be used right now, so the system voice reads this chapter.';
+
+  @override
+  String get turnOnAiVoice => 'Turn on AI voices';
+
+  @override
+  String waitingWithStatus(String status) {
+    return 'Preparing this chapter: $status';
+  }
+
+  @override
+  String get listenWithSystemVoice => 'Listen with the system voice';
+
+  @override
+  String get miniWaiting => 'Preparing AI voices…';
+
+  @override
+  String get listenFromStart => 'Listen from the start';
+
+  @override
+  String get errorNoSystemVoiceShort => 'No reading voice on this phone';
+
+  @override
+  String get errorChapterUnavailableShort => 'Can’t open this chapter';
+
+  @override
+  String get errorAudioFailedShort => 'Can’t play this passage';
+
+  @override
+  String get errorBookMissingShort => 'No longer on your shelf';
+
+  @override
+  String get errorAudioChangedShort => 'Audio changed — tap play';
+
+  @override
+  String get errorPlaybackStoppedShort => 'Stopped — tap play to retry';
+
+  @override
+  String get chapterProfiling => 'Finding characters';
+
+  @override
+  String get chapterListening => 'Listening';
+
+  @override
+  String get chapterVoiced => 'AI voices ready';
+
+  @override
+  String get generationPausedNote =>
+      'The system voice reads meanwhile; listening goes on.';
+
+  @override
+  String profilingPausedLine(String provider, String reason) {
+    return 'Finding characters · $provider: $reason';
+  }
+
+  @override
+  String checkProviderSettings(String provider) {
+    return 'Check $provider settings';
+  }
+
+  @override
+  String get resumeAfterFixNote => 'It resumes once that’s fixed.';
+
+  @override
+  String get retryNow => 'Retry now';
+
+  @override
+  String get retryingSoon => 'It will retry by itself shortly.';
+
+  @override
+  String get reviewAndAgree => 'Review and agree';
+
+  @override
+  String get chooseVoices => 'Choose voices';
+
+  @override
+  String get useSystemVoiceForBook => 'Use the system voice for this book';
+
+  @override
+  String get reasonConsentNeeded =>
+      'You haven’t agreed to send it book text yet';
+
+  @override
+  String consentSetupTitle(String provider) {
+    return 'Allow sending book text to $provider?';
+  }
+
+  @override
+  String get consentScopeNote =>
+      'Agreeing once covers every book sent here. Withdraw it anytime in Settings › Privacy.';
+
+  @override
+  String get consentAgree => 'Agree';
+
+  @override
+  String get listeningSection => 'Listening';
+
+  @override
+  String get aiVoicesEnabled => 'AI voices';
+
+  @override
+  String get aiVoicesEnabledNote =>
+      'Off: every book uses the system voice and no text is sent.';
+
+  @override
+  String get prepareAheadSetting => 'Prepare ahead';
+
+  @override
+  String get prepareAheadSettingNote =>
+      'Prepares the next chapters while you listen. At 0 only the chapter you’re on is prepared.';
+
+  @override
+  String get fewerAhead => 'Prepare one chapter fewer';
+
+  @override
+  String get moreAhead => 'Prepare one chapter more';
+
+  @override
+  String get voiceSettings => 'Voice settings';
+
+  @override
+  String get voiceSettingsFailed => 'Couldn’t load this book’s voice settings';
+
+  @override
+  String get aiVoiceForBook => 'AI voices for each character';
+
+  @override
+  String get aiVoiceForBookNote =>
+      'Each character gets their own voice, prepared as you listen. Text goes to the providers you set up. Off: the system voice reads, and chapters already voiced still play.';
+
+  @override
+  String get aiVoicesOffEverywhere => 'AI voices are off in Settings';
+
+  @override
+  String get openSettings => 'Open Settings';
+
+  @override
+  String get readDialogueTags => 'Read tags like “he said”';
+
+  @override
+  String get readDialogueTagsNote =>
+      'Off: characters speak for themselves and tags are skipped, like a radio drama.';
+
+  @override
+  String get performanceChangeNote =>
+      'Changes apply to this book only. Voiced chapters are voiced again the next time you hear them, calling the voice service again; the chapter playing now finishes first.';
+
+  @override
+  String get prepareAhead => 'Prepare chapters…';
+
+  @override
+  String get prepareAheadNote =>
+      'For example before a trip, to listen offline.';
+
+  @override
+  String get stopPreparing => 'Stop preparing';
+
+  @override
+  String get stopPreparingNote =>
+      'Cancels queued chapters. While you listen, the next chapter or two are still prepared.';
+
+  @override
+  String get castShort => 'Characters';
+
+  @override
+  String get castRowNote => 'Who each character is and how they sound';
+
+  @override
+  String get sampleVoicedTitle => 'The sample is voiced in advance';
+
+  @override
+  String get sampleVoicedBody =>
+      'Its settings can’t change. Import your own book to voice it with your own providers.';
+
+  @override
+  String get voiceStatusSample => 'Sample · voiced in advance';
+
+  @override
+  String get voiceStatusTurnOn => 'Turn on AI voices';
+
+  @override
+  String voiceStatusReadyThrough(int chapter) {
+    return 'Ready through chapter $chapter';
+  }
+
+  @override
+  String voiceStatusVoicedCount(int count) {
+    return '$count chapters voiced';
+  }
+
+  @override
+  String get voiceStatusAsYouListen => 'Prepared as you listen';
+
+  @override
+  String get gapLanguageModelTitle => 'A language model account is needed';
+
+  @override
+  String get gapLanguageModelBody =>
+      'AI voices first need a language model to find the characters and assign lines. The system voice reads until it’s set up.';
+
+  @override
+  String get gapVoiceTitle => 'A voice service is needed';
+
+  @override
+  String get gapVoiceBody =>
+      'Turn on at least one voice service. Microsoft Edge is free and needs no key.';
+
+  @override
+  String profileNeededTitle(int chapter) {
+    return 'To voice chapter $chapter, the characters before it need finding first';
+  }
+
+  @override
+  String profileNeededBody(int from, int through) {
+    return 'This sends chapters $from–$through to the language model and may take a while; the system voice reads meanwhile.';
+  }
+
+  @override
+  String get profileNeededAction => 'Start';
+
+  @override
+  String get jumpToChapter => 'Jump to…';
+
+  @override
+  String get profilingNotStarted => 'No characters found yet';
+
+  @override
+  String profilingStatusLine(int chapter, int count) {
+    return 'Found through chapter $chapter of $count';
+  }
+
+  @override
+  String get profilingAuto =>
+      'Characters are found as you listen; there’s nothing to do.';
+
+  @override
+  String get profileMore => 'Find characters further ahead…';
+
+  @override
+  String laterCharacters(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count characters who appear later',
+      one: '1 character who appears later',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get showLaterCharacters => 'Show (may spoil)';
+
+  @override
+  String get hideLaterCharacters => 'Hide';
+
+  @override
+  String get profileFirstChapter => 'First appears';
+
+  @override
+  String get genderMale => 'Male';
+
+  @override
+  String get genderFemale => 'Female';
+
+  @override
+  String get ageChild => 'Child';
+
+  @override
+  String get ageTeen => 'Teen';
+
+  @override
+  String get ageYoungAdult => 'Young adult';
+
+  @override
+  String get ageMiddleAged => 'Middle-aged';
+
+  @override
+  String get ageSenior => 'Senior';
+
+  @override
+  String get startupFailedTitle => 'pagestage couldn’t open';
+
+  @override
+  String get startupFailedBody =>
+      'Your books and settings are still there. Try again; if it keeps happening, export a diagnostic report for us. It contains no book text and no keys.';
+
+  @override
+  String get keysUnavailableTitle => 'Saved keys can’t be read';
+
+  @override
+  String get keysUnavailableBody =>
+      'The system keychain isn’t available right now, so AI voices can’t run; books still read and play in the system voice. Restart the phone and try again, or enter the keys again.';
+
+  @override
+  String get regionGlobal => 'International';
+
+  @override
+  String get regionChina => 'Mainland China';
+
+  @override
+  String get presetSection => 'Service';
+
+  @override
+  String get presetService => 'Language model service';
+
+  @override
+  String get presetBailian => 'Alibaba Cloud Model Studio (Qwen)';
+
+  @override
+  String get presetCustom => 'Custom';
+
+  @override
+  String get presetCustomNote =>
+      'Any OpenAI-compatible service with structured output (JSON Schema) works; enter its address and model yourself.';
+
+  @override
+  String presetConsoleNote(String console) {
+    return 'The address, protocol and a suitable model are filled in. Create an API key at $console and paste it below.';
+  }
+
+  @override
+  String get shareBailianKey => 'Also voice with this key on Model Studio';
+
+  @override
+  String get shareBailianKeyNote =>
+      'The same Model Studio key voices too (Beijing region); no need to enter it twice.';
+
+  @override
+  String get testConnection => 'Test connection';
+
+  @override
+  String get testConnectionNote =>
+      'Sends one tiny request to check it works; no book text is sent.';
+
+  @override
+  String get testConnectionOk => 'Connected and working.';
+
+  @override
+  String get testUnauthorized =>
+      'The key was refused: check it was copied in full and the region or platform matches.';
+
+  @override
+  String get testSchemaUnsupported =>
+      'This model doesn’t support structured output (JSON Schema). Pick one that does, or a preset above.';
+
+  @override
+  String get testRequestRejected =>
+      'The provider refused the request: check the address and model name.';
+
+  @override
+  String get testQuota => 'The account is out of credit. Top up and try again.';
+
+  @override
+  String get testMissing => 'A key or model name is still missing.';
+
+  @override
+  String get testRateLimited => 'Too many requests; try again in a moment.';
+
+  @override
+  String get testNetwork =>
+      'Couldn’t connect: check the network and the address.';
+
+  @override
+  String get usage => 'Usage';
+
+  @override
+  String get usageRowNote => 'How much each book used of each service';
+
+  @override
+  String get usageNote =>
+      'Figures are what each provider reported, in its own units; its bill is the final word on cost.';
+
+  @override
+  String get usageEmpty => 'No paid service has been used yet.';
+
+  @override
+  String get usageLoadFailed => 'Couldn’t load usage';
+
+  @override
+  String get usageEarlier => 'Earlier usage (not kept per book)';
+
+  @override
+  String get usageDeletedBook => 'A deleted book';
+
+  @override
+  String usageTokens(String provider, String count) {
+    return '$provider $count tokens';
+  }
+
+  @override
+  String usageCharacters(String provider, String count) {
+    return '$provider $count characters';
+  }
+
+  @override
+  String get usageNothingBilled => 'Nothing billed';
+
+  @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get privacyRowNote => 'Who receives book text; withdraw anytime';
+
+  @override
+  String get privacyIntro =>
+      'Books stay on this phone. With AI voices on, the text of the chapters you listen to and the book’s characters go to the language model and voice services you set up, to find characters, assign lines and voice them. Keys are stored encrypted on this phone and only sent to their own provider. The system voice sends nothing.';
+
+  @override
+  String get consentsSection => 'Services allowed to receive text';
+
+  @override
+  String get consentsNote =>
+      'After withdrawing, AI voices that need it pause and the system voice reads until you agree again.';
+
+  @override
+  String get consentsEmpty => 'No service has been allowed yet';
+
+  @override
+  String get revokeConsent => 'Withdraw';
+
+  @override
+  String get consentRevoked => 'Withdrawn';
+
+  @override
+  String get privacyLoadFailed => 'Couldn’t load';
+
+  @override
+  String get systemVoicePageNote =>
+      'Reads books and chapters without AI voices. Tap one to hear it and use it.';
+
+  @override
+  String get systemVoiceRowNote =>
+      'Without AI voices your phone’s own voice reads; pick one you like.';
+
+  @override
+  String get systemVoiceChinese => 'Chinese';
+
+  @override
+  String get systemVoiceEnglish => 'English';
+
+  @override
+  String get systemVoiceNone => 'No voice available';
+
+  @override
+  String get systemVoiceDownloadNote =>
+      'Download an “Enhanced” or “Premium” voice in system settings (Accessibility › Spoken Content › Voices); it sounds much more natural.';
+
+  @override
+  String get voiceQualityEnhanced => 'Enhanced';
+
+  @override
+  String get voiceQualityPremium => 'Premium';
+
+  @override
+  String get continueListening => 'Continue listening';
+
+  @override
+  String get sampleBookMeta => 'Sample · voiced';
+
+  @override
+  String get importFailedDismiss => 'OK';
+
+  @override
+  String bookUpdatedAdded(String title, int added) {
+    String _temp0 = intl.Intl.pluralLogic(
+      added,
+      locale: localeName,
+      other: '$added new chapters',
+      one: '1 new chapter',
+    );
+    return '“$title” has $_temp0';
+  }
+
+  @override
+  String bookUpdatedChanged(String title, int changed) {
+    String _temp0 = intl.Intl.pluralLogic(
+      changed,
+      locale: localeName,
+      other: '$changed chapters',
+      one: '1 chapter',
+    );
+    return '$_temp0 of “$title” changed';
+  }
+
+  @override
+  String get chapterShort => 'Chapter';
+
+  @override
+  String get lineShort => 'Line';
+
+  @override
+  String bookUsageLine(String summary) {
+    return 'Used by this book: $summary, as the providers reported.';
+  }
+
+  @override
+  String auditionNeedsProvider(String provider) {
+    return 'Auditions need $provider, which isn’t set up';
+  }
+
+  @override
+  String get auditionNeedsProviderBody =>
+      'This voice hasn’t spoken in a voiced chapter yet, so a sample has to be made with it.';
 }

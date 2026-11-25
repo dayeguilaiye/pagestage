@@ -35,8 +35,13 @@ class ProviderGateway {
   VoiceBinding? failedBinding;
   Future<bool> Function(ScheduledTask task, VoiceBinding binding)? rebuild;
   final _rebuilt = <String>{};
-  UsageLedger get usage =>
-      JsonlUsageLedger(File('${File(store.path).parent.path}/usage.jsonl'));
+
+  /// The ledger of what providers report spending, each line labelled with
+  /// the book it was spent on so the reader can see it per book.
+  UsageLedger usageFor(String bookId) => JsonlUsageLedger(
+    File('${File(store.path).parent.path}/usage.jsonl'),
+    labels: {'bookId': bookId},
+  );
 
   Future<void> beforeTask(ScheduledTask task) async {
     activeTask = task;
@@ -91,36 +96,68 @@ class ProviderGateway {
     only: providers.value.voiceProviders,
   );
 
-  /// Asks the reader before book text first goes to [endpoint]; an engine
-  /// without one keeps everything on the device and needs no asking.
+  /// Book text goes to [endpoint] only with the reader's agreement; an
+  /// engine without one keeps everything on the device. Work in the
+  /// background never asks: it pauses until the reader agrees from the
+  /// banner. Only what the reader just tapped, such as a voice sample, may
+  /// ask on the spot.
   Future<void> _consent(
     String bookId,
     String provider,
     Uri? endpoint,
     String content,
-    String failure,
-  ) async {
+    String failure, {
+    bool interactive = false,
+  }) async {
     if (endpoint != null) {
-      final book = await Library(store).getBook(bookId);
-      if (!await consents.request(
-        bookTitle: book.title,
-        provider: provider,
-        endpoint: endpoint.toString(),
-        content: content,
-      )) {
+      final granted = await consents.granted(provider, endpoint.toString());
+      var accepted = granted;
+      if (!granted && interactive) {
+        final book = await Library(store).getBook(bookId);
+        accepted = await consents.request(
+          bookTitle: book.title,
+          provider: provider,
+          endpoint: endpoint.toString(),
+          content: content,
+        );
+      }
+      if (!accepted) {
+        final reason = interactive ? 'consentDeclined' : 'consentNeeded';
         await store.put(failure, bookId, {
           'bookId': bookId,
           'provider': provider,
-          'reason': 'consentDeclined',
+          'reason': reason,
         });
         throw ProviderException(
           provider: provider,
           kind: ProviderErrorKind.invalidConfiguration,
-          code: 'consentDeclined',
+          code: reason,
         );
       }
     }
     await store.delete(failure, bookId);
+  }
+
+  /// Asks the reader to agree to sending [bookId]'s text to [provider],
+  /// as configured now; true when it needs no agreement or they agree.
+  Future<bool> ask(String bookId, String provider) async {
+    final config = await providers.configuration();
+    final Uri? endpoint;
+    try {
+      endpoint = provider == 'llm'
+          ? engines.language.active(config).endpoint(config)
+          : engines.voice.require(provider).endpoint(config);
+    } on Object {
+      return true;
+    }
+    if (endpoint == null) return true;
+    final book = await Library(store).getBook(bookId);
+    return consents.request(
+      bookTitle: book.title,
+      provider: provider,
+      endpoint: endpoint.toString(),
+      content: 'chapterTextAndCast',
+    );
   }
 
   Future<T> withTts<T>(
@@ -159,7 +196,7 @@ class ProviderGateway {
             engines: engines.voice,
             runtime: runtime,
             queues: queues,
-            usageLedger: usage,
+            usageLedger: usageFor(bookId),
           )
         : null;
     try {
@@ -169,6 +206,7 @@ class ProviderGateway {
         engines.voice.require(provider).endpoint(config),
         content,
         'generationFailure',
+        interactive: content == 'voiceSample',
       );
       return await operation(injected ?? session!.adapters[provider]!);
     } finally {
@@ -212,7 +250,7 @@ class _GatewayLlm implements LlmAdapter {
           config,
           _role,
           runtime: gateway.runtime,
-          usageLedger: gateway.usage,
+          usageLedger: gateway.usageFor(bookId),
         );
     try {
       return await adapter.complete(request);
@@ -222,7 +260,7 @@ class _GatewayLlm implements LlmAdapter {
   }
 }
 
-class _GatewayTts implements TtsAdapter, VoiceDesignAdapter {
+class _GatewayTts implements PairedTtsAdapter, VoiceDesignAdapter {
   _GatewayTts(this.gateway, this.bookId, this.provider, this.content);
   final ProviderGateway gateway;
   final String Function() bookId;
@@ -254,6 +292,17 @@ class _GatewayTts implements TtsAdapter, VoiceDesignAdapter {
   }
 
   @override
+  Future<(TtsAudio, TtsAudio)> synthesizePair(
+    TtsRequest first,
+    TtsRequest second,
+  ) => gateway.withTts(
+    bookId(),
+    provider,
+    content,
+    (a) => (a as PairedTtsAdapter).synthesizePair(first, second),
+  );
+
+  @override
   Future<DesignedVoice> design(VoiceDesignRequest request) =>
       gateway.withTts(bookId(), provider, 'voiceSample', (a) {
         if (a is! VoiceDesignAdapter) {
@@ -271,6 +320,9 @@ String providerReason(ProviderErrorKind? reason, [String? code]) =>
       ProviderErrorKind.invalidKey => 'unauthorized',
       ProviderErrorKind.insufficientBalance => 'quotaExceeded',
       ProviderErrorKind.rateLimited => 'rateLimited',
+      ProviderErrorKind.unavailable
+          when code == 'ming_unavailable' || code == 'ming_synthesis' =>
+        'localSynthesisFailed',
       ProviderErrorKind.unavailable => 'network',
       ProviderErrorKind.invalidResponse => invalidResponseReason(code),
       ProviderErrorKind.invalidVoice => 'voiceUnavailable',
@@ -284,6 +336,7 @@ String configurationReason(String? code) => switch (code) {
   'providerDisabled' ||
   'engineNotInstalled' ||
   'engineUnavailable' ||
+  'consentNeeded' ||
   'consentDeclined' => code!,
   _ => 'missingKey',
 };

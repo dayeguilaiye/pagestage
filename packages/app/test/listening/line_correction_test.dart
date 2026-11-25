@@ -94,8 +94,8 @@ void main() {
     await _openReader(tester, fakes);
     await _tapParagraph(tester, '『你敢胡说！』');
     expect(find.text('从这里播放'), findsOneWidget);
-    expect(find.text('换阿Q的声音'), findsOneWidget);
-    expect(find.text('这句不是阿Q说的'), findsOneWidget);
+    expect(find.text('换「阿Q」的声音'), findsOneWidget);
+    expect(find.text('这句不是「阿Q」说的'), findsOneWidget);
     // Opening the menu changes nothing.
     expect(fakes.scripts.reassignments, isEmpty);
     expect(fakes.listening.calls, isEmpty);
@@ -104,8 +104,8 @@ void main() {
   testWidgets('narration is named as the narrator', (tester) async {
     await _openReader(tester, _fakes());
     await _tapParagraph(tester, '赵太爷说。');
-    expect(find.text('换旁白的声音'), findsOneWidget);
-    expect(find.text('这句不是旁白说的'), findsOneWidget);
+    expect(find.text('换「旁白」的声音'), findsOneWidget);
+    expect(find.text('这句不是「旁白」说的'), findsOneWidget);
   });
 
   testWidgets('text read by the system voice has nobody to correct', (
@@ -122,7 +122,7 @@ void main() {
     final fakes = _fakes();
     await _openReader(tester, fakes);
     await _tapParagraph(tester, '『你敢胡说！』');
-    await tester.tap(find.text('这句不是阿Q说的'));
+    await tester.tap(find.text('这句不是「阿Q」说的'));
     await tester.pumpAndSettle();
 
     expect(find.text('这句是谁说的？'), findsOneWidget);
@@ -136,7 +136,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(fakes.scripts.reassignments, [(_bookId, 1, _lineOf(0), 'zhao')]);
     expect(find.text('这句是谁说的？'), findsNothing);
-    expect(find.text('已改为赵太爷'), findsOneWidget);
+    expect(find.text('已改为「赵太爷」说的'), findsOneWidget);
     await _settleToast(tester);
   });
 
@@ -146,7 +146,7 @@ void main() {
     final fakes = _fakes()..scripts.imported.add((_bookId, 1));
     await _openReader(tester, fakes);
     await _tapParagraph(tester, '『你敢胡说！』');
-    await tester.tap(find.text('这句不是阿Q说的'));
+    await tester.tap(find.text('这句不是「阿Q」说的'));
     await tester.pumpAndSettle();
     expect(find.textContaining('这一章的音频是导入的'), findsOneWidget);
   });
@@ -155,7 +155,7 @@ void main() {
     final fakes = _fakes()..scripts.failure = Exception();
     await _openReader(tester, fakes);
     await _tapParagraph(tester, '『你敢胡说！』');
-    await tester.tap(find.text('这句不是阿Q说的'));
+    await tester.tap(find.text('这句不是「阿Q」说的'));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('speaker-narrator')));
     await tester.pumpAndSettle();
@@ -169,9 +169,9 @@ void main() {
     final fakes = _fakes();
     await _openReader(tester, fakes);
     await _tapParagraph(tester, '『你敢胡说！』');
-    await tester.tap(find.text('换阿Q的声音'));
+    await tester.tap(find.text('换「阿Q」的声音'));
     await tester.pumpAndSettle();
-    expect(find.text('给阿Q换声音'), findsOneWidget);
+    expect(find.text('给「阿Q」换声音'), findsOneWidget);
     expect(find.text('Voice A'), findsOneWidget);
     // Nothing plays or changes until a voice is chosen.
     expect(fakes.voices.selectedPresets, isEmpty);

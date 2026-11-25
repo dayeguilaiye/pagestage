@@ -4,7 +4,53 @@ import 'package:flutter/services.dart';
 import '../application/contracts.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
+import '../listening/app_scope.dart';
 import '../listening/labels.dart';
+import 'open_settings.dart';
+
+/// A language model service the reader likely already has an account
+/// with: choosing it fills the address, protocol and a model that answers
+/// structured output. Anything else is entered by hand.
+class LlmPreset {
+  const LlmPreset(this.id, this.baseUrl, this.api, this.model, this.console);
+  final String id;
+  final String baseUrl;
+  final String api;
+  final String model;
+
+  /// Where its API keys are made.
+  final String console;
+
+  static const all = [
+    LlmPreset(
+      'deepseek',
+      'https://api.deepseek.com',
+      'responses',
+      'deepseek-flash',
+      'platform.deepseek.com',
+    ),
+    LlmPreset(
+      'bailian',
+      'https://dashscope.aliyuncs.com/compatible-mode/v1',
+      'chat-completions',
+      'qwen-plus',
+      'bailian.console.aliyun.com',
+    ),
+    LlmPreset(
+      'openai',
+      'https://api.openai.com/v1',
+      'chat-completions',
+      'gpt-4.1-mini',
+      'platform.openai.com',
+    ),
+  ];
+
+  /// The preset serving [baseUrl], or null for one entered by hand.
+  static LlmPreset? of(String baseUrl) {
+    final host = Uri.tryParse(baseUrl.trim())?.host ?? '';
+    return all.where((p) => Uri.parse(p.baseUrl).host == host).firstOrNull;
+  }
+}
 
 /// One engine's page, built from the settings the engine declares: what it
 /// does and can perform, its settings in groups, and its stored key. Any
@@ -43,6 +89,80 @@ class _EnginePageState extends State<EnginePage> {
 
   /// Settings whose value needs fixing before it can be saved.
   final _invalid = <String>{};
+
+  /// The last connection test: 'ok' or a reason code; null before one.
+  String? _tested;
+  var _testing = false;
+
+  /// With the 百炼 preset, its key can voice too: one account for both.
+  var _shareKey = true;
+
+  Map<String, String> get _draftValues => {
+    for (final entry in _texts.entries) entry.key: entry.value.text.trim(),
+    ..._choices,
+  };
+
+  Map<String, String> get _draftSecrets => {
+    for (final entry in _keys.entries) entry.key: ?entry.value.change,
+  };
+
+  Future<void> _test() async {
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _testing = true;
+      _tested = null;
+    });
+    String? result;
+    try {
+      result = await widget.providers.test(
+        widget.id,
+        values: _draftValues,
+        secrets: _draftSecrets,
+      );
+    } catch (_) {
+      result = 'network';
+    }
+    if (mounted) {
+      setState(() {
+        _testing = false;
+        _tested = result ?? 'ok';
+      });
+    }
+  }
+
+  void _applyPreset(LlmPreset? preset) {
+    setState(() {
+      _tested = null;
+      if (preset == null) return;
+      _texts['baseUrl']?.text = preset.baseUrl;
+      if (_choices.containsKey('api')) _choices['api'] = preset.api;
+      _texts['profileModel']?.text = preset.model;
+      _texts['directorModel']?.text = '';
+    });
+  }
+
+  Future<void> _pickPreset(BuildContext row) async {
+    final l = AppLocalizations.of(context);
+    final box = row.findRenderObject()! as RenderBox;
+    final choice = await showPsMenu<String>(
+      context,
+      anchor: box.localToGlobal(Offset.zero) & box.size,
+      items: [
+        for (final preset in LlmPreset.all)
+          PsMenuItem(preset.id, _presetName(l, preset.id)),
+        PsMenuItem('custom', l.presetCustom),
+      ],
+    );
+    if (choice == null || !mounted) return;
+    _applyPreset(LlmPreset.all.where((p) => p.id == choice).firstOrNull);
+  }
+
+  static String _presetName(AppLocalizations l, String id) => switch (id) {
+    'deepseek' => 'DeepSeek',
+    'bailian' => l.presetBailian,
+    'openai' => 'OpenAI',
+    _ => l.presetCustom,
+  };
 
   EngineView get _engine => widget.providers.value.engine(widget.id)!;
 
@@ -96,16 +216,33 @@ class _EnginePageState extends State<EnginePage> {
       setState(() => _invalid.add('baseUrl'));
       return false;
     }
+    final services = AppScope.servicesOf(context);
+    final key = _keys['key']?.change;
+    final share =
+        _shareKey &&
+        key != null &&
+        LlmPreset.of(url)?.id == 'bailian' &&
+        widget.providers.value.engine('bailian') != null;
     await widget.providers.configure(
       widget.id,
-      values: {
-        for (final entry in _texts.entries) entry.key: entry.value.text.trim(),
-        ..._choices,
-      },
-      secrets: {
-        for (final entry in _keys.entries) entry.key: ?entry.value.change,
-      },
+      values: _draftValues,
+      secrets: _draftSecrets,
     );
+    if (share) {
+      // A 百炼 key from the Beijing console voices there too.
+      await widget.providers.configure(
+        'bailian',
+        values: {'region': 'beijing'},
+        secrets: {'key': key},
+      );
+    }
+    // Setting a provider up is when the reader agrees to what it will be
+    // sent, instead of in the middle of listening later.
+    if (services != null) {
+      for (final id in [widget.id, if (share) 'bailian']) {
+        await agreeToEngine(services, id);
+      }
+    }
     return true;
   }
 
@@ -179,6 +316,14 @@ class _EnginePageState extends State<EnginePage> {
       },
     };
     final stored = engine.secrets;
+    final preset = engine.id == 'llm'
+        ? LlmPreset.of(_texts['baseUrl']?.text ?? '')
+        : null;
+    final p = context.ps;
+    final caption = PsType.caption.copyWith(
+      color: p.ink2,
+      fontWeight: FontWeight.w400,
+    );
     return _FormScaffold(
       title: Labels.engine(l, engine),
       note: note,
@@ -194,6 +339,41 @@ class _EnginePageState extends State<EnginePage> {
       children: [
         if (!language && engine.status != EngineStatus.unavailable)
           _Abilities(engine: engine),
+        if (engine.id == 'llm')
+          PsListGroup(
+            header: l.presetSection,
+            footer: preset == null
+                ? l.presetCustomNote
+                : l.presetConsoleNote(preset.console),
+            children: [
+              Builder(
+                builder: (row) => PsListRow(
+                  key: const ValueKey('llmPreset'),
+                  title: l.presetService,
+                  detail: preset == null
+                      ? l.presetCustom
+                      : _presetName(l, preset.id),
+                  chevron: true,
+                  onTap: () => _pickPreset(row),
+                ),
+              ),
+              if (preset?.id == 'bailian' &&
+                  engine.secrets.isEmpty &&
+                  widget.providers.value.engine('bailian') != null)
+                MergeSemantics(
+                  child: PsListRow(
+                    title: l.shareBailianKey,
+                    subtitle: l.shareBailianKeyNote,
+                    trailing: Switch(
+                      key: const ValueKey('shareKey'),
+                      value: _shareKey,
+                      onChanged: (v) => setState(() => _shareKey = v),
+                    ),
+                    onTap: () => setState(() => _shareKey = !_shareKey),
+                  ),
+                ),
+            ],
+          ),
         if (connection.isNotEmpty)
           PsListGroup(
             header: models.isEmpty ? null : l.connectionSection,
@@ -211,9 +391,52 @@ class _EnginePageState extends State<EnginePage> {
             footer: language ? l.modelsNote : null,
             children: [for (final s in models) _field(l, engine, s)],
           ),
+        if (engine.settings.isNotEmpty &&
+            engine.status != EngineStatus.unavailable &&
+            engine.site == EngineSite.cloud)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: PsSpace.s2,
+            children: [
+              PsButton(
+                key: const ValueKey('testConnection'),
+                label: l.testConnection,
+                icon: PsIcons.check,
+                expand: true,
+                loading: _testing,
+                onPressed: _testing ? null : _test,
+              ),
+              if (_tested case final tested?)
+                Text(
+                  tested == 'ok' ? l.testConnectionOk : _testFailure(l, tested),
+                  textAlign: TextAlign.center,
+                  style: caption.copyWith(
+                    color: tested == 'ok' ? p.jade : p.danger,
+                  ),
+                )
+              else
+                Text(
+                  l.testConnectionNote,
+                  textAlign: TextAlign.center,
+                  style: caption,
+                ),
+            ],
+          ),
       ],
     );
   }
+
+  /// What a failed test means and what to change, by reason.
+  static String _testFailure(AppLocalizations l, String reason) =>
+      switch (reason) {
+        'unauthorized' => l.testUnauthorized,
+        'schemaUnsupported' => l.testSchemaUnsupported,
+        'requestRejected' => l.testRequestRejected,
+        'quotaExceeded' => l.testQuota,
+        'missingKey' => l.testMissing,
+        'rateLimited' => l.testRateLimited,
+        _ => l.testNetwork,
+      };
 }
 
 /// What a voice engine performs of the director's script, as plain labels:

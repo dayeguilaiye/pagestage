@@ -87,6 +87,9 @@ void main() {
       ).install(manifest, (name) async => assets[name]!);
       final books = await Library(target).listBooks();
       expect(books, hasLength(2));
+      expect(await ExampleLibrary.bookIds(target), {
+        for (final book in books) book.id,
+      });
       for (final book in books) {
         expect(
           (await Library(target).chapters(book.id)).single.state,
@@ -118,6 +121,7 @@ void main() {
       );
       expect(await Library(target).books(), isEmpty);
       expect(await target.get('settings', 'examplesInstalled'), isNull);
+      expect(await target.get('settings', 'exampleBooks'), isNull);
       await ExampleLibrary(
         target,
       ).install(manifest, (name) async => assets[name]!);
@@ -133,5 +137,6 @@ void main() {
       target,
     ).install(manifest, (_) async => throw StateError('must not load'));
     expect((await Library(target).books()).single.id, own.id);
+    expect(await target.get('settings', 'exampleBooks'), {'ids': []});
   });
 }

@@ -84,7 +84,7 @@ class VoiceController extends ChangeNotifier implements Voices {
         if (p.languages.contains(book.language))
           VoiceOption(
             id: p.id,
-            name: p.binding.voiceId,
+            name: p.displayName ?? p.binding.voiceId,
             provider: p.binding.provider,
             description: p.description,
             selected:

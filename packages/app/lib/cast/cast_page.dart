@@ -1,6 +1,8 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:pagestage_core/pagestage_core.dart'
+    show ProviderErrorKind, ProviderException;
 
 import '../application/app_services.dart';
 import '../design/design.dart';
@@ -9,11 +11,14 @@ import '../listening/app_scope.dart';
 import '../listening/chapter_picker.dart';
 import '../listening/labels.dart';
 import '../listening/off_provider_banner.dart';
+import '../settings/open_settings.dart';
 import '../shelf/bookshelf.dart';
+import '../shelf/voice_sheet.dart';
 import 'voice_page.dart';
 
-/// A book's cast and how far it has been profiled: start or extend
-/// profiling, resume it after a pause, audition each voice.
+/// A book's characters and their voices, in the order they appear. Finding
+/// them follows listening on its own; this page shows how far it got, lets
+/// the reader look further ahead, audition each voice and change it.
 class CastPage extends StatefulWidget {
   const CastPage({
     super.key,
@@ -54,6 +59,17 @@ class _CastPageState extends State<CastPage> {
   var _actionFailed = false;
   var _auditionFailed = false;
   final _expanded = <String>{};
+
+  /// The chapter listened to last; characters first appearing after it
+  /// are folded away, as they may give the story away.
+  int? _heardThrough;
+  var _showLater = false;
+
+  /// Whether the book is a bundled example, whose voices are fixed.
+  var _sample = false;
+
+  /// Looking further ahead than listening needs is tucked away.
+  late var _ahead = widget.initialThrough != null;
 
   Casts get _casts => widget.services.casts;
   Voices? get _voices => widget.services.voices;
@@ -149,10 +165,23 @@ class _CastPageState extends State<CastPage> {
   Future<void> _load() async {
     final load = ++_loads;
     try {
+      final services = widget.services;
+      final bookmark = await services.listening.bookmark(widget.book.id);
+      final listening = services.listening.value;
+      final heard = listening.bookId == widget.book.id
+          ? listening.chapter
+          : bookmark?.chapter;
+      try {
+        final voice = await services.generation?.voice(widget.book.id);
+        _sample = voice?.sample ?? false;
+      } catch (_) {
+        // Not knowing, it is not an example.
+      }
       final cast = await _casts.load(widget.book.id);
       if (!mounted || load != _loads) return;
       setState(() {
         _cast = cast;
+        _heardThrough = math.max(heard ?? 1, 1);
         _loadFailed = false;
         final floor = _floor(cast);
         if (_through == null || _through! <= floor) {
@@ -202,6 +231,13 @@ class _CastPageState extends State<CastPage> {
   }
 
   Future<void> _run(Future<void> Function() action) async {
+    // Without a language model nothing can be profiled; the banner below
+    // says so and opens its settings instead of failing vaguely.
+    final providers = widget.services.providers.value;
+    if (!providers.llmReady) {
+      setState(() => _actionFailed = true);
+      return;
+    }
     setState(() {
       _busy = true;
       _actionFailed = false;
@@ -216,23 +252,41 @@ class _CastPageState extends State<CastPage> {
     await _load();
   }
 
+  /// The voice engine an audition needed but could not use, when that was
+  /// why it failed; the banner then opens its settings.
+  String? _auditionProvider;
+
   Future<void> _audition(CastMember member) async {
     if (_casts.auditioning == member.id) {
       await _casts.stopAudition();
       return;
     }
-    setState(() => _auditionFailed = false);
+    setState(() {
+      _auditionFailed = false;
+      _auditionProvider = null;
+    });
     try {
       await _casts.audition(widget.book.id, member.id);
+    } on ProviderException catch (error) {
+      if (mounted) {
+        setState(() {
+          _auditionFailed = true;
+          if (error.kind == ProviderErrorKind.invalidConfiguration ||
+              error.kind == ProviderErrorKind.invalidKey) {
+            _auditionProvider = member.provider ?? error.provider;
+          }
+        });
+      }
     } catch (_) {
       if (mounted) setState(() => _auditionFailed = true);
     }
   }
 
-  /// Speakers whose voices come from a provider now off, by provider.
+  /// Speakers whose voices come from a provider now off, by provider. An
+  /// example book's voices are already made, so it has nothing to fix.
   Widget _offProviders(CastState cast) {
     final providers = AppScope.servicesOf(context)?.providers;
-    if (providers == null) return const SizedBox.shrink();
+    if (providers == null || _sample) return const SizedBox.shrink();
     return ValueListenableBuilder(
       valueListenable: providers,
       builder: (context, preferences, _) {
@@ -322,11 +376,20 @@ class _CastPageState extends State<CastPage> {
                   SliverToBoxAdapter(child: _castHeader(cast, l)),
                   if (cast.members.isEmpty)
                     SliverToBoxAdapter(child: _empty(cast, l))
-                  else
+                  else ...[
                     SliverList.builder(
-                      itemCount: cast.members.length,
-                      itemBuilder: (context, i) => _member(cast.members[i], l),
+                      itemCount: _known(cast).length,
+                      itemBuilder: (context, i) => _member(_known(cast)[i], l),
                     ),
+                    if (_later(cast).isNotEmpty)
+                      SliverToBoxAdapter(child: _laterRow(cast, l)),
+                    if (_showLater)
+                      SliverList.builder(
+                        itemCount: _later(cast).length,
+                        itemBuilder: (context, i) =>
+                            _member(_later(cast)[i], l),
+                      ),
+                  ],
                 ],
                 SliverToBoxAdapter(
                   child: SizedBox(
@@ -341,6 +404,46 @@ class _CastPageState extends State<CastPage> {
     );
   }
 
+  /// Characters met by the chapter listened to, and those still ahead.
+  List<CastMember> _known(CastState cast) => [
+    for (final m in cast.members)
+      if ((m.firstChapter ?? 0) <= (_heardThrough ?? 1 << 30)) m,
+  ];
+  List<CastMember> _later(CastState cast) => [
+    for (final m in cast.members)
+      if ((m.firstChapter ?? 0) > (_heardThrough ?? 1 << 30)) m,
+  ];
+
+  Widget _laterRow(CastState cast, AppLocalizations l) {
+    final p = context.ps;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        PsSpace.s5,
+        PsSpace.s3,
+        PsSpace.s5,
+        PsSpace.s3,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              l.laterCharacters(_later(cast).length),
+              style: PsType.subhead.copyWith(color: p.ink2),
+            ),
+          ),
+          PsButton(
+            label: _showLater ? l.hideLaterCharacters : l.showLaterCharacters,
+            small: true,
+            variant: PsButtonVariant.ghost,
+            onPressed: () => setState(() => _showLater = !_showLater),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// How far the characters are found, in one line; the reader can look
+  /// further ahead from a fold below it.
   Widget _profiling(CastState cast, AppLocalizations l) {
     final p = context.ps;
     final count = _count(cast);
@@ -348,162 +451,166 @@ class _CastPageState extends State<CastPage> {
     final floor = _floor(cast);
     final whole = count > 0 && cast.profiledThrough >= count;
     final canProfile = !_busy && count > 0 && through > floor;
-    // A paused range continues from the main button; a pause after the range
-    // finished (casting) is retried from the banner.
     final unfinished =
         cast.status == ProfilingStatus.paused &&
         cast.targetChapter > cast.profiledThrough;
     final tag = switch (cast.status) {
-      ProfilingStatus.idle => null,
+      ProfilingStatus.idle || ProfilingStatus.complete => null,
       ProfilingStatus.queued => PsTag(l.statusQueued),
       ProfilingStatus.running => PsTag(l.statusRunning, tone: PsTagTone.amber),
       ProfilingStatus.paused => PsTag(l.statusPaused, tone: PsTagTone.danger),
-      ProfilingStatus.complete => PsTag(l.statusComplete, tone: PsTagTone.jade),
     };
+    final caption = PsType.caption.copyWith(
+      color: p.ink2,
+      fontWeight: FontWeight.w400,
+    );
+    final reason = cast.reason;
+    final fixInSettings = const {
+      'missingKey',
+      'unauthorized',
+      'requestRejected',
+      'schemaUnsupported',
+      'providerDisabled',
+      'noVoiceProvider',
+    }.contains(reason);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(PsSpace.s5, 0, PsSpace.s5, PsSpace.s8),
-      child: Container(
-        padding: const EdgeInsets.all(PsSpace.s4),
-        decoration: BoxDecoration(
-          color: p.paperRaised,
-          borderRadius: BorderRadius.circular(PsRadius.md),
-          border: Border.all(color: p.rule),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              spacing: PsSpace.s2,
-              children: [
-                Expanded(
-                  child: Text(
-                    l.profiling,
-                    style: PsType.headline.copyWith(color: p.ink),
-                  ),
-                ),
-                ?tag,
-              ],
-            ),
-            const SizedBox(height: PsSpace.s3),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              spacing: PsSpace.s2,
-              children: [
-                Text(
-                  '${cast.profiledThrough}',
-                  style: PsType.style(
-                    PsFonts.mono,
-                    28,
-                    34,
-                    FontWeight.w500,
-                  ).copyWith(color: p.ink),
-                ),
-                Text(
-                  '/ $count',
-                  style: PsType.numeralLg.copyWith(color: p.ink2),
-                ),
-                Flexible(
-                  child: Text(
-                    l.chaptersProfiled,
-                    overflow: TextOverflow.ellipsis,
-                    style: PsType.subhead.copyWith(color: p.ink2),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: PsSpace.s2),
-            _ProfileBar(
-              done: count == 0 ? 0 : cast.profiledThrough / count,
-              target: count == 0 ? 0 : cast.targetChapter / count,
-            ),
-            if (_working(cast) && cast.targetChapter > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: PsSpace.s2),
+      padding: const EdgeInsets.fromLTRB(PsSpace.s5, 0, PsSpace.s5, PsSpace.s6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        spacing: PsSpace.s2,
+        children: [
+          Row(
+            spacing: PsSpace.s2,
+            children: [
+              Expanded(
                 child: Text(
-                  cast.status == ProfilingStatus.queued
-                      ? l.profilingQueuedTo(cast.targetChapter)
-                      : l.profilingRunningTo(cast.targetChapter),
-                  style: PsType.subhead.copyWith(color: p.ink2),
+                  cast.profiledThrough == 0
+                      ? l.profilingNotStarted
+                      : whole
+                      ? l.profiledWholeBook
+                      : l.profilingStatusLine(cast.profiledThrough, count),
+                  style: PsType.subhead.copyWith(color: p.ink),
                 ),
               ),
-            if (cast.skippedChapters.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: PsSpace.s2),
-                child: Text(
-                  l.profilingSkipped(
-                    cast.skippedChapters.join(l.chapterListSeparator),
-                  ),
-                  style: PsType.caption.copyWith(
-                    color: p.ink2,
-                    fontWeight: FontWeight.w400,
-                  ),
-                ),
-              ),
-            if (cast.status == ProfilingStatus.paused)
-              Padding(
-                padding: const EdgeInsets.only(top: PsSpace.s4),
-                child: PsBanner(
-                  tone: PsBannerTone.amber,
-                  title: l.profilingPausedTitle,
-                  body: l.profilingPausedBody(
-                    Labels.provider(l, cast.provider),
-                    Labels.pauseReason(l, cast.reason),
-                  ),
-                  actionLabel: unfinished ? null : l.retry,
-                  onAction: unfinished || _busy
-                      ? null
-                      : () => _run(() => _casts.resume(widget.book.id)),
-                ),
-              ),
-            if (_actionFailed)
-              Padding(
-                padding: const EdgeInsets.only(top: PsSpace.s4),
-                child: PsBanner(
-                  tone: PsBannerTone.danger,
-                  title: l.profilingActionFailed,
-                  onClose: () => setState(() => _actionFailed = false),
-                ),
-              ),
-            const SizedBox(height: PsSpace.s4),
-            if (whole)
-              Text(
-                l.profiledWholeBook,
-                style: PsType.subhead.copyWith(color: p.ink2),
-              )
-            else ...[
-              PsPickerRow(
-                label: l.profileThrough,
-                value: through > 0 ? l.chapterNumber(through) : '—',
-                onTap: _chapters.isEmpty ? null : () => _pickThrough(cast),
-              ),
-              const SizedBox(height: PsSpace.s3),
-              PsButton(
-                label: unfinished
-                    ? l.resumeProfilingTo(through)
-                    : cast.profiledThrough == 0 && !_working(cast)
-                    ? l.startProfiling
-                    : l.extendProfiling,
-                variant: PsButtonVariant.primary,
-                expand: true,
-                loading: _busy,
-                onPressed: canProfile
-                    ? () => _run(
-                        () => _casts.profile(widget.book.id, through: through),
-                      )
-                    : null,
-              ),
-              const SizedBox(height: PsSpace.s3),
-              Text(
-                l.profilingNote,
-                style: PsType.caption.copyWith(
-                  color: p.ink2,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
+              ?tag,
             ],
+          ),
+          if (_working(cast) && cast.targetChapter > 0)
+            Text(
+              cast.status == ProfilingStatus.queued
+                  ? l.profilingQueuedTo(cast.targetChapter)
+                  : l.profilingRunningTo(cast.targetChapter),
+              style: caption,
+            )
+          else if (!whole && !_sample)
+            Text(l.profilingAuto, style: caption),
+          if (cast.skippedChapters.isNotEmpty)
+            Text(
+              l.profilingSkipped(
+                cast.skippedChapters.join(l.chapterListSeparator),
+              ),
+              style: caption,
+            ),
+          if (cast.status == ProfilingStatus.paused)
+            Padding(
+              padding: const EdgeInsets.only(top: PsSpace.s2),
+              child: PsBanner(
+                tone: PsBannerTone.amber,
+                title: l.profilingPausedTitle,
+                body: l.profilingPausedBody(
+                  Labels.provider(l, cast.provider),
+                  Labels.pauseReason(l, cast.reason),
+                ),
+                actionLabel: fixInSettings
+                    ? l.openSettings
+                    : unfinished
+                    ? null
+                    : l.retry,
+                onAction: fixInSettings
+                    ? () =>
+                          reason == 'noVoiceProvider' ||
+                              reason == 'providerDisabled'
+                          ? openSettings(context)
+                          : openEngine(
+                              context,
+                              widget.services.providers.value.language?.id ??
+                                  'llm',
+                            )
+                    : unfinished || _busy
+                    ? null
+                    : () => _run(() => _casts.resume(widget.book.id)),
+              ),
+            ),
+          if (_actionFailed)
+            Padding(
+              padding: const EdgeInsets.only(top: PsSpace.s2),
+              child: widget.services.providers.value.llmReady
+                  ? PsBanner(
+                      tone: PsBannerTone.danger,
+                      title: l.profilingActionFailed,
+                      onClose: () => setState(() => _actionFailed = false),
+                    )
+                  : const SetupGapBanner(gap: VoiceSetupGap.languageModel),
+            ),
+          if (!whole && !_sample) ...[
+            if (!_ahead)
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: PsButton(
+                  key: const ValueKey('profileAhead'),
+                  label: unfinished
+                      ? l.resumeProfilingTo(through)
+                      : l.profileMore,
+                  small: true,
+                  variant: PsButtonVariant.ghost,
+                  onPressed: () => setState(() => _ahead = true),
+                ),
+              )
+            else
+              Container(
+                margin: const EdgeInsets.only(top: PsSpace.s2),
+                padding: const EdgeInsets.all(PsSpace.s4),
+                decoration: BoxDecoration(
+                  color: p.paperRaised,
+                  borderRadius: BorderRadius.circular(PsRadius.md),
+                  border: Border.all(color: p.rule),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    PsPickerRow(
+                      label: l.profileThrough,
+                      value: through > 0 ? l.chapterNumber(through) : '—',
+                      onTap: _chapters.isEmpty
+                          ? null
+                          : () => _pickThrough(cast),
+                    ),
+                    const SizedBox(height: PsSpace.s3),
+                    PsButton(
+                      label: unfinished
+                          ? l.resumeProfilingTo(through)
+                          : cast.profiledThrough == 0 && !_working(cast)
+                          ? l.startProfiling
+                          : l.extendProfiling,
+                      variant: PsButtonVariant.primary,
+                      expand: true,
+                      loading: _busy,
+                      onPressed: canProfile
+                          ? () => _run(
+                              () => _casts.profile(
+                                widget.book.id,
+                                through: through,
+                              ),
+                            )
+                          : null,
+                    ),
+                    const SizedBox(height: PsSpace.s3),
+                    Text(l.profilingNote, style: caption),
+                  ],
+                ),
+              ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -541,11 +648,21 @@ class _CastPageState extends State<CastPage> {
           if (_auditionFailed)
             Padding(
               padding: const EdgeInsets.only(top: PsSpace.s3),
-              child: PsBanner(
-                tone: PsBannerTone.danger,
-                title: l.auditionFailed,
-                onClose: () => setState(() => _auditionFailed = false),
-              ),
+              child: switch (_auditionProvider) {
+                final provider? => PsBanner(
+                  tone: PsBannerTone.amber,
+                  title: l.auditionNeedsProvider(Labels.inline(l, provider)),
+                  body: l.auditionNeedsProviderBody,
+                  actionLabel: l.openSettings,
+                  onAction: () => openEngine(context, provider),
+                  onClose: () => setState(() => _auditionFailed = false),
+                ),
+                null => PsBanner(
+                  tone: PsBannerTone.danger,
+                  title: l.auditionFailed,
+                  onClose: () => setState(() => _auditionFailed = false),
+                ),
+              },
             ),
         ],
       ),
@@ -570,18 +687,22 @@ class _CastPageState extends State<CastPage> {
       if (member.provider case final provider? when provider.isNotEmpty)
         Labels.provider(l, provider),
     ];
+    final name = member.kind == CastMemberKind.narrator
+        ? l.narrator
+        : member.name;
     return Semantics(
       expanded: expanded,
       child: PsCastRow(
         key: ValueKey(member.id),
-        name: member.name,
+        name: name,
         narrator: member.kind == CastMemberKind.narrator,
         tag: member.kind == CastMemberKind.provisional
             ? l.castProvisional
             : null,
         subtitle: voice.isEmpty ? l.voiceNotAssigned : voice.join(' · '),
         auditioning: _casts.auditioning == member.id,
-        onAudition: () => _audition(member),
+        // The example's voices are fixed: only lines it already has play.
+        onAudition: _sample && !member.spoken ? null : () => _audition(member),
         onTap: () => setState(
           () =>
               expanded ? _expanded.remove(member.id) : _expanded.add(member.id),
@@ -592,7 +713,7 @@ class _CastPageState extends State<CastPage> {
                 spacing: PsSpace.s4,
                 children: [
                   _Profile(member),
-                  if (_voices != null)
+                  if (_voices != null && !_sample)
                     Wrap(
                       spacing: PsSpace.s2,
                       runSpacing: PsSpace.s2,
@@ -622,38 +743,6 @@ class _CastPageState extends State<CastPage> {
   }
 }
 
-/// Profiled chapters in ink, the chapters still to come in a lighter rule.
-class _ProfileBar extends StatelessWidget {
-  const _ProfileBar({required this.done, required this.target});
-  final double done;
-  final double target;
-
-  @override
-  Widget build(BuildContext context) {
-    final p = context.ps;
-    Widget fill(double f, Color color) => FractionallySizedBox(
-      alignment: Alignment.centerLeft,
-      widthFactor: f.clamp(0, 1),
-      child: ColoredBox(color: color),
-    );
-    return ExcludeSemantics(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(PsRadius.full),
-        child: SizedBox(
-          height: 4,
-          child: ColoredBox(
-            color: p.rule,
-            child: Stack(
-              fit: StackFit.expand,
-              children: [fill(target, p.ruleStrong), fill(done, p.ink)],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// The collapsed profile: who the speaker is and how they should sound.
 class _Profile extends StatelessWidget {
   const _Profile(this.member);
@@ -664,8 +753,10 @@ class _Profile extends StatelessWidget {
     final l = AppLocalizations.of(context);
     final p = context.ps;
     final rows = [
-      (l.profileGender, member.gender),
-      (l.profileAge, member.ageGroup),
+      (l.profileGender, Labels.gender(l, member.gender)),
+      (l.profileAge, Labels.ageGroup(l, member.ageGroup)),
+      if (member.firstChapter case final chapter?)
+        (l.profileFirstChapter, l.chapterNumber(chapter)),
       (l.profilePersonality, member.personality),
       (l.profileSpeakingStyle, member.speakingStyle),
       (l.profileVoice, member.voiceDescription),

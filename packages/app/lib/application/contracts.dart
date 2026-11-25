@@ -28,6 +28,10 @@ abstract interface class Listening implements ValueListenable<ListeningState> {
   Future<void> nextChapter();
   Future<void> seek(Duration position);
   Future<void> setSpeed(double speed);
+
+  /// Stops waiting for AI voices: the system voice reads the rest of this
+  /// chapter from the current line.
+  Future<void> useSystemVoice();
   void setSleepTimer(Duration? duration);
   void setSleepAfterChapter(bool enabled);
   Future<List<ListeningLine>> lines(String bookId, int chapter);
@@ -57,6 +61,9 @@ class ListeningState {
     this.sleepRemaining,
     this.sleepAfterChapter = false,
     this.error,
+    this.aiVoice = false,
+    this.fallback = false,
+    this.waitingSince,
   });
   final String? bookId;
   final String bookTitle;
@@ -83,6 +90,17 @@ class ListeningState {
 
   /// Stable, non-sensitive error code; the screen supplies localized text.
   final String? error;
+
+  /// Whether this book uses AI voices and can: chapters without them yet
+  /// are being prepared while the system voice reads.
+  final bool aiVoice;
+
+  /// The system voice is reading a chapter whose AI voices were not ready
+  /// in time; the next chapter tries them again.
+  final bool fallback;
+
+  /// When playback started waiting for AI voices; null while not waiting.
+  final DateTime? waitingSince;
   double get progress => error == 'endOfBook'
       ? 1
       : (source == ListeningSource.system || !durationComplete) && lineCount > 0
@@ -123,12 +141,17 @@ class ListeningBookmark {
     required this.line,
     required this.progress,
     this.sourceOffset,
+    this.listenedAt,
   });
   final String bookId;
   final int chapter;
   final int line;
   final double progress;
   final int? sourceOffset;
+
+  /// When the book was last heard; null for bookmarks saved before this
+  /// was kept.
+  final DateTime? listenedAt;
 }
 
 /// What an engine does for a book.
@@ -220,7 +243,10 @@ class EngineView {
 }
 
 class ProviderPreferences {
-  const ProviderPreferences({this.engines = const []});
+  const ProviderPreferences({
+    this.engines = const [],
+    this.secretsUnavailable = false,
+  });
 
   /// Every engine of this build, language engines first, each kind in the
   /// order screens list it.
@@ -247,6 +273,10 @@ class ProviderPreferences {
 
   /// Whether [engineId]'s switch can be turned on: it has what it needs.
   bool canSwitchOn(String engineId) => engine(engineId)?.ready ?? false;
+
+  /// Stored keys could not be read, such as when the system keychain is
+  /// unavailable; engines that need them show as not set up.
+  final bool secretsUnavailable;
 }
 
 abstract interface class Providers
@@ -265,18 +295,34 @@ abstract interface class Providers
 
   /// Chooses the language engine that profiles and directs.
   Future<void> selectLanguage(String engineId);
+
+  /// Where [engineId] sends book text as configured now; null for an engine
+  /// that keeps it on the device or is not set up enough to say.
+  Future<String?> endpoint(String engineId);
+
+  /// Tries [engineId] with the stored settings overlaid by the unsaved
+  /// [values] and [secrets], with one tiny request carrying no book text.
+  /// Null when it answered as needed; otherwise the same reason codes a
+  /// paused task reports, such as unauthorized or schemaUnsupported.
+  Future<String?> test(
+    String engineId, {
+    Map<String, String> values = const {},
+    Map<String, String> secrets = const {},
+  });
 }
 
 class ConsentRequest {
   const ConsentRequest({
     required this.id,
-    required this.bookTitle,
+    this.bookTitle,
     required this.provider,
     required this.endpoint,
     required this.content,
   });
   final int id;
-  final String bookTitle;
+
+  /// The book about to be sent; null when asked while setting up.
+  final String? bookTitle;
   final String provider;
   final String endpoint;
 
@@ -284,8 +330,30 @@ class ConsentRequest {
   final String content;
 }
 
+/// A provider the reader agreed to send book text to.
+class ConsentRecord {
+  const ConsentRecord({required this.provider, required this.endpoint});
+  final String provider;
+  final String endpoint;
+}
+
 abstract interface class Consents implements ValueListenable<ConsentRequest?> {
   void respond(int requestId, {required bool accepted});
+
+  /// Asks once per provider and address; true at once when already agreed.
+  /// [bookTitle] is null when asked while setting a provider up.
+  Future<bool> request({
+    String? bookTitle,
+    required String provider,
+    required String endpoint,
+    required String content,
+  });
+
+  /// Every agreement the reader has given, for reviewing and withdrawing.
+  Future<List<ConsentRecord>> records();
+
+  /// Withdraws an agreement; generation that needs it pauses and asks again.
+  Future<void> revoke(ConsentRecord record);
 }
 
 enum ProfilingStatus { idle, queued, running, paused, complete }
@@ -304,10 +372,19 @@ class CastMember {
     this.voiceDescription = '',
     this.voiceName,
     this.provider,
+    this.firstChapter,
+    this.spoken = false,
   });
   final String id;
   final String name;
   final CastMemberKind kind;
+
+  /// The first chapter the speaker appears in, when known.
+  final int? firstChapter;
+
+  /// Whether a chapter voiced with the current voices has a line of theirs,
+  /// so an audition needs no provider at all.
+  final bool spoken;
   final String gender;
   final String ageGroup;
   final String personality;
@@ -365,32 +442,85 @@ enum BookPerformanceMode { audiobook, drama }
 /// How much of the director's performance a book asks of its voices.
 enum BookExpressiveness { plain, natural, dramatic }
 
-enum GenerationChoice { generate, system, cancel }
+/// How a chapter without AI voices is heard: they are prepared while
+/// playback waits, or the system voice reads it.
+enum GenerationChoice { generate, system }
 
 class GenerationPreferences {
   const GenerationPreferences({
-    this.automatic = false,
-    this.directing = 2,
-    this.synthesis = 1,
+    this.enabled = true,
+    this.automatic = true,
+    this.ahead = 1,
   });
+
+  /// AI voices for the whole app. Off, every book reads in the system voice
+  /// and no book text is sent anywhere.
+  final bool enabled;
+
+  /// Whether books the reader has not decided for use AI voices.
   final bool automatic;
-  final int directing;
-  final int synthesis;
+
+  /// Chapters prepared ahead of the listener.
+  final int ahead;
+
+  static const maxAhead = 10;
+
+  /// Scripts are written one chapter further ahead than audio is made.
+  int get directing => ahead == 0 ? 0 : ahead + 1;
+  int get synthesis => ahead;
+
+  GenerationPreferences copyWith({
+    bool? enabled,
+    bool? automatic,
+    int? ahead,
+  }) => GenerationPreferences(
+    enabled: enabled ?? this.enabled,
+    automatic: automatic ?? this.automatic,
+    ahead: ahead ?? this.ahead,
+  );
 }
 
-class GenerationRequest {
-  const GenerationRequest({
-    required this.id,
+/// What a book still needs before its AI voices can be prepared.
+enum VoiceSetupGap { languageModel, voiceEngine }
+
+/// Where a book stands with its AI voices, for the book page and player.
+class BookVoice {
+  const BookVoice({
     required this.bookId,
-    required this.bookTitle,
-    required this.chapter,
-    required this.canGenerate,
+    this.ai = false,
+    this.chosen = false,
+    this.enabled = true,
+    this.gap,
+    this.sample = false,
+    this.profiledThrough = 0,
+    this.chapterCount = 0,
+    this.profileNeeded,
   });
-  final int id;
   final String bookId;
-  final String bookTitle;
-  final int chapter;
-  final bool canGenerate;
+
+  /// The book's choice: AI voices, or the system voice throughout.
+  final bool ai;
+
+  /// Whether the reader chose for this book rather than the default.
+  final bool chosen;
+
+  /// AI voices are on for the app.
+  final bool enabled;
+
+  /// What is missing before AI voices can be prepared; null when nothing.
+  final VoiceSetupGap? gap;
+
+  /// A bundled example, voiced in advance; its performance is fixed.
+  final bool sample;
+  final int profiledThrough;
+  final int chapterCount;
+
+  /// A chapter listened to so far past the characters found so far that
+  /// finding them first waits for the reader's go-ahead.
+  final int? profileNeeded;
+
+  /// Whether chapters without AI voices get them as they are listened to.
+  bool get active => ai && enabled && gap == null && !sample;
 }
 
 class GenerationFailure {
@@ -399,6 +529,7 @@ class GenerationFailure {
     required this.chapter,
     required this.provider,
     required this.reason,
+    this.profiling = false,
   });
   final String bookId;
   final int chapter;
@@ -406,21 +537,25 @@ class GenerationFailure {
 
   /// Uses the same safe reason codes as CastState.reason.
   final String reason;
+
+  /// Finding the book's characters paused, which holds every chapter
+  /// after it.
+  final bool profiling;
 }
 
 class GenerationState {
   const GenerationState({
     this.preferences = const GenerationPreferences(),
-    this.request,
     this.failures = const [],
   });
   final GenerationPreferences preferences;
-  final GenerationRequest? request;
   final List<GenerationFailure> failures;
 }
 
-/// Where a chapter stands while its generation is under way.
-enum ChapterStage { queued, directing, voicing, paused }
+/// Where a chapter stands while its generation is under way: waiting its
+/// turn, waiting for the characters up to it to be found, being directed,
+/// being voiced, or paused.
+enum ChapterStage { queued, profiling, directing, voicing, paused }
 
 /// A chapter with directing or voicing still ahead, in its book's mode.
 class ChapterProgress {
@@ -469,12 +604,40 @@ class GenerationProgress {
   }
 }
 
+/// What providers reported spending on one book, in their own units:
+/// nothing here is estimated.
+class BookUsage {
+  const BookUsage({
+    required this.bookId,
+    this.tokens = 0,
+    this.characters = const {},
+    this.requests = 0,
+  });
+
+  /// Empty for spending recorded before it was kept per book.
+  final String bookId;
+
+  /// Language model tokens, in and out.
+  final int tokens;
+
+  /// Characters voiced, by voice provider.
+  final Map<String, int> characters;
+
+  /// Billable responses.
+  final int requests;
+}
+
 abstract interface class Generation
     implements ValueListenable<GenerationState> {
+  /// What providers reported spending, per book, most first.
+  Future<List<BookUsage>> usage();
+
+  /// The bundled example books, which come voiced and stay as they are.
+  Future<Set<String>> samples();
+
   /// Kept apart from [value] because it changes with every voiced line.
   ValueListenable<GenerationProgress> get progress;
   Future<void> savePreferences(GenerationPreferences preferences);
-  void respond(int requestId, GenerationChoice choice);
   Future<BookPerformanceMode> mode(String bookId);
   Future<void> setMode(String bookId, BookPerformanceMode mode);
   Future<BookExpressiveness> expressiveness(String bookId);
@@ -482,11 +645,34 @@ abstract interface class Generation
   /// Chapters already voiced are voiced again the next time they are heard;
   /// lines whose delivery does not change come from the cache.
   Future<void> setExpressiveness(String bookId, BookExpressiveness value);
+
+  /// Resumes the book's paused work, asking again for any agreement the
+  /// reader has not given.
   Future<void> resume(String bookId);
 
+  /// Where [bookId] stands with its AI voices.
+  Future<BookVoice> voice(String bookId);
+
+  /// AI voices for this book, or the system voice throughout. Turning them
+  /// off drops the book's queued work; voices already made still play.
+  Future<void> setAiVoice(String bookId, bool on);
+
+  /// Asks for the agreements AI voices for [bookId] need: sending its text
+  /// to the language model and to each voice engine in use. False when the
+  /// reader declines one.
+  Future<bool> allow(String bookId);
+
+  /// Drops the book's queued work. While it is listened to with AI voices
+  /// on, the chapters just ahead are still prepared.
+  Future<void> stopPreparing(String bookId);
+
+  /// Finds the characters through [chapter] after the reader agreed to the
+  /// wait, when listening jumped far past the profiled chapters.
+  Future<void> profileThrough(String bookId, int chapter);
+
   /// Directs and voices chapters [first]..[through] ahead of listening, in
-  /// the book's mode. Finished chapters are skipped; the range must already
-  /// be profiled.
+  /// the book's mode. Finished chapters are skipped; chapters not profiled
+  /// yet are profiled first.
   Future<void> prepare(
     String bookId, {
     required int first,

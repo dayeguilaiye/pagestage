@@ -28,7 +28,7 @@ void main() {
     expect(find.text('把《阿Q正传》的内容发出去？'), findsOneWidget);
     expect(find.text('大模型'), findsOneWidget);
     expect(find.text('https://api.example.com/v1'), findsOneWidget);
-    expect(find.text('章节正文与演员表'), findsOneWidget);
+    expect(find.text('章节正文与角色'), findsOneWidget);
   });
 
   testWidgets('cancelling answers no', (tester) async {

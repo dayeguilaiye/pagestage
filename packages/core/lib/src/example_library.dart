@@ -14,6 +14,13 @@ class ExampleLibrary {
   ExampleLibrary(this.store);
   final LocalStore store;
 
+  /// Ids of the bundled example books this library received. Imports never
+  /// merge into them.
+  static Future<Set<String>> bookIds(LocalStore store) async {
+    final record = await store.get('settings', 'exampleBooks');
+    return {...?(record?['ids'] as List?)?.cast<String>()};
+  }
+
   Future<void> install(
     Map<String, Object?> manifest,
     Future<List<int>> Function(String asset) load,
@@ -21,12 +28,20 @@ class ExampleLibrary {
     if (manifest['schema'] != 1) {
       throw const FormatException('Unsupported example bundle.');
     }
-    if (await store.get('settings', 'examplesInstalled') != null) return;
+    if (await store.get('settings', 'examplesInstalled') != null) {
+      if (await store.get('settings', 'exampleBooks') == null) {
+        await _recordEarlierInstall(manifest);
+      }
+      return;
+    }
     final entries = (manifest['books'] as List).cast<Map>();
     if (entries.isEmpty) return;
     // Existing libraries belong to their readers; seeding is for new installs.
     if ((await store.list('books')).isNotEmpty) {
-      await store.put('settings', 'examplesInstalled', {'version': 1});
+      await store.transaction(() async {
+        await store.put('settings', 'examplesInstalled', {'version': 1});
+        await store.put('settings', 'exampleBooks', {'ids': <String>[]});
+      });
       return;
     }
     final staged = <Directory>[];
@@ -145,6 +160,12 @@ class ExampleLibrary {
           }
         }
         await store.put('settings', 'examplesInstalled', {'version': 1});
+        await store.put('settings', 'exampleBooks', {
+          'ids': [
+            for (final record in records)
+              if (record.collection == 'books') record.key,
+          ],
+        });
       });
     } catch (_) {
       for (final directory in staged) {
@@ -152,5 +173,18 @@ class ExampleLibrary {
       }
       rethrow;
     }
+  }
+
+  /// Installs from before example ids were recorded: the manifest names the
+  /// books. One that a reader's import has since taken over (its source is no
+  /// longer the bundle) is theirs now, not an example.
+  Future<void> _recordEarlierInstall(Map<String, Object?> manifest) async {
+    final ids = <String>[];
+    for (final entry in (manifest['books'] as List).cast<Map>()) {
+      final id = (entry['book'] as Map)['id'] as String;
+      final book = await store.get('books', id);
+      if (book == null || book['sourcePath'] == 'bundled:$id') ids.add(id);
+    }
+    await store.put('settings', 'exampleBooks', {'ids': ids});
   }
 }

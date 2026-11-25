@@ -139,12 +139,13 @@ void main() {
         await casts.profile(book.id, through: 2);
         await casts.idle;
         expect((await casts.load(book.id)).members, isNotEmpty);
-        await generation.savePreferences(
-          const GenerationPreferences(
-            automatic: true,
-            directing: 0,
-            synthesis: 0,
-          ),
+        await generation.savePreferences(const GenerationPreferences(ahead: 0));
+        // Agreed while setting the voice provider up, as the app asks:
+        // voicing in the background never asks on its own.
+        await consents.request(
+          provider: 'minimax',
+          endpoint: (await providers.endpoint('minimax'))!,
+          content: 'chapterTextAndCast',
         );
         tts.before = (n) => n == 2 ? release.future : null;
         listening.setSleepAfterChapter(true);

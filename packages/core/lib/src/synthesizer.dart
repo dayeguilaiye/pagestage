@@ -209,16 +209,22 @@ class Synthesizer {
       final requests = <TtsRequest>[];
       var offset = 0;
       for (final (index, chunk) in chunks.indexed) {
+        final end = offset + chunk.length;
+        final chunkDelivery = delivery.chunk(
+          offset,
+          end,
+          last: index == chunks.length - 1,
+        );
+        offset = end;
+        // Blank source still occupies script offsets. Only send it to a
+        // voice when the director placed a supported vocal cue there.
+        if (chunk.trim().isEmpty && chunkDelivery.cues.isEmpty) continue;
         requests.add(
           TtsRequest(
             text: chunk,
             language: language,
             binding: binding,
-            delivery: delivery.chunk(
-              offset,
-              offset + chunk.length,
-              last: index == chunks.length - 1,
-            ),
+            delivery: chunkDelivery,
             pronunciations: List.unmodifiable(
               matchedPronunciations(
                 pronunciationMatches(chunk, pronunciations),
@@ -226,23 +232,21 @@ class Synthesizer {
             ),
           ),
         );
-        offset += chunk.length;
       }
       prepared.add(
         _PreparedUtterance(
           entry,
           adapter,
           requests,
+          capabilities.pairedSynthesis && adapter is PairedTtsAdapter,
           matches.isNotEmpty && !capabilities.supportsPronunciation
               ? 'Selected voice does not support pronunciation; synthesized plain text.'
               : null,
         ),
       );
     }
-    for (final item in prepared) {
-      final entry = item.entry;
-      final line = entry.line;
-      final cacheKey = sha256
+    String keyFor(_PreparedUtterance item) {
+      return sha256
           .convert(
             utf8.encode(
               jsonEncode(
@@ -265,9 +269,21 @@ class Synthesizer {
             ),
           )
           .toString();
-      final cacheFile = File(
-        '${cacheDirectory?.path ?? '${File(outputPath).parent.path}/.utterances'}/$cacheKey.wav',
-      );
+    }
+
+    File fileFor(String cacheKey) => File(
+      '${cacheDirectory?.path ?? '${File(outputPath).parent.path}/.utterances'}/$cacheKey.wav',
+    );
+
+    TtsAudio? firstOfNext;
+    for (var index = 0; index < prepared.length; index++) {
+      final item = prepared[index];
+      final entry = item.entry;
+      final line = entry.line;
+      final cacheKey = keyFor(item);
+      final cacheFile = fileFor(cacheKey);
+      final carried = firstOfNext;
+      firstOfNext = null;
       var raw = await _readCache(cacheFile);
       if (raw == null && fallbackCacheDirectory != null) {
         raw = await _readCache(
@@ -279,8 +295,7 @@ class Synthesizer {
       if (raw == null) {
         final utteranceSamples = <int>[];
         int? utteranceRate;
-        for (final request in item.requests) {
-          final result = await item.adapter.synthesize(request);
+        void collect(TtsAudio result) {
           utteranceRate ??= result.audio.sampleRate;
           if (utteranceRate != result.audio.sampleRate) {
             throw StateError('Audio sample rates must match.');
@@ -288,11 +303,50 @@ class Synthesizer {
           utteranceSamples.addAll(result.audio.samples);
           characters = characters == null || result.characters == null
               ? null
-              : characters + result.characters!;
+              : characters! + result.characters!;
           inputTokens = _addReported(inputTokens, result.inputTokens);
           outputTokens = _addReported(outputTokens, result.outputTokens);
           totalTokens = _addReported(totalTokens, result.totalTokens);
           requests++;
+        }
+
+        final adapter = item.adapter;
+        final pair = item.canPair ? adapter as PairedTtsAdapter : null;
+        if (carried != null) collect(carried);
+        var cursor = carried == null ? 0 : 1;
+        while (cursor < item.requests.length) {
+          final request = item.requests[cursor++];
+          if (pair != null && cursor < item.requests.length) {
+            final (first, second) = await pair.synthesizePair(
+              request,
+              item.requests[cursor++],
+            );
+            collect(first);
+            collect(second);
+            continue;
+          }
+          if (pair != null && index + 1 < prepared.length) {
+            final next = prepared[index + 1];
+            if (identical(next.adapter, adapter) &&
+                next.requests.isNotEmpty &&
+                next.canPair) {
+              final nextKey = keyFor(next);
+              final legacy = fallbackCacheDirectory;
+              if (nextKey != cacheKey &&
+                  !await fileFor(nextKey).exists() &&
+                  (legacy == null ||
+                      !await File('${legacy.path}/$nextKey.wav').exists())) {
+                final (first, second) = await pair.synthesizePair(
+                  request,
+                  next.requests.first,
+                );
+                collect(first);
+                firstOfNext = second;
+                continue;
+              }
+            }
+          }
+          collect(await adapter.synthesize(request));
         }
         raw = PcmAudio(
           samples: Int16List.fromList(utteranceSamples),
@@ -301,9 +355,6 @@ class Synthesizer {
         await _writeCache(cacheFile, raw);
       }
       sampleRate ??= raw.sampleRate;
-      if (sampleRate != raw.sampleRate) {
-        throw StateError('Audio sample rates must match.');
-      }
       final normalized = normalizeLoudness(raw, loudness);
       final settingsKey = sha256
           .convert(utf8.encode(jsonEncode(_canonical(loudness.toJson()))))
@@ -325,7 +376,7 @@ class Synthesizer {
       samples.addAll(
         List.filled(sampleRate * pause.inMicroseconds ~/ 1000000, 0),
       );
-      samples.addAll(normalized.audio.samples);
+      samples.addAll(normalized.audio.atSampleRate(sampleRate).samples);
       utterances.add(
         SynthesizedUtterance(
           start: line.start,
@@ -401,11 +452,13 @@ class _PreparedUtterance {
     this.entry,
     this.adapter,
     this.requests,
+    this.canPair,
     this.warning,
   );
   final _PlannedUtterance entry;
   final TtsAdapter adapter;
   final List<TtsRequest> requests;
+  final bool canPair;
   final String? warning;
 }
 
@@ -439,7 +492,12 @@ List<_PlannedUtterance> _utterances(
         // Notes are unique per line, so they cannot gate merging; the
         // merged block keeps the first line's note.
         previous.line.direction.emotion == line.direction.emotion &&
-        previous.line.direction.intensity == line.direction.intensity) {
+        previous.line.direction.intensity == line.direction.intensity &&
+        previous.line.direction.pace == line.direction.pace &&
+        previous.line.direction.volume == line.direction.volume &&
+        // Cues belong at a particular position within their own line.
+        previous.line.direction.cues.isEmpty &&
+        line.direction.cues.isEmpty) {
       previous.line = ScriptLine(
         start: previous.line.start,
         end: line.end,

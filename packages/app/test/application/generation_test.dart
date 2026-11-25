@@ -109,14 +109,9 @@ void main() {
     await casts.idle;
   }
 
-  Future<void> automatic({int directing = 0, int synthesis = 0}) =>
-      generation.savePreferences(
-        GenerationPreferences(
-          automatic: true,
-          directing: directing,
-          synthesis: synthesis,
-        ),
-      );
+  /// AI voices on for new books, preparing [ahead] chapters ahead.
+  Future<void> automatic({int ahead = 0}) =>
+      generation.savePreferences(GenerationPreferences(ahead: ahead));
   setUp(() async {
     root = await Directory.systemTemp.createTemp('generation-app-');
     store = LocalStore('${root.path}/db.sqlite');
@@ -138,6 +133,15 @@ void main() {
         consents.respond(request.id, accepted: accept);
       }
     });
+    // As setting a provider up asks: work in the background never does.
+    for (final id in ['llm', 'minimax']) {
+      final endpoint = await providers.endpoint(id);
+      await consents.request(
+        provider: id,
+        endpoint: endpoint!,
+        content: 'chapterTextAndCast',
+      );
+    }
     engine = PlaylistEngine();
     speech = MemorySpeech();
     listening = ListeningController(
@@ -206,7 +210,6 @@ void main() {
       expect(engine.replacements, 0);
       expect(listening.value.source, ListeningSource.synthesized);
       expect(listening.value.playing, isTrue);
-      expect(generation.value.request, isNull);
       expect(tts.requests.length, count);
       expect(speech.requests, isEmpty);
       await listening.nextLine();
@@ -248,32 +251,100 @@ void main() {
   );
 
   test(
-    'reading stays idle; cancel and outside-range system choice send no requests',
+    'reading stays idle; a book with AI voices off reads in the system voice without asking',
     () async {
       await listening.lines(book.id, 1);
       await casts.idle;
       expect(director.chapters, isEmpty);
-      final open = listening.open(book.id);
-      await eventually(() => generation.value.request != null);
-      expect(generation.value.request!.canGenerate, isFalse);
-      generation.respond(
-        generation.value.request!.id,
-        GenerationChoice.generate,
-      );
-      expect(generation.value.request, isNotNull);
-      generation.respond(generation.value.request!.id, GenerationChoice.cancel);
-      await open;
-      expect(engine.state.playing, isFalse);
-      final again = listening.play();
-      await eventually(() => generation.value.request != null);
-      generation.respond(generation.value.request!.id, GenerationChoice.system);
-      await again;
+      await generation.setAiVoice(book.id, false);
+      await listening.open(book.id);
       expect(listening.value.source, ListeningSource.system);
+      expect(listening.value.aiVoice, isFalse);
+      expect(listening.value.fallback, isFalse);
+      expect(listening.value.playing, isTrue);
       expect(speech.requests, isNotEmpty);
+      await casts.idle;
       expect(tts.requests, isEmpty);
       expect(director.chapters, isEmpty);
+      expect(profile.chapters, isEmpty);
     },
   );
+  test(
+    'with AI voices on, an unprofiled chapter is profiled, directed and voiced without asking',
+    () async {
+      await automatic();
+      await listening.open(book.id);
+      await casts.idle;
+      await eventually(
+        () =>
+            listening.value.playing &&
+            listening.value.source == ListeningSource.synthesized,
+      );
+      expect(profile.chapters, contains(1));
+      expect(director.chapters, [1]);
+      expect(speech.requests, isEmpty);
+      expect(listening.value.aiVoice, isTrue);
+    },
+  );
+  test(
+    'voices not ready in time: the system voice reads the chapter, the next one switches back',
+    () async {
+      await prepare();
+      await automatic();
+      final quick = ListeningController(
+        store: store,
+        engine: PlaylistEngine(),
+        speech: speech,
+        fallbackAfter: const Duration(milliseconds: 100),
+      );
+      quick.attachGeneration(generation);
+      addTearDown(() async {
+        await quick.pause();
+        await quick.settled;
+      });
+      final release = Completer<void>();
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+      });
+      tts.before = (n) => n == 1 ? release.future : null;
+      await quick.open(book.id);
+      expect(quick.value.waitingSince, isNotNull);
+      await eventually(() => quick.value.source == ListeningSource.system);
+      expect(quick.value.fallback, isTrue);
+      expect(quick.value.playing, isTrue);
+      expect(speech.requests, isNotEmpty);
+      release.complete();
+      await casts.idle;
+      await quick.nextChapter();
+      await casts.idle;
+      await eventually(
+        () =>
+            quick.value.chapter == 2 &&
+            quick.value.source == ListeningSource.synthesized &&
+            quick.value.playing,
+      );
+      expect(quick.value.fallback, isFalse);
+    },
+  );
+  test('a paused book reads in the system voice at once', () async {
+    await prepare();
+    await automatic();
+    tts.before = (n) => throw const ProviderException(
+      provider: 'minimax',
+      kind: ProviderErrorKind.invalidKey,
+    );
+    await listening.open(book.id);
+    await casts.idle;
+    await eventually(
+      () =>
+          generation.value.failures.isNotEmpty &&
+          listening.value.source == ListeningSource.system &&
+          listening.value.playing,
+    );
+    expect(listening.value.fallback, isTrue);
+    expect(generation.value.failures.single.reason, 'unauthorized');
+    tts.before = null;
+  });
   test(
     'first utterance starts early; playlist grows and buffers without system fallback',
     () async {
@@ -308,23 +379,26 @@ void main() {
     },
   );
   test(
-    'lookahead clamps to range and next generated chapter continues without asking',
+    'lookahead profiles ahead and the next chapter continues without asking',
     () async {
       await prepare();
-      await automatic(directing: 2, synthesis: 2);
+      await automatic(ahead: 1);
       await listening.open(book.id);
       await eventually(() => listening.value.playing);
       await casts.idle;
-      expect(director.chapters.toSet(), {1, 2});
+      // Chapter 3 was not profiled; lookahead profiles it on the way.
+      expect(director.chapters.toSet(), {1, 2, 3});
+      expect(profile.chapters, contains(3));
       await listening.settled;
       engine.complete();
       await eventually(
-        () => listening.value.chapter == 2 && listening.value.playing,
+        () =>
+            listening.value.chapter == 2 &&
+            listening.value.playing &&
+            listening.value.source == ListeningSource.synthesized,
       );
-      expect(generation.value.request, isNull);
       expect(speech.requests, isEmpty);
       await listening.pause();
-      expect(casts.scheduler.tasks.where((t) => t.chapter == 3), isEmpty);
     },
   );
   test(
@@ -346,15 +420,21 @@ void main() {
         () => generation.value.failures.isNotEmpty && listening.value.playing,
       );
       expect(generation.value.failures.single.reason, 'quotaExceeded');
+      // Out of credit: the system voice reads on from the line after the
+      // voiced one instead of leaving the listener in silence.
       engine.complete();
-      await listening.settled;
-      expect(speech.requests, isEmpty);
+      await eventually(
+        () =>
+            listening.value.source == ListeningSource.system &&
+            listening.value.fallback,
+      );
+      expect(speech.requests, isNotEmpty);
+      expect(speech.requests.first.$1, isNot(contains('One.')));
       tts.before = null;
       await generation.resume(book.id);
       await casts.idle;
-      await eventually(
-        () => generation.value.failures.isEmpty && engine.segments.length == 3,
-      );
+      await eventually(() => generation.value.failures.isEmpty);
+      expect((await AudioRepository(store).get(book.id, 1))!.complete, isTrue);
       expect(tts.requests.where((r) => r.text.trim() == 'One.'), hasLength(1));
     },
   );
@@ -389,14 +469,17 @@ void main() {
       expect(tts.requests, hasLength(3));
       await generation.setMode(book.id, BookPerformanceMode.drama);
       await casts.idle;
+      // The chapter playing finishes as it is; the change applies next.
+      await listening.settled;
+      expect(engine.segments, hasLength(3));
+      await listening.open(book.id, chapter: 1);
+      await casts.idle;
       await eventually(() => engine.segments.length == 2);
       expect(tts.requests, hasLength(3));
       expect(await generation.mode(book.id), BookPerformanceMode.drama);
       expect((await store.get('performance', book.id))!['mode'], 'drama');
       await expectLater(
-        generation.savePreferences(
-          const GenerationPreferences(directing: 1, synthesis: 2),
-        ),
+        generation.savePreferences(const GenerationPreferences(ahead: -1)),
         throwsArgumentError,
       );
     },
@@ -593,6 +676,49 @@ void main() {
       expect(tts.requests, hasLength(3));
     },
   );
+  test(
+    'an audition plays a line the voice already spoke, sending nothing',
+    () async {
+      await prepare();
+      await casts.scheduler.enqueue(book.id, TaskKind.synthesize, through: 1);
+      await casts.idle;
+      final count = tts.requests.length;
+      final audio = (await AudioRepository(store).get(book.id, 1))!;
+      final spoken = audio.utterances.first;
+      // Remove saved samples so only the chapter can provide one.
+      for (final voice in (await Casting(
+        store,
+      ).getCasting(book.id)).voices.values) {
+        final path = voice.samplePath;
+        if (path != null && await File(path).exists()) {
+          await File(path).delete();
+        }
+      }
+      await casts.audition(book.id, spoken.speakerId);
+      final engine = casts.auditionEngine as MemoryEngine;
+      expect(engine.loads.last, spoken.audioPath);
+      expect(tts.requests.length, count);
+      expect(casts.auditioning, spoken.speakerId);
+      await casts.stopAudition();
+
+      // An example's chapter is one file: the line plays from where it is.
+      final whole = await File(
+        '${root.path}/whole.wav',
+      ).writeAsBytes(await File(spoken.audioPath).readAsBytes());
+      final json = audio.toJson();
+      json['utterances'] = [
+        for (final u in audio.utterances)
+          {...u.toJson(), 'audioPath': whole.path},
+      ];
+      await AudioRepository(store).save(ChapterAudio.fromJson(json));
+      final second = audio.utterances.last;
+      await casts.audition(book.id, second.speakerId);
+      expect(engine.loads.last, whole.path);
+      expect(tts.requests.length, count);
+      await casts.stopAudition();
+    },
+  );
+
   test('voice presets and design offer only providers that are on', () async {
     await prepare();
     expect(
@@ -613,21 +739,42 @@ void main() {
     );
     expect(await voices.designProviders(book.id), isEmpty);
   });
-  test('TTS consent denial prevents synthesis and can be resumed', () async {
-    await prepare();
-    await automatic();
-    accept = false;
-    await listening.open(book.id);
-    await casts.idle;
-    await eventually(() => generation.value.failures.isNotEmpty);
-    expect(tts.requests, isEmpty);
-    expect(generation.value.failures.single.reason, 'consentDeclined');
-    accept = true;
-    await generation.resume(book.id);
-    await casts.idle;
-    await eventually(() => listening.value.playing);
-    expect(tts.requests, hasLength(3));
-  });
+  test(
+    'without agreement voicing pauses instead of asking, and resuming asks',
+    () async {
+      await prepare();
+      await automatic();
+      final endpoint = (await providers.endpoint('minimax'))!;
+      await consents.revoke(
+        ConsentRecord(provider: 'minimax', endpoint: endpoint),
+      );
+      var asked = 0;
+      consents.addListener(() {
+        if (consents.value != null) asked++;
+      });
+      await listening.open(book.id);
+      await casts.idle;
+      await eventually(() => generation.value.failures.isNotEmpty);
+      expect(asked, 0);
+      expect(tts.requests, isEmpty);
+      expect(generation.value.failures.single.reason, 'consentNeeded');
+      // The listener keeps hearing the chapter meanwhile.
+      await eventually(
+        () =>
+            listening.value.source == ListeningSource.system &&
+            listening.value.playing,
+      );
+      accept = false;
+      await generation.resume(book.id);
+      expect(asked, 1);
+      expect(generation.value.failures, isNotEmpty);
+      accept = true;
+      await generation.resume(book.id);
+      await casts.idle;
+      await eventually(() => tts.requests.length == 3);
+      expect(await consents.granted('minimax', endpoint), isTrue);
+    },
+  );
   test(
     'clear during synthesis waits for checkpoint and cannot restore removed audio',
     () async {
@@ -659,24 +806,29 @@ void main() {
   );
 
   test(
-    'pause cancels an unanswered generation request and a later play retries',
+    'pausing while waiting does not fall back; playing waits again',
     () async {
       await prepare();
-      final opening = listening.open(book.id);
-      await eventually(() => generation.value.request != null);
+      await automatic();
+      final release = Completer<void>();
+      addTearDown(() {
+        if (!release.isCompleted) release.complete();
+      });
+      tts.before = (n) => n == 1 ? release.future : null;
+      await listening.open(book.id);
+      expect(listening.value.waitingSince, isNotNull);
       await listening.pause();
-      await opening;
-      expect(generation.value.request, isNull);
-      expect(director.chapters, isEmpty);
-      final playing = listening.play();
-      await eventually(() => generation.value.request != null);
-      generation.respond(
-        generation.value.request!.id,
-        GenerationChoice.generate,
-      );
-      await playing;
+      expect(listening.value.waitingSince, isNull);
+      expect(listening.value.source, ListeningSource.synthesized);
+      release.complete();
       await casts.idle;
-      await eventually(() => listening.value.playing);
+      await listening.play();
+      await eventually(
+        () =>
+            listening.value.playing &&
+            listening.value.source == ListeningSource.synthesized,
+      );
+      expect(speech.requests, isEmpty);
     },
   );
 

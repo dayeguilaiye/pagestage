@@ -107,13 +107,22 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
       _on[engine.id] ??
       engine.fields.any((field) => field.kind == EngineFieldKind.secret);
 
+  /// Set when the platform's secure storage would not answer, so the app
+  /// still opens and says why the keys are missing.
+  bool _secretsUnavailable = false;
+
   Future<String?> _secret(String engineId, String field) async {
-    final value = await secrets.read('$engineId.$field');
-    if (value != null && value.isNotEmpty) return value;
-    // Keys stored before engines had settings by name.
-    if (field != 'key') return null;
-    final legacy = await secrets.read(engineId);
-    return legacy == null || legacy.isEmpty ? null : legacy;
+    try {
+      final value = await secrets.read('$engineId.$field');
+      if (value != null && value.isNotEmpty) return value;
+      // Keys stored before engines had settings by name.
+      if (field != 'key') return null;
+      final legacy = await secrets.read(engineId);
+      return legacy == null || legacy.isEmpty ? null : legacy;
+    } catch (_) {
+      _secretsUnavailable = true;
+      return null;
+    }
   }
 
   Future<ProviderConfiguration> _configuration({required bool secret}) async {
@@ -195,7 +204,10 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
         ),
       );
     }
-    value = ProviderPreferences(engines: List.unmodifiable(views));
+    value = ProviderPreferences(
+      engines: List.unmodifiable(views),
+      secretsUnavailable: _secretsUnavailable,
+    );
   }
 
   Future<void> _save(Future<void> Function() change) {
@@ -304,11 +316,122 @@ class ProviderStore extends ValueNotifier<ProviderPreferences>
     return _save(() async => _language = engineId);
   }
 
+  @override
+  Future<String?> endpoint(String engineId) async {
+    final config = await configuration();
+    final Engine? engine =
+        engines.language[engineId] ?? engines.voice[engineId];
+    try {
+      return engine?.endpoint(config)?.toString();
+    } on Object {
+      return null;
+    }
+  }
+
+  @override
+  Future<String?> test(
+    String engineId, {
+    Map<String, String> values = const {},
+    Map<String, String> secrets = const {},
+  }) async {
+    final engine = _engine(engineId);
+    final stored = await configuration();
+    final sections = <String, Map<String, String>>{};
+    for (final other in _all) {
+      final section = <String, String>{};
+      for (final field in other.fields) {
+        final value = stored.value(other.id, field.name);
+        if (value != null) section[field.name] = value;
+      }
+      sections[other.id] = section;
+    }
+    final section = sections[engineId]!;
+    for (final entry in {...values, ...secrets}.entries) {
+      final text = entry.value.trim();
+      text.isEmpty ? section.remove(entry.key) : section[entry.key] = text;
+    }
+    if (engine is LlmEngine) (sections['llm'] ??= {})['engine'] = engineId;
+    final config = ProviderConfiguration.fromValues(sections);
+    try {
+      if (engine is LlmEngine) {
+        final adapter = engine.open(
+          config,
+          LlmRole.profile,
+          runtime: RequestRuntime(),
+        );
+        try {
+          await adapter.complete(
+            const LlmRequest(
+              system: 'Answer with the JSON object the schema describes.',
+              user: 'Connection check: answer ok true.',
+              schemaName: 'check',
+              schema: {
+                'type': 'object',
+                'properties': {
+                  'ok': {'type': 'boolean'},
+                },
+                'required': ['ok'],
+                'additionalProperties': false,
+              },
+              maxAttempts: 1,
+            ),
+          );
+        } finally {
+          closeLlm(adapter);
+        }
+      } else if (engine is TtsEngine) {
+        final presets = engine.presets(config);
+        if (presets.isEmpty) return 'engineUnavailable';
+        final preset =
+            presets.where((p) => p.languages.contains('zh')).firstOrNull ??
+            presets.first;
+        final opened = engine.open(config);
+        try {
+          await opened.adapter.synthesize(
+            TtsRequest(
+              text: preset.languages.contains('zh') ? '你好。' : 'Hello.',
+              language: preset.languages.contains('zh') ? 'zh' : 'en',
+              binding: preset.binding,
+            ),
+          );
+        } finally {
+          opened.close();
+        }
+      }
+      return null;
+    } on ProviderException catch (error) {
+      return switch (error.kind) {
+        ProviderErrorKind.invalidKey => 'unauthorized',
+        ProviderErrorKind.insufficientBalance => 'quotaExceeded',
+        ProviderErrorKind.rateLimited => 'rateLimited',
+        ProviderErrorKind.unavailable => 'network',
+        ProviderErrorKind.invalidVoice => 'voiceUnavailable',
+        ProviderErrorKind.invalidResponse => switch (error.code) {
+          LlmFailure.requestRejected => 'requestRejected',
+          LlmFailure.schemaUnsupported => 'schemaUnsupported',
+          _ => 'invalidResponse',
+        },
+        ProviderErrorKind.invalidConfiguration => 'missingKey',
+      };
+    } catch (_) {
+      return 'network';
+    }
+  }
+
   /// Captures credentials and settings under the same write queue.
   Future<ProviderConfiguration> configuration() {
     final result = _writes.then((_) => _configuration(secret: true));
     _writes = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     return result;
+  }
+
+  Future<void> refreshReadiness() {
+    final operation = _writes.then((_) => _publish());
+    _writes = operation.then<void>(
+      (_) {},
+      onError: (Object _, StackTrace _) {},
+    );
+    return operation;
   }
 
   Future<void> get saved => _writes;
@@ -323,8 +446,26 @@ class ConsentBroker extends ValueNotifier<ConsentRequest?> implements Consents {
   Completer<bool>? _pending;
   bool _closed = false;
 
+  /// Whether the reader already agreed to sending book text to [endpoint].
+  Future<bool> granted(String provider, String endpoint) =>
+      store.exists('providerConsent', '$provider:$endpoint');
+
+  @override
+  Future<List<ConsentRecord>> records() async => [
+    for (final json in await store.list('providerConsent'))
+      ConsentRecord(
+        provider: json['provider'] as String,
+        endpoint: json['endpoint'] as String,
+      ),
+  ];
+
+  @override
+  Future<void> revoke(ConsentRecord record) =>
+      store.delete('providerConsent', '${record.provider}:${record.endpoint}');
+
+  @override
   Future<bool> request({
-    required String bookTitle,
+    String? bookTitle,
     required String provider,
     required String endpoint,
     required String content,

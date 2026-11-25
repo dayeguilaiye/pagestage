@@ -4,6 +4,8 @@ import '../application/contracts.dart';
 import '../design/design.dart';
 import '../l10n/app_localizations.dart';
 import '../shelf/bookshelf.dart';
+import '../shelf/contents.dart';
+import '../shelf/voice_sheet.dart';
 import 'app_scope.dart';
 import 'chapter_picker.dart';
 import 'generation_failures.dart';
@@ -49,9 +51,11 @@ class ListeningDock extends StatelessWidget {
             child: PsMiniPlayer(
               book: state.bookTitle,
               title: chapterLabel(l, state),
-              subtitle: error == null
-                  ? state.bookTitle
-                  : Labels.listeningError(l, error),
+              subtitle: error != null
+                  ? Labels.listeningErrorShort(l, error)
+                  : state.waitingSince != null
+                  ? l.miniWaiting
+                  : state.bookTitle,
               synthesized: state.source == ListeningSource.synthesized,
               playing: state.playing,
               buffering: state.buffering,
@@ -265,27 +269,7 @@ class _PlayerPageState extends State<PlayerPage> {
                     icon: PsIcons.voice,
                   ),
                 ),
-                if (!synthesized)
-                  Padding(
-                    padding: const EdgeInsets.only(top: PsSpace.s2),
-                    child: Text(
-                      l.systemVoiceNote,
-                      textAlign: TextAlign.center,
-                      style: PsType.caption.copyWith(
-                        color: p.ink2,
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                if (state.buffering)
-                  Padding(
-                    padding: const EdgeInsets.only(top: PsSpace.s2),
-                    child: Text(
-                      l.waitingForSynthesis,
-                      textAlign: TextAlign.center,
-                      style: PsType.caption.copyWith(color: p.vermilion),
-                    ),
-                  ),
+                _VoiceNote(state: state, listening: listening),
                 const Spacer(),
                 const SizedBox(height: PsSpace.s6),
                 _NowLine(
@@ -297,12 +281,18 @@ class _PlayerPageState extends State<PlayerPage> {
                 if (error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: PsSpace.s4),
-                    child: PsBanner(
-                      tone: Labels.isEndOfBook(error)
-                          ? PsBannerTone.jade
-                          : PsBannerTone.danger,
-                      title: Labels.listeningError(l, error),
-                    ),
+                    child: Labels.isEndOfBook(error)
+                        ? PsBanner(
+                            tone: PsBannerTone.jade,
+                            title: Labels.listeningError(l, error),
+                            actionLabel: l.listenFromStart,
+                            onAction: () =>
+                                listening.open(state.bookId!, chapter: 1),
+                          )
+                        : PsBanner(
+                            tone: PsBannerTone.danger,
+                            title: Labels.listeningError(l, error),
+                          ),
                   ),
                 GenerationFailures(
                   bookId: state.bookId!,
@@ -387,20 +377,50 @@ class _PlayerPageState extends State<PlayerPage> {
     ListeningState state,
     AppLocalizations l,
   ) {
+    final p = context.ps;
     final last = state.chapterCount > 0 && state.chapter >= state.chapterCount;
+    // The line and chapter arrows look alike, so each says which it is.
+    Widget captioned(String caption, Widget button) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Large and small arrows share one height, so the words line up.
+        SizedBox(height: 56, child: Center(child: button)),
+        // As wide as the button: a longer word overhangs rather than
+        // pushing the row apart.
+        SizedBox(
+          width: PsSize.touch,
+          child: ExcludeSemantics(
+            child: Text(
+              caption,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.visible,
+              textAlign: TextAlign.center,
+              style: PsType.caption.copyWith(color: p.ink2),
+            ),
+          ),
+        ),
+      ],
+    );
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        PsIconButton(
-          icon: PsIcons.chapterBack,
-          label: l.previousChapter,
-          onPressed: state.chapter > 1 ? listening.previousChapter : null,
+        captioned(
+          l.chapterShort,
+          PsIconButton(
+            icon: PsIcons.chapterBack,
+            label: l.previousChapter,
+            onPressed: state.chapter > 1 ? listening.previousChapter : null,
+          ),
         ),
-        PsIconButton(
-          icon: PsIcons.lineBack,
-          label: l.previousLine,
-          size: PsControlSize.lg,
-          onPressed: listening.previousLine,
+        captioned(
+          l.lineShort,
+          PsIconButton(
+            icon: PsIcons.lineBack,
+            label: l.previousLine,
+            size: PsControlSize.lg,
+            onPressed: listening.previousLine,
+          ),
         ),
         PsPlayButton(
           size: PsPlaySize.lg,
@@ -408,16 +428,22 @@ class _PlayerPageState extends State<PlayerPage> {
           buffering: state.buffering,
           onPressed: () => state.playing ? listening.pause() : listening.play(),
         ),
-        PsIconButton(
-          icon: PsIcons.lineForward,
-          label: l.nextLine,
-          size: PsControlSize.lg,
-          onPressed: listening.nextLine,
+        captioned(
+          l.lineShort,
+          PsIconButton(
+            icon: PsIcons.lineForward,
+            label: l.nextLine,
+            size: PsControlSize.lg,
+            onPressed: listening.nextLine,
+          ),
         ),
-        PsIconButton(
-          icon: PsIcons.chapterForward,
-          label: l.nextChapter,
-          onPressed: last ? null : listening.nextChapter,
+        captioned(
+          l.chapterShort,
+          PsIconButton(
+            icon: PsIcons.chapterForward,
+            label: l.nextChapter,
+            onPressed: last ? null : listening.nextChapter,
+          ),
         ),
       ],
     );
@@ -477,6 +503,94 @@ class _PlayerPageState extends State<PlayerPage> {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Under the voice tag: what the wait for AI voices is doing, or why the
+/// system voice is reading, each with the one thing the listener can do.
+class _VoiceNote extends StatelessWidget {
+  const _VoiceNote({required this.state, required this.listening});
+
+  final ListeningState state;
+  final Listening listening;
+
+  Future<void> _openVoice(BuildContext context) async {
+    final scope = AppScope.of(context);
+    final bookId = state.bookId!;
+    try {
+      final book = (await scope.bookshelf.books())
+          .where((b) => b.id == bookId)
+          .firstOrNull;
+      final chapters = await scope.bookshelf.chapters(bookId);
+      if (book == null || !context.mounted) return;
+      await showVoiceSheet(context, book: book, chapters: chapters);
+    } catch (_) {
+      // The book is gone; the player says so.
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final p = context.ps;
+    final caption = PsType.caption.copyWith(
+      color: p.ink2,
+      fontWeight: FontWeight.w400,
+    );
+    Widget note(String text, {Widget? action, Color? color}) => Padding(
+      padding: const EdgeInsets.only(top: PsSpace.s2),
+      child: Column(
+        spacing: PsSpace.s1,
+        children: [
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: color == null ? caption : caption.copyWith(color: color),
+          ),
+          ?action,
+        ],
+      ),
+    );
+    if (state.waitingSince != null) {
+      final progress = AppScope.servicesOf(context)?.generation?.progress;
+      final useSystem = PsButton(
+        key: const ValueKey('useSystemVoice'),
+        label: l.listenWithSystemVoice,
+        small: true,
+        variant: PsButtonVariant.ghost,
+        onPressed: listening.useSystemVoice,
+      );
+      if (progress == null) {
+        return note(l.waitingForSynthesis, action: useSystem);
+      }
+      return ValueListenableBuilder(
+        valueListenable: progress,
+        builder: (context, value, _) => ProgressClock(
+          progress: value.of(state.bookId!, state.chapter),
+          builder: (context, status) => note(
+            status == null
+                ? l.waitingForSynthesis
+                : l.waitingWithStatus(status.label),
+            color: p.vermilion,
+            action: useSystem,
+          ),
+        ),
+      );
+    }
+    if (state.source == ListeningSource.synthesized) {
+      return const SizedBox.shrink();
+    }
+    if (state.fallback) return note(l.fallbackNote);
+    if (state.aiVoice) return note(l.systemVoiceForNowNote);
+    return note(
+      l.systemVoiceNote,
+      action: PsButton(
+        label: l.turnOnAiVoice,
+        small: true,
+        variant: PsButtonVariant.ghost,
+        onPressed: () => _openVoice(context),
+      ),
     );
   }
 }

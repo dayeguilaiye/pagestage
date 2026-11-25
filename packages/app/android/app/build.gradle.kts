@@ -18,6 +18,9 @@ check(System.getenv("REQUIRE_ANDROID_SIGNING") != "true" || signingPropertiesFil
 
 android {
     namespace = "com.example.pagestage_app"
+    assetPacks += listOf(":ming_front", ":ming_steps", ":ming_audio")
+    packaging.jniLibs.useLegacyPackaging = true
+    packaging.jniLibs.keepDebugSymbols += "**/libQnnHtpV75Skel.so"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -54,6 +57,7 @@ android {
 
     buildTypes {
         release {
+            proguardFiles("proguard-rules.pro")
             signingConfig = signingConfigs.getByName(
                 if (signingPropertiesFile.exists()) "testRelease" else "debug"
             )
@@ -69,4 +73,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.google.ai.edge.litert:litert:2.2.0")
 }

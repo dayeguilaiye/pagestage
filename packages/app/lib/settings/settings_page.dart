@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../application/app_services.dart';
@@ -9,8 +7,14 @@ import '../shelf/reading_settings.dart';
 import 'exclusive_voices_sheet.dart';
 import '../listening/labels.dart';
 import 'feedback_group.dart';
+import 'open_settings.dart';
+import 'privacy_page.dart';
 import 'provider_pages.dart';
 import 'storage_page.dart';
+import 'system_voice_page.dart';
+import 'usage_page.dart';
+import 'ming_settings_page.dart';
+import '../application/ming.dart';
 
 /// What the reader sets once for the whole app. Their own provider
 /// accounts come first and each opens a page of its own; everything below
@@ -105,29 +109,69 @@ class _SettingsPageState extends State<SettingsPage> {
                     spacing: PsSpace.s8,
                     children: [
                       _ProvidersGroup(
+                        services: services,
                         providers: services.providers,
+                        ming: services.ming,
                         open: _push,
                       ),
                       if (services.generation case final generation?)
                         _GenerationGroup(generation: generation),
-                      _CastingGroup(casts: services.casts),
-                      _AppearanceGroup(settings: widget.readingSettings),
-                      if (storage != null)
+                      if (services.speech case final speech?)
                         PsListGroup(
-                          header: l.storageSection,
+                          footer: l.systemVoiceRowNote,
                           children: [
                             PsListRow(
-                              key: const ValueKey('storage'),
-                              title: l.storage,
-                              detail: bytes == null ? null : formatBytes(bytes),
+                              key: const ValueKey('systemVoice'),
+                              title: l.systemVoice,
                               chevron: true,
-                              onTap: () async {
-                                await _push(StoragePage(storage: storage));
-                                await _measureStorage();
-                              },
+                              onTap: () =>
+                                  _push(SystemVoicePage(speech: speech)),
                             ),
                           ],
                         ),
+                      _CastingGroup(casts: services.casts),
+                      _AppearanceGroup(settings: widget.readingSettings),
+                      if (storage != null || services.generation != null)
+                        PsListGroup(
+                          header: l.storageSection,
+                          children: [
+                            if (storage != null)
+                              PsListRow(
+                                key: const ValueKey('storage'),
+                                title: l.storage,
+                                detail: bytes == null
+                                    ? null
+                                    : formatBytes(bytes),
+                                chevron: true,
+                                onTap: () async {
+                                  await _push(StoragePage(storage: storage));
+                                  await _measureStorage();
+                                },
+                              ),
+                            if (services.generation case final generation?)
+                              PsListRow(
+                                key: const ValueKey('usage'),
+                                title: l.usage,
+                                subtitle: l.usageRowNote,
+                                chevron: true,
+                                onTap: () =>
+                                    _push(UsagePage(generation: generation)),
+                              ),
+                          ],
+                        ),
+                      PsListGroup(
+                        header: l.privacy,
+                        children: [
+                          PsListRow(
+                            key: const ValueKey('privacy'),
+                            title: l.consentsSection,
+                            subtitle: l.privacyRowNote,
+                            chevron: true,
+                            onTap: () =>
+                                _push(PrivacyPage(consents: services.consents)),
+                          ),
+                        ],
+                      ),
                       if (services.diagnostics case final diagnostics?)
                         FeedbackGroup(diagnostics: diagnostics),
                       PsListGroup(
@@ -170,7 +214,15 @@ class _SettingsPageState extends State<SettingsPage> {
 /// profiling can run, or while no voice engine is on, a banner says what to
 /// set up first.
 class _ProvidersGroup extends StatefulWidget {
-  const _ProvidersGroup({required this.providers, required this.open});
+  const _ProvidersGroup({
+    required this.services,
+    required this.providers,
+    required this.open,
+    this.ming,
+  });
+
+  final AppServices services;
+  final MingDevice? ming;
 
   final Providers providers;
   final Future<void> Function(Widget page) open;
@@ -196,8 +248,26 @@ class _ProvidersGroupState extends State<_ProvidersGroup> {
     }
   }
 
-  void _open(String id) =>
+  /// Turning a voice engine on is when the reader agrees to what it will
+  /// be sent, rather than in the middle of a chapter later.
+  Future<void> _switch(String id, bool on) => _change(() async {
+    if (on && !await agreeToEngine(widget.services, id)) return;
+    await widget.providers.switchVoice(id, on);
+  });
+
+  void _open(String id) {
+    final ming = widget.ming;
+    if (id == 'ming' && ming != null) {
+      widget.open(
+        MingSettingsPage(
+          device: ming,
+          enable: () => widget.providers.switchVoice(id, true),
+        ),
+      );
+    } else {
       widget.open(EnginePage(providers: widget.providers, id: id));
+    }
+  }
 
   /// Where a language engine stands, as a tag beside its name.
   Widget _languageTag(AppLocalizations l, EngineView engine) {
@@ -223,7 +293,8 @@ class _ProvidersGroupState extends State<_ProvidersGroup> {
   String _voiceSubtitle(AppLocalizations l, EngineView engine) =>
       switch (engine.status) {
         EngineStatus.unavailable => l.engineComingSoon,
-        EngineStatus.notInstalled => l.engineNotInstalled,
+        EngineStatus.notInstalled =>
+          engine.id == 'ming' ? l.mingPending : l.engineNotInstalled,
         EngineStatus.needsSetup => l.voiceNeedsKey,
         EngineStatus.ready => [
           if (engine.id == 'edge') l.edgeRole,
@@ -257,23 +328,37 @@ class _ProvidersGroupState extends State<_ProvidersGroup> {
           title: Labels.provider(l, engine.id),
           subtitle: _voiceSubtitle(l, engine),
           on: engine.on && engine.ready,
-          onChanged: engine.ready
-              ? (v) => _change(() => providers.switchVoice(engine.id, v))
-              : null,
+          onChanged: engine.ready ? (v) => _switch(engine.id, v) : null,
           onOpen: engine.status == EngineStatus.unavailable
               ? null
               : () => _open(engine.id),
         );
+        // Engines this build cannot offer yet are left out, not teased.
         final cloud = prefs.voiceEngines
-            .where((e) => e.site == EngineSite.cloud)
+            .where(
+              (e) =>
+                  e.site == EngineSite.cloud &&
+                  e.status != EngineStatus.unavailable,
+            )
             .toList();
         final device = prefs.voiceEngines
-            .where((e) => e.site == EngineSite.device)
+            .where(
+              (e) =>
+                  e.site == EngineSite.device &&
+                  e.status != EngineStatus.unavailable,
+            )
             .toList();
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: PsSpace.s6,
           children: [
+            if (prefs.secretsUnavailable)
+              PsBanner(
+                tone: PsBannerTone.danger,
+                icon: PsIcons.key,
+                title: l.keysUnavailableTitle,
+                body: l.keysUnavailableBody,
+              ),
             if (!prefs.llmReady && language != null)
               PsBanner(
                 icon: PsIcons.key,
@@ -292,15 +377,15 @@ class _ProvidersGroupState extends State<_ProvidersGroup> {
                     : Labels.sentence(
                         l.turnOnProvider(Labels.inline(l, free.id)),
                       ),
-                onAction: free == null
-                    ? null
-                    : () => _change(() => providers.switchVoice(free.id, true)),
+                onAction: free == null ? null : () => _switch(free.id, true),
               ),
             PsListGroup(
               header: l.llmSection,
               footer: l.llmSectionNote,
               children: [
-                for (final engine in prefs.languageEngines)
+                for (final engine in prefs.languageEngines.where(
+                  (e) => e.status != EngineStatus.unavailable,
+                ))
                   PsListRow(
                     key: ValueKey('provider-${engine.id}'),
                     title: Labels.engine(l, engine),
@@ -450,14 +535,13 @@ class _VoiceRow extends StatelessWidget {
   }
 }
 
-/// Whether to generate without asking, and how far ahead of the listener
-/// to direct and to synthesize. Each change is saved at once.
+/// AI voices for the whole app, whether new books use them, and how many
+/// chapters ahead of the listener they are prepared. Each change is saved
+/// at once.
 class _GenerationGroup extends StatefulWidget {
   const _GenerationGroup({required this.generation});
 
   final Generation generation;
-
-  static const maxAhead = 20;
 
   @override
   State<_GenerationGroup> createState() => _GenerationGroupState();
@@ -482,73 +566,55 @@ class _GenerationGroupState extends State<_GenerationGroup> {
       valueListenable: widget.generation,
       builder: (context, state, _) {
         final prefs = state.preferences;
-        void automatic(bool on) => _save(
-          GenerationPreferences(
-            automatic: on,
-            directing: prefs.directing,
-            synthesis: prefs.synthesis,
-          ),
-        );
-        // Audio is made only for chapters already directed, so each
-        // lookahead carries the other along instead of refusing.
-        void directing(int n) => _save(
-          GenerationPreferences(
-            automatic: prefs.automatic,
-            directing: n,
-            synthesis: math.min(prefs.synthesis, n),
-          ),
-        );
-        void synthesis(int n) => _save(
-          GenerationPreferences(
-            automatic: prefs.automatic,
-            directing: math.max(prefs.directing, n),
-            synthesis: n,
-          ),
-        );
+        void enabled(bool on) => _save(prefs.copyWith(enabled: on));
+        void automatic(bool on) => _save(prefs.copyWith(automatic: on));
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: PsSpace.s3,
           children: [
             PsListGroup(
-              header: l.generationSection,
+              header: l.listeningSection,
               footer: l.generationSectionNote,
               children: [
                 MergeSemantics(
                   child: PsListRow(
-                    title: l.autoGenerate,
-                    subtitle: l.autoGenerateNote,
+                    title: l.aiVoicesEnabled,
+                    subtitle: l.aiVoicesEnabledNote,
                     trailing: Switch(
-                      key: const ValueKey('autoGenerate'),
-                      value: prefs.automatic,
-                      onChanged: automatic,
+                      key: const ValueKey('aiVoicesEnabled'),
+                      value: prefs.enabled,
+                      onChanged: enabled,
                     ),
-                    onTap: () => automatic(!prefs.automatic),
+                    onTap: () => enabled(!prefs.enabled),
                   ),
                 ),
-                PsListRow(
-                  title: l.directingAhead,
-                  subtitle: l.directingAheadNote,
-                  trailing: PsStepper(
-                    value: prefs.directing,
-                    max: _GenerationGroup.maxAhead,
-                    unit: l.aheadUnit,
-                    decreaseLabel: l.fewerDirectingAhead,
-                    increaseLabel: l.moreDirectingAhead,
-                    onChanged: directing,
+                if (prefs.enabled) ...[
+                  MergeSemantics(
+                    child: PsListRow(
+                      title: l.autoGenerate,
+                      subtitle: l.autoGenerateNote,
+                      trailing: Switch(
+                        key: const ValueKey('autoGenerate'),
+                        value: prefs.automatic,
+                        onChanged: automatic,
+                      ),
+                      onTap: () => automatic(!prefs.automatic),
+                    ),
                   ),
-                ),
-                PsListRow(
-                  title: l.synthesisAhead,
-                  subtitle: l.synthesisAheadNote,
-                  trailing: PsStepper(
-                    value: prefs.synthesis,
-                    max: _GenerationGroup.maxAhead,
-                    unit: l.aheadUnit,
-                    decreaseLabel: l.fewerSynthesisAhead,
-                    increaseLabel: l.moreSynthesisAhead,
-                    onChanged: synthesis,
+                  PsListRow(
+                    title: l.prepareAheadSetting,
+                    subtitle: l.prepareAheadSettingNote,
+                    trailing: PsStepper(
+                      key: const ValueKey('ahead'),
+                      value: prefs.ahead,
+                      max: GenerationPreferences.maxAhead,
+                      unit: l.aheadUnit,
+                      decreaseLabel: l.fewerAhead,
+                      increaseLabel: l.moreAhead,
+                      onChanged: (n) => _save(prefs.copyWith(ahead: n)),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
             if (_failed)

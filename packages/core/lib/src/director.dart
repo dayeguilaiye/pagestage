@@ -6,6 +6,7 @@ import 'models/book.dart';
 import 'models/cast.dart';
 import 'models/script.dart';
 import 'providers/llm_adapter.dart';
+import 'providers/provider_exception.dart';
 import 'providers/request_recovery.dart';
 import 'script_repository.dart';
 
@@ -95,21 +96,42 @@ class Director {
             'llm: alignment retry; ${3 - attempt} HTTP attempts remaining for this chunk.',
           );
         }
-        final response = await llm.complete(
-          LlmRequest(
-            system: _instructions(book.language),
-            user: jsonEncode({
-              'chapter': chapterNumber,
-              'source': source,
-              'cast': readerCast.visible,
-              'previousLines': previous,
-              'alignmentRetry': attempt,
-            }),
-            maxAttempts: 3 - attempt,
-            schemaName: 'script',
-            schema: _scriptSchema,
-          ),
-        );
+        final LlmResponse response;
+        try {
+          response = await llm.complete(
+            LlmRequest(
+              system: _instructions(book.language),
+              user: jsonEncode({
+                'chapter': chapterNumber,
+                'source': source,
+                'cast': readerCast.visible,
+                'previousLines': previous,
+                'alignmentRetry': attempt,
+              }),
+              maxAttempts: 3 - attempt,
+              schemaName: 'script',
+              schema: _scriptSchema,
+            ),
+          );
+        } on ProviderException catch (error) {
+          // A passage the provider will not direct is narrated plainly, so
+          // one refused passage never stops the rest of the book.
+          if (error.kind != ProviderErrorKind.invalidResponse ||
+              !LlmFailure.inputBound(error.code)) {
+            rethrow;
+          }
+          runtime.onEvent(
+            'llm: ${error.code}; narrating this passage without direction.',
+          );
+          aligned = _Alignment([
+            ScriptLine(
+              start: 0,
+              end: source.length,
+              direction: const Direction(speakerId: 'narrator'),
+            ),
+          ], true);
+          break;
+        }
         attempt += response.attempts;
         requests += response.attempts;
         usage += response.usage;

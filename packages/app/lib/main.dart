@@ -1,44 +1,23 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:path_provider/path_provider.dart';
+import 'boot.dart';
 
-import 'app.dart';
-import 'application/diagnostics.dart';
-import 'application/bundled_examples.dart';
-import 'application/app_services.dart';
-import 'storage.dart';
-
+/// The first frame shows at once; storage, the examples and the services
+/// open behind it, and a failure among them shows its own page instead of
+/// a blank screen.
 Future<void> main() async {
-  DiagnosticLog? diagnostics;
   await runZonedGuarded(
     () async {
       WidgetsFlutterBinding.ensureInitialized();
-      final root = await getApplicationSupportDirectory();
-      diagnostics = DiagnosticLog(Directory('${root.path}/diagnostics'));
-      diagnostics!.install();
-      await diagnostics!.collectNative();
       LicenseRegistry.addLicense(_fontLicenses);
-      final storage = await AppStorage.open(directory: root);
-      await installBundledExamples(storage.store);
-      final services = await AppServices.open(
-        storage,
-        diagnostics: diagnostics,
-      );
-      runApp(
-        PagestageApp(
-          bookshelf: storage.library,
-          readingSettings: storage.readingSettings,
-          services: services,
-        ),
-      );
+      runApp(const PagestageBoot());
     },
     (error, stack) {
-      unawaited(diagnostics?.record(error, stack, source: 'zone'));
+      unawaited(bootDiagnostics?.record(error, stack, source: 'zone'));
     },
   );
 }

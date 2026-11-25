@@ -8,11 +8,12 @@ import 'package:pagestage_core/src/cli.dart';
 import 'package:test/test.dart';
 
 import 'support/generation_fakes.dart';
+import 'support/fake_request_clock.dart';
 
 void main() {
   late Directory dir;
   late LocalStore store;
-  late LocalStore other;
+  late _FailingStore other;
   late Book book;
   late GenerationTts tts;
 
@@ -40,7 +41,7 @@ void main() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     dir = await Directory.systemTemp.createTemp('package-');
     store = LocalStore('${dir.path}/a/pagestage.sqlite');
-    other = LocalStore('${dir.path}/b/db.sqlite');
+    other = _FailingStore('${dir.path}/b/db.sqlite');
     final file = await File('${dir.path}/novel.txt').writeAsString(
       [for (var i = 1; i <= 3; i++) 'Chapter $i\nWind $i.\nHome $i.\n'].join(),
     );
@@ -62,6 +63,13 @@ void main() {
     ).export(book.id, path, kind: BookPackageKind.script);
     expect(exported.scriptChapters, [1, 2]);
     expect(exported.audioChapters, isEmpty);
+    final archive = ZipDecoder().decodeBytes(await File(path).readAsBytes());
+    final exportedBook =
+        jsonDecode(
+              utf8.decode(archive.findFile('book.json')!.content as List<int>),
+            )
+            as Map;
+    expect(exportedBook['sourcePath'], 'novel.txt');
 
     final summary = await BookPackages(other).inspect(path);
     expect(summary.title, 'Winds');
@@ -279,6 +287,148 @@ void main() {
     );
   });
 
+  for (final damage in ['audio', 'performance', 'storage']) {
+    test(
+      'a replacement with invalid $damage preserves the existing book',
+      () async {
+        await produce(2);
+        final path = '${dir.path}/replacement.pagestage';
+        await BookPackages(
+          store,
+        ).export(book.id, path, kind: BookPackageKind.audio);
+        await BookPackages(other).import(path);
+        await other.put('listening', book.id, {
+          'bookId': book.id,
+          'chapter': 2,
+        });
+        const collections = [
+          'books',
+          'casts',
+          'scripts',
+          'voices',
+          'casting',
+          'audio',
+          'performance',
+          'listening',
+        ];
+        final before = {
+          for (final collection in collections)
+            collection: await other.list(collection),
+        };
+        final audio = (await AudioRepository(other).get(book.id, 1))!;
+        final bytesBefore = await File(audio.path!).readAsBytes();
+        final archive = ZipDecoder().decodeBytes(
+          await File(path).readAsBytes(),
+        );
+        final tampered = Archive();
+        for (final entry in archive) {
+          var bytes = List<int>.of(entry.content as List<int>);
+          if (damage == 'audio' && entry.name.endsWith('.wav')) {
+            bytes[50] ^= 0xff;
+          } else if (damage == 'performance' && entry.name == 'manifest.json') {
+            final manifest = jsonDecode(utf8.decode(bytes)) as Map;
+            bytes = utf8.encode(
+              jsonEncode({
+                ...manifest,
+                'performance': {'mode': 'unknown'},
+              }),
+            );
+          }
+          tampered.addFile(ArchiveFile(entry.name, bytes.length, bytes));
+        }
+        final damaged = await File(
+          '${dir.path}/damaged.pagestage',
+        ).writeAsBytes(ZipEncoder().encode(tampered)!);
+        if (damage == 'storage') other.failCollection = 'casts';
+        var edits = 0;
+
+        await expectLater(
+          BookPackages(other).import(
+            damaged.path,
+            replace: true,
+            edit: (_, action) async {
+              edits++;
+              await action();
+            },
+          ),
+          damage == 'storage' ? throwsStateError : throwsFormatException,
+        );
+        other.failCollection = null;
+        expect(edits, damage == 'storage' ? 1 : 0);
+
+        for (final collection in collections) {
+          expect(
+            await other.list(collection),
+            before[collection],
+            reason: '$collection survives a failed replacement',
+          );
+        }
+        expect(await File(audio.path!).readAsBytes(), bytesBefore);
+        final script = (await ScriptRepository(other).get(book.id, 1))!;
+        expect(await AudioRepository(other).isComplete(script), isTrue);
+        expect(
+          await Directory(
+            '${dir.path}/b/audio',
+          ).list().map((f) => f.path).toList(),
+          ['${dir.path}/b/audio/${book.id}'],
+        );
+      },
+    );
+  }
+
+  test('CLI synthesis and export share the saved performance mode', () async {
+    await produce(1, voiced: false);
+    await store.close();
+    final out = StringBuffer();
+    final errors = StringBuffer();
+    Future<int> synthesize(List<String> options) => runCli(
+      ['--data-dir', '${dir.path}/a', 'synthesize', book.id, '1', ...options],
+      output: out,
+      errorOutput: errors,
+      environment: const {},
+      ttsAdapters: {'minimax': tts},
+      requestRuntime: FakeRequestClock().runtime,
+    );
+    expect(await synthesize(['--mode', 'drama']), 0, reason: '$errors');
+    out.clear();
+    expect(await synthesize([]), 0, reason: '$errors');
+    expect((jsonDecode(out.toString()) as Map)['mode'], 'drama');
+    out.clear();
+    final path = '${dir.path}/drama.pagestage';
+    expect(
+      await runCli(
+        [
+          '--data-dir',
+          '${dir.path}/a',
+          'export',
+          book.id,
+          path,
+          '--kind',
+          'audio',
+        ],
+        output: out,
+        errorOutput: errors,
+        environment: const {},
+      ),
+      0,
+      reason: '$errors',
+    );
+    final imported = await BookPackages(other).import(path);
+    expect(imported.summary.audioChapters, [1]);
+    expect(
+      (await PerformanceRepository(other).get(book.id)).mode,
+      PerformanceMode.drama,
+    );
+    expect(
+      await AudioRepository(other).isComplete(
+        (await ScriptRepository(other).get(book.id, 1))!,
+        mode: PerformanceMode.drama,
+      ),
+      isTrue,
+    );
+    store = LocalStore('${dir.path}/a/pagestage.sqlite');
+  });
+
   test(
     'the CLI exports a package and imports it into another library',
     () async {
@@ -322,4 +472,17 @@ void main() {
       store = LocalStore('${dir.path}/a/pagestage.sqlite');
     },
   );
+}
+
+class _FailingStore extends LocalStore {
+  _FailingStore(super.path);
+  String? failCollection;
+
+  @override
+  Future<void> put(String collection, String key, Map<String, Object?> value) {
+    if (collection == failCollection) {
+      throw StateError('Simulated write failure');
+    }
+    return super.put(collection, key, value);
+  }
 }

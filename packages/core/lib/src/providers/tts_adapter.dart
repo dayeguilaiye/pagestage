@@ -10,6 +10,14 @@ abstract interface class TtsAdapter {
   Future<TtsAudio> synthesize(TtsRequest request);
 }
 
+/// A single device operation for two separately directed requests, in input order.
+abstract interface class PairedTtsAdapter implements TtsAdapter {
+  Future<(TtsAudio, TtsAudio)> synthesizePair(
+    TtsRequest first,
+    TtsRequest second,
+  );
+}
+
 class TtsRequest {
   const TtsRequest({
     required this.text,
@@ -53,6 +61,7 @@ class TtsCapabilities {
     this.instruction = false,
     this.cues = const {},
     this.prosody = false,
+    this.pairedSynthesis = false,
   });
   final bool supportsPronunciation;
 
@@ -74,4 +83,6 @@ class TtsCapabilities {
 
   /// Whether pace, loudness and pitch can be set per request.
   final bool prosody;
+
+  final bool pairedSynthesis;
 }

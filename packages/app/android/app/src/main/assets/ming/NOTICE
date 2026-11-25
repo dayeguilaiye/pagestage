@@ -1,0 +1,29 @@
+Ming-3.0-tts-0.5B on LiteRT
+
+The graphs and host files in this repository are converted from:
+- inclusionAI/Ming-3.0-tts-0.5B (Hugging Face), revision 8d66b70a00f05ad183fa8a863b4ce609fc83cbc0, MIT License
+  https://huggingface.co/inclusionAI/Ming-3.0-tts-0.5B
+- inclusionAI/Ming-3.0-tts (GitHub), commit 028c1eace193e7acdb256453da89b6e9207e052b, MIT License,
+  Copyright (c) 2025 inclusionAI
+  https://github.com/inclusionAI/Ming-3.0-tts
+LICENSE is that license, unchanged.
+
+What the conversion changed:
+- The language model, flow head, aggregator and decoder were rewritten as PyTorch modules for export
+  (scripts/ming_modules.py, scripts/r4_modules.py) with the same arithmetic in float32: the KV caches,
+  RoPE tables and attention masks became graph inputs, the flow's 10 solver steps and classifier-free
+  guidance run inside one graph, and the decoder runs 16 latents per call with a 64-position cache.
+- Weights are stored as float16 (ai-edge-quantizer FLOAT_CASTING); inputs, outputs and the CPU and
+  GPU FP32 arithmetic stay float32.
+- lm2_epsdiv_prefill_wfp16.tflite and lm2_epsdiv_step_wfp16.tflite (the faster all-NPU placement) are
+  the language model with its normalization's eps / (m * m) computed as (eps / m) / m, the same in real
+  arithmetic, one signature per file (scripts/export_npu_lm.py).
+- tokenizer.json is the upstream file. embed_tokens_f16.bin, istft_window.bin, stop_head.bin and
+  temb_epss10.bin are tensors of the checkpoint (the last computed with its time embedder);
+  tokenizer_*.txt and char_classes.bin are tables made from tokenizer.json and Python's Unicode data.
+- The text normalizer and the voice-cloning path (audio encoder, CAM++ speaker model) are not converted.
+
+android/ and scripts/ were written for this conversion. scripts/host_mirror.py and the app's Kotlin
+host code follow the upstream inference code (prompt contract, tokenizer, decode loop, ISTFT).
+The Android app uses LiteRT 2.2.0 (Apache License 2.0). Its NPU path needs Qualcomm's runtime
+libraries, which are not part of this repository.

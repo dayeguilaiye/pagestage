@@ -64,15 +64,13 @@ class PlaybackQueue {
           await File(entry.utterance.audioPath).readAsBytes(),
         );
         if (count == 0) sampleRate = audio.sampleRate;
-        if (audio.sampleRate != sampleRate) {
-          throw StateError('Audio sample rates must match.');
-        }
+        final mixed = audio.atSampleRate(sampleRate);
         final silence =
             sampleRate * entry.utterance.pauseBefore.inMicroseconds ~/ 1000000;
         await sink.writeFrom(Uint8List(silence * 2));
-        final pcm = audio.toWav();
+        final pcm = mixed.toWav();
         await sink.writeFrom(pcm, 44);
-        count += silence + audio.samples.length;
+        count += silence + mixed.samples.length;
       }
       final header = ByteData.sublistView(
         PcmAudio(samples: Int16List(0), sampleRate: sampleRate).toWav(),

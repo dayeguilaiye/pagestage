@@ -17,8 +17,20 @@ import MetricKit
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
+  // Without scenes, a file another app opens in pagestage arrives here
+  // rather than at the SceneDelegate.
+  override func application(
+    _ app: UIApplication, open url: URL,
+    options: [UIApplication.OpenURLOptionsKey: Any] = [:]
+  ) -> Bool {
+    guard url.isFileURL else { return super.application(app, open: url, options: options) }
+    IncomingFiles.shared.receive([url])
+    return true
+  }
+
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    IncomingFiles.shared.attach(to: engineBridge.applicationRegistrar.messenger())
     guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "PagestageDiagnostics") else { return }
     let files = FlutterMethodChannel(name: "pagestage/files", binaryMessenger: registrar.messenger())
     files.setMethodCallHandler { [weak self] call, result in

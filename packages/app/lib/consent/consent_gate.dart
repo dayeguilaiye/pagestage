@@ -112,7 +112,10 @@ class ConsentDialog extends StatelessWidget {
     final label = PsType.caption.copyWith(color: p.ink2);
     final value = PsType.body.copyWith(color: p.ink, height: 20 / 15);
     return PsDialog(
-      title: l.consentTitle(request.bookTitle),
+      title: switch (request.bookTitle) {
+        final title? => l.consentTitle(title),
+        null => l.consentSetupTitle(Labels.provider(l, request.provider)),
+      },
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -141,12 +144,16 @@ class ConsentDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: PsSpace.s3),
+          // The agreement covers every book sent to this address, so it
+          // says so, and where to take it back.
+          Text(l.consentScopeNote),
+          const SizedBox(height: PsSpace.s2),
           Text(l.consentCancelNote),
         ],
       ),
       actions: [
         PsButton(
-          label: l.consentAccept,
+          label: request.bookTitle == null ? l.consentAgree : l.consentAccept,
           variant: PsButtonVariant.primary,
           expand: true,
           onPressed: () => Navigator.pop(context, true),

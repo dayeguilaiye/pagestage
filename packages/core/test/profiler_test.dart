@@ -8,11 +8,13 @@ class FakeLlm implements LlmAdapter {
   FakeLlm(this.responses);
   final List<Object> responses;
   final List<LlmRequest> requests = [];
+  Future<void> Function()? duringRequest;
   @override
   String get model => 'fake-profile';
   @override
   Future<LlmResponse> complete(LlmRequest request) async {
     requests.add(request);
+    await duringRequest?.call();
     final next = responses.removeAt(0);
     if (next is Exception) throw next;
     return LlmResponse(
@@ -78,6 +80,179 @@ void main() {
     await store.close();
     await temp.delete(recursive: true);
   });
+  VoicePreset preset(
+    String id, {
+    String language = 'zh',
+    bool narrator = false,
+  }) => VoicePreset(
+    id: 'ming:$id',
+    binding: VoiceBinding(provider: 'ming', model: '10steps', voiceId: id),
+    languages: [language],
+    gender: 'male',
+    ageGroup: 'youngAdult',
+    description: '声音 $id 的描述',
+    styles: const ['clear'],
+    narratorCandidate: narrator,
+  );
+
+  test(
+    'casts in the profile request and checkpoints actual voices for later chapters',
+    () async {
+      final catalog = [
+        preset('a-default'),
+        preset('b'),
+        preset('c'),
+        preset('d'),
+        preset('z-lead'),
+        preset('narrator', narrator: true),
+        preset('english', language: 'en'),
+      ];
+      final firstLlm = FakeLlm([
+        {
+          ...batch(
+            characters: [
+              character('lead', '林舟', [1], count: 9),
+              character('guest', '访客', [1]),
+              character('extra', '来人', [1]),
+            ],
+          ),
+          'voiceChoices': [
+            {'speakerId': 'lead', 'presetId': 'ming:z-lead'},
+            {'speakerId': 'guest', 'presetId': 'ming:english'},
+            {'speakerId': 'extra', 'presetId': 'ming:z-lead'},
+            {'speakerId': 'narrator', 'presetId': 'ming:narrator'},
+            {'speakerId': 'invented', 'presetId': 'ming:b'},
+            42,
+          ],
+        },
+      ]);
+      final first = await Profiler(
+        store,
+        firstLlm,
+        voiceCatalog: () => catalog,
+      ).profile(book, throughChapter: 1);
+      final request = firstLlm.requests.single;
+      final input = jsonDecode(request.user) as Map;
+      final offered = (input['voiceCatalog'] as List).cast<Map>();
+      expect(
+        offered.map((p) => p['presetId']),
+        isNot(contains('ming:english')),
+      );
+      expect(offered.first['description'], '声音 a-default 的描述');
+      expect(offered.first['styles'], ['clear']);
+      expect((request.schema['properties'] as Map), contains('voiceChoices'));
+      final casting = Casting(store, catalog: catalog);
+      final old = await casting.getCasting(book.id);
+      final lead = first.cast.findSpeaker('林舟')!.id,
+          guest = first.cast.findSpeaker('访客')!.id;
+      final extra = first.cast.findSpeaker('来人')!.id;
+      expect(old.voices[lead]!.binding.voiceId, 'z-lead');
+      expect(old.voices[lead]!.profileSelected, isTrue);
+      expect(old.voices['narrator']!.profileSelected, isTrue);
+      expect(old.voices[guest]!.profileSelected, isFalse);
+      expect(old.voices[extra]!.profileSelected, isFalse);
+      expect(
+        old.voices.values.map((v) => v.binding.voiceId).toSet(),
+        hasLength(4),
+      );
+      expect(first.cast.speakers.every((s) => s.voiceId != null), isTrue);
+
+      final next = FakeLlm([
+        {
+          ...batch(
+            characters: [
+              character('alias', '林舟', [2]),
+              character('new', '师傅', [2]),
+            ],
+          ),
+          'voiceChoices': [
+            {'speakerId': 'alias', 'presetId': 'ming:b'},
+            {'speakerId': 'new', 'presetId': 'ming:d'},
+          ],
+        },
+      ]);
+      // The reader changes a binding while the LLM is processing chapter two.
+      next.duringRequest = () async {
+        await casting.selectPreset(book, guest, 'ming:c');
+      };
+      final second = await Profiler(
+        store,
+        next,
+        voiceCatalog: () => catalog,
+      ).profile(book, throughChapter: 2);
+      final assigned =
+          (jsonDecode(next.requests.single.user) as Map)['assignedVoices']
+              as Map;
+      expect(assigned[lead], 'ming:z-lead');
+      expect(assigned['narrator'], 'ming:narrator');
+      final newId = second.cast.findSpeaker('师傅')!.id;
+      final extended = await casting.getCasting(book.id);
+      expect(extended.voices[guest]!.binding.voiceId, 'c');
+      expect(extended.voices[guest]!.manuallySelected, isTrue);
+      expect(extended.voices[lead]!.binding.voiceId, 'z-lead');
+      expect(
+        extended.voices[extra]!.binding.voiceId,
+        old.voices[extra]!.binding.voiceId,
+      );
+      expect(extended.voices[newId]!.binding.voiceId, 'd');
+      final bindings = await Casting(
+        store,
+        catalog: catalog,
+      ).prepareChapterBindings(book, 2);
+      expect(bindings[lead]!.voiceId, 'z-lead');
+      expect(bindings[newId]!.voiceId, 'd');
+      final resumed = FakeLlm([]);
+      await Profiler(
+        store,
+        resumed,
+        voiceCatalog: () => catalog,
+      ).profile(book, throughChapter: 2);
+      expect(resumed.requests, isEmpty);
+    },
+  );
+
+  test(
+    'skips withdrawn and malformed choices independently without retrying the profile',
+    () async {
+      final a = preset('a'), b = preset('b'), c = preset('c');
+      var available = [a, b, c];
+      final llm =
+          FakeLlm([
+              {
+                ...batch(
+                  characters: [
+                    character('first', '甲', [1]),
+                    character('second', '乙', [1]),
+                  ],
+                ),
+                'voiceChoices': [
+                  {'speakerId': 'first', 'presetId': c.id},
+                  {'speakerId': 'second', 'presetId': b.id},
+                  {'speakerId': 'second', 'presetId': a.id},
+                ],
+              },
+            ])
+            ..duringRequest = () async {
+              available = [a, b];
+            };
+      final profile = await Profiler(
+        store,
+        llm,
+        voiceCatalog: () => available,
+      ).profile(book, throughChapter: 1);
+      final current = await Casting(store).getCasting(book.id);
+      expect(llm.requests, hasLength(1));
+      expect(profile.cast.profiledThrough, 1);
+      expect(
+        current.voices.values.every(
+          (v) => !v.profileSelected && v.binding.voiceId != 'c',
+        ),
+        isTrue,
+      );
+      expect(current.voices, hasLength(3));
+    },
+  );
+
   test('keeps the system narrator out of character profiling input', () async {
     await CastRepository(store).save(
       Cast(

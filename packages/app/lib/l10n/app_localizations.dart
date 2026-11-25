@@ -161,7 +161,7 @@ abstract class AppLocalizations {
   /// Tag that always sits beside the player: the audio is synthesized.
   ///
   /// In zh, this message translates to:
-  /// **'AI 合成'**
+  /// **'AI 配音'**
   String get aiVoice;
 
   /// No description provided for @nextLine.
@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @chapterDirecting.
   ///
   /// In zh, this message translates to:
-  /// **'导演中 {elapsed}'**
+  /// **'分配台词中 {elapsed}'**
   String chapterDirecting(String elapsed);
 
   /// No description provided for @chapterVoicing.
@@ -233,7 +233,7 @@ abstract class AppLocalizations {
   /// No description provided for @prepareChapters.
   ///
   /// In zh, this message translates to:
-  /// **'提前生成'**
+  /// **'提前准备章节'**
   String get prepareChapters;
 
   /// No description provided for @prepareFrom.
@@ -251,31 +251,25 @@ abstract class AppLocalizations {
   /// No description provided for @prepareNote.
   ///
   /// In zh, this message translates to:
-  /// **'先为这些章节导演、配音，听的时候直接播放。正文会发给你设置的大模型和配音服务；已经生成好的章节会跳过。'**
+  /// **'先为这些章节准备好配音，听的时候直接播放，也能离线听。正文会发给你设置的大模型和配音服务；已经准备好的章节会跳过。'**
   String get prepareNote;
 
   /// No description provided for @prepareRange.
   ///
   /// In zh, this message translates to:
-  /// **'生成第 {first}–{through} 章'**
+  /// **'准备第 {first}–{through} 章'**
   String prepareRange(int first, int through);
 
   /// No description provided for @prepareOne.
   ///
   /// In zh, this message translates to:
-  /// **'生成第 {chapter} 章'**
+  /// **'准备第 {chapter} 章'**
   String prepareOne(int chapter);
-
-  /// No description provided for @prepareNeedsProfile.
-  ///
-  /// In zh, this message translates to:
-  /// **'建档范围内的章节才能生成。先在演员表里建档。'**
-  String get prepareNeedsProfile;
 
   /// No description provided for @prepareFailed.
   ///
   /// In zh, this message translates to:
-  /// **'没能开始生成，请稍后再试。'**
+  /// **'没能开始准备，请稍后再试。'**
   String get prepareFailed;
 
   /// No description provided for @shelfTitle.
@@ -365,7 +359,7 @@ abstract class AppLocalizations {
   /// No description provided for @bookUpdated.
   ///
   /// In zh, this message translates to:
-  /// **'《{title}》已更新：新增 {added} 章，{changed} 章内容有变化'**
+  /// **'《{title}》已更新：新增 {added} 章，另有 {changed} 章内容更新'**
   String bookUpdated(String title, int added, int changed);
 
   /// No description provided for @bookUnchanged.
@@ -419,7 +413,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteBookBody.
   ///
   /// In zh, this message translates to:
-  /// **'这本书的章节、演员表、剧本和音频都会删掉，不能恢复。'**
+  /// **'这本书的章节、角色、台词和音频都会删掉，不能恢复。'**
   String get deleteBookBody;
 
   /// No description provided for @deleteBookConfirm.
@@ -527,13 +521,13 @@ abstract class AppLocalizations {
   /// Tag beside the player when the phone's own text-to-speech voice is reading.
   ///
   /// In zh, this message translates to:
-  /// **'系统朗读'**
+  /// **'系统声音'**
   String get systemVoice;
 
   /// No description provided for @systemVoiceNote.
   ///
   /// In zh, this message translates to:
-  /// **'这一章还没有生成配音，先用手机自带的声音朗读。'**
+  /// **'这本书用手机自带的声音朗读。'**
   String get systemVoiceNote;
 
   /// No description provided for @chapterNumber.
@@ -761,31 +755,31 @@ abstract class AppLocalizations {
   /// No description provided for @cast.
   ///
   /// In zh, this message translates to:
-  /// **'演员表'**
+  /// **'角色与声音'**
   String get cast;
 
   /// No description provided for @castLoadFailed.
   ///
   /// In zh, this message translates to:
-  /// **'没能读取演员表'**
+  /// **'没能读取角色'**
   String get castLoadFailed;
 
   /// No description provided for @castMembers.
   ///
   /// In zh, this message translates to:
-  /// **'演员 · {count} 位'**
+  /// **'角色 · {count} 位'**
   String castMembers(int count);
 
   /// No description provided for @castEmpty.
   ///
   /// In zh, this message translates to:
-  /// **'还没有演员。建档后，书里的说话人和他们的声音会列在这里。'**
+  /// **'还没有找到角色。开启 AI 配音后，听到哪里就分析到哪里，角色会陆续出现在这里。'**
   String get castEmpty;
 
   /// No description provided for @castEmptyWorking.
   ///
   /// In zh, this message translates to:
-  /// **'正在建档，找到的说话人会陆续出现在这里。'**
+  /// **'正在分析角色，找到的会陆续出现在这里。'**
   String get castEmptyWorking;
 
   /// No description provided for @castProvisional.
@@ -845,14 +839,8 @@ abstract class AppLocalizations {
   /// No description provided for @profiling.
   ///
   /// In zh, this message translates to:
-  /// **'建档'**
+  /// **'分析角色'**
   String get profiling;
-
-  /// No description provided for @chaptersProfiled.
-  ///
-  /// In zh, this message translates to:
-  /// **'章已建档'**
-  String get chaptersProfiled;
 
   /// No description provided for @statusQueued.
   ///
@@ -863,7 +851,7 @@ abstract class AppLocalizations {
   /// No description provided for @statusRunning.
   ///
   /// In zh, this message translates to:
-  /// **'建档中'**
+  /// **'分析中'**
   String get statusRunning;
 
   /// No description provided for @statusPaused.
@@ -881,19 +869,19 @@ abstract class AppLocalizations {
   /// No description provided for @profilingQueuedTo.
   ///
   /// In zh, this message translates to:
-  /// **'排队中，将建档到第 {chapter} 章'**
+  /// **'排队中，将分析到第 {chapter} 章'**
   String profilingQueuedTo(int chapter);
 
   /// No description provided for @profilingRunningTo.
   ///
   /// In zh, this message translates to:
-  /// **'正在建档到第 {chapter} 章'**
+  /// **'正在分析到第 {chapter} 章'**
   String profilingRunningTo(int chapter);
 
   /// No description provided for @profilingPausedTitle.
   ///
   /// In zh, this message translates to:
-  /// **'建档暂停了'**
+  /// **'角色分析暂停了'**
   String get profilingPausedTitle;
 
   /// No description provided for @profilingPausedBody.
@@ -905,7 +893,7 @@ abstract class AppLocalizations {
   /// No description provided for @resumeProfilingTo.
   ///
   /// In zh, this message translates to:
-  /// **'继续建档到第 {chapter} 章'**
+  /// **'继续分析到第 {chapter} 章'**
   String resumeProfilingTo(int chapter);
 
   /// No description provided for @profilingSkipped.
@@ -923,73 +911,73 @@ abstract class AppLocalizations {
   /// No description provided for @profilingActionFailed.
   ///
   /// In zh, this message translates to:
-  /// **'没能开始建档，请稍后再试。'**
+  /// **'没能开始分析，请稍后再试。'**
   String get profilingActionFailed;
 
   /// No description provided for @profiledWholeBook.
   ///
   /// In zh, this message translates to:
-  /// **'全书都已建档。'**
+  /// **'全书的角色都分析好了。'**
   String get profiledWholeBook;
 
   /// No description provided for @profileThrough.
   ///
   /// In zh, this message translates to:
-  /// **'建档到'**
+  /// **'分析到'**
   String get profileThrough;
 
   /// No description provided for @startProfiling.
   ///
   /// In zh, this message translates to:
-  /// **'开始建档'**
+  /// **'开始分析'**
   String get startProfiling;
 
   /// No description provided for @extendProfiling.
   ///
   /// In zh, this message translates to:
-  /// **'继续往后建档'**
+  /// **'继续往后分析'**
   String get extendProfiling;
 
   /// No description provided for @profilingNote.
   ///
   /// In zh, this message translates to:
-  /// **'建档会把所选章节的正文发给你设置的大模型，用来找出说话人、为他们挑选声音。发送前会先征得你的同意。'**
+  /// **'会把所选章节的正文发给你设置的大模型，用来找出角色、为他们挑选声音。'**
   String get profilingNote;
 
   /// No description provided for @reasonMissingKey.
   ///
   /// In zh, this message translates to:
-  /// **'还没有填写密钥，请到设置里补上'**
+  /// **'还没有填写密钥'**
   String get reasonMissingKey;
 
   /// No description provided for @reasonUnauthorized.
   ///
   /// In zh, this message translates to:
-  /// **'密钥无效或没有权限，请到设置里检查'**
+  /// **'密钥无效或没有权限'**
   String get reasonUnauthorized;
 
   /// No description provided for @reasonRateLimited.
   ///
   /// In zh, this message translates to:
-  /// **'请求太频繁，过一会儿再继续'**
+  /// **'请求太频繁'**
   String get reasonRateLimited;
 
   /// No description provided for @reasonQuotaExceeded.
   ///
   /// In zh, this message translates to:
-  /// **'账户额度用完了'**
+  /// **'账户额度用完了，充值后点「继续配音」'**
   String get reasonQuotaExceeded;
 
   /// No description provided for @reasonNetwork.
   ///
   /// In zh, this message translates to:
-  /// **'网络连接中断'**
+  /// **'网络连不上'**
   String get reasonNetwork;
 
   /// No description provided for @reasonConsentDeclined.
   ///
   /// In zh, this message translates to:
-  /// **'你取消了发送'**
+  /// **'你没有同意发送正文'**
   String get reasonConsentDeclined;
 
   /// No description provided for @reasonInvalidResponse.
@@ -1028,6 +1016,12 @@ abstract class AppLocalizations {
   /// **'应用关闭时中断了'**
   String get reasonInterrupted;
 
+  /// No description provided for @reasonLocalSynthesisFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'本机引擎未能合成这段配音'**
+  String get reasonLocalSynthesisFailed;
+
   /// No description provided for @reasonUnknown.
   ///
   /// In zh, this message translates to:
@@ -1043,7 +1037,7 @@ abstract class AppLocalizations {
   /// No description provided for @consentChapterTextAndCast.
   ///
   /// In zh, this message translates to:
-  /// **'导演需要所选章节的正文和这本书的演员表，用来分配台词和声音。'**
+  /// **'为了分析角色、分配台词和配音，你听到的章节正文和书里的角色会发给它。'**
   String get consentChapterTextAndCast;
 
   /// No description provided for @consentVoiceSample.
@@ -1079,7 +1073,7 @@ abstract class AppLocalizations {
   /// No description provided for @consentChapterTextAndCastName.
   ///
   /// In zh, this message translates to:
-  /// **'章节正文与演员表'**
+  /// **'章节正文与角色'**
   String get consentChapterTextAndCastName;
 
   /// No description provided for @consentVoiceSampleName.
@@ -1106,52 +1100,22 @@ abstract class AppLocalizations {
   /// **'同意并发送'**
   String get consentAccept;
 
-  /// No description provided for @generationTitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'{chapter}还没有配音'**
-  String generationTitle(String chapter);
-
-  /// No description provided for @generationBody.
-  ///
-  /// In zh, this message translates to:
-  /// **'可以现在生成 AI 配音，边听边生成；也可以先用手机自带的声音朗读。'**
-  String get generationBody;
-
-  /// No description provided for @generationOutOfRange.
-  ///
-  /// In zh, this message translates to:
-  /// **'{chapter}还没有建档，暂时不能生成配音。把建档延伸到这一章后就可以生成；现在也可以先用手机自带的声音朗读。'**
-  String generationOutOfRange(String chapter);
-
-  /// No description provided for @generateNow.
-  ///
-  /// In zh, this message translates to:
-  /// **'生成配音'**
-  String get generateNow;
-
   /// No description provided for @useSystemVoice.
   ///
   /// In zh, this message translates to:
   /// **'用系统声音朗读'**
   String get useSystemVoice;
 
-  /// No description provided for @extendProfilingTo.
-  ///
-  /// In zh, this message translates to:
-  /// **'把建档延伸到{chapter}'**
-  String extendProfilingTo(String chapter);
-
   /// No description provided for @waitingForSynthesis.
   ///
   /// In zh, this message translates to:
-  /// **'正在生成接下来的配音，好了就继续播放'**
+  /// **'正在准备 AI 配音，好了就开始'**
   String get waitingForSynthesis;
 
   /// No description provided for @generationPausedTitle.
   ///
   /// In zh, this message translates to:
-  /// **'配音生成暂停了'**
+  /// **'AI 配音暂停了'**
   String get generationPausedTitle;
 
   /// No description provided for @generationResumeFailed.
@@ -1169,13 +1133,13 @@ abstract class AppLocalizations {
   /// No description provided for @resumeGeneration.
   ///
   /// In zh, this message translates to:
-  /// **'继续生成'**
+  /// **'继续配音'**
   String get resumeGeneration;
 
   /// No description provided for @reasonVoiceUnavailable.
   ///
   /// In zh, this message translates to:
-  /// **'分配的声音已不可用，请在演员表里换一个'**
+  /// **'分配的声音已不可用'**
   String get reasonVoiceUnavailable;
 
   /// No description provided for @errorAudioChanged.
@@ -1183,48 +1147,6 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'音频已更新（清理过或换了声音），点播放重新准备。'**
   String get errorAudioChanged;
-
-  /// No description provided for @errorGenerationCancelled.
-  ///
-  /// In zh, this message translates to:
-  /// **'已取消生成，点播放可以重新选择。'**
-  String get errorGenerationCancelled;
-
-  /// No description provided for @performanceMode.
-  ///
-  /// In zh, this message translates to:
-  /// **'演绎方式'**
-  String get performanceMode;
-
-  /// No description provided for @modeAudiobook.
-  ///
-  /// In zh, this message translates to:
-  /// **'有声书'**
-  String get modeAudiobook;
-
-  /// No description provided for @modeDrama.
-  ///
-  /// In zh, this message translates to:
-  /// **'广播剧'**
-  String get modeDrama;
-
-  /// No description provided for @modeAudiobookNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'旁白完整朗读原文，包括「他说」「她问道」这类提示。'**
-  String get modeAudiobookNote;
-
-  /// No description provided for @modeDramaNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'角色直接开口，跳过「他说」这类说话提示。'**
-  String get modeDramaNote;
-
-  /// No description provided for @modeSaveFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'没能保存演绎方式，请再试一次'**
-  String get modeSaveFailed;
 
   /// No description provided for @changeVoice.
   ///
@@ -1241,7 +1163,7 @@ abstract class AppLocalizations {
   /// No description provided for @changeVoiceTitle.
   ///
   /// In zh, this message translates to:
-  /// **'给{name}换声音'**
+  /// **'给「{name}」换声音'**
   String changeVoiceTitle(String name);
 
   /// No description provided for @currentVoice.
@@ -1295,7 +1217,7 @@ abstract class AppLocalizations {
   /// No description provided for @presetsEmpty.
   ///
   /// In zh, this message translates to:
-  /// **'开启的声音引擎里没有适合这本书语言的预设音色。'**
+  /// **'开启的配音服务里没有适合这本书语言的声音。'**
   String get presetsEmpty;
 
   /// No description provided for @designProvider.
@@ -1355,7 +1277,7 @@ abstract class AppLocalizations {
   /// No description provided for @voiceChanged.
   ///
   /// In zh, this message translates to:
-  /// **'已为{name}换上新声音'**
+  /// **'已为「{name}」换上新声音'**
   String voiceChanged(String name);
 
   /// No description provided for @voiceRebuiltTitle.
@@ -1433,7 +1355,7 @@ abstract class AppLocalizations {
   /// No description provided for @setupBody.
   ///
   /// In zh, this message translates to:
-  /// **'建档和导演要用你自己的大模型账户。'**
+  /// **'分析角色和分配台词要用你自己的大模型账户。'**
   String get setupBody;
 
   /// No description provided for @setupAction.
@@ -1442,83 +1364,29 @@ abstract class AppLocalizations {
   /// **'配置大模型'**
   String get setupAction;
 
-  /// No description provided for @generationSection.
-  ///
-  /// In zh, this message translates to:
-  /// **'边听边生成'**
-  String get generationSection;
-
   /// No description provided for @generationSectionNote.
   ///
   /// In zh, this message translates to:
-  /// **'只在收听时生效，静默阅读不会触发。合成提前量不会超过导演提前量，设为 0 即关闭。'**
+  /// **'只在收听时进行，静默阅读不会触发。'**
   String get generationSectionNote;
 
   /// No description provided for @autoGenerate.
   ///
   /// In zh, this message translates to:
-  /// **'自动生成配音'**
+  /// **'新书默认用 AI 配音'**
   String get autoGenerate;
 
   /// No description provided for @autoGenerateNote.
   ///
   /// In zh, this message translates to:
-  /// **'没有配音的章节直接生成，不再询问'**
+  /// **'每本书也可以在它的配音设置里单独开关。'**
   String get autoGenerateNote;
-
-  /// No description provided for @directingAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'导演提前量'**
-  String get directingAhead;
-
-  /// No description provided for @directingAheadNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'先写好后面几章的剧本'**
-  String get directingAheadNote;
-
-  /// No description provided for @synthesisAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'合成提前量'**
-  String get synthesisAhead;
-
-  /// No description provided for @synthesisAheadNote.
-  ///
-  /// In zh, this message translates to:
-  /// **'先生成后面几章的配音'**
-  String get synthesisAheadNote;
 
   /// No description provided for @aheadUnit.
   ///
   /// In zh, this message translates to:
   /// **'章'**
   String get aheadUnit;
-
-  /// No description provided for @fewerDirectingAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'减少导演提前量'**
-  String get fewerDirectingAhead;
-
-  /// No description provided for @moreDirectingAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'增加导演提前量'**
-  String get moreDirectingAhead;
-
-  /// No description provided for @fewerSynthesisAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'减少合成提前量'**
-  String get fewerSynthesisAhead;
-
-  /// No description provided for @moreSynthesisAhead.
-  ///
-  /// In zh, this message translates to:
-  /// **'增加合成提前量'**
-  String get moreSynthesisAhead;
 
   /// No description provided for @generationSettingsFailed.
   ///
@@ -1529,13 +1397,13 @@ abstract class AppLocalizations {
   /// No description provided for @castingSection.
   ///
   /// In zh, this message translates to:
-  /// **'选角'**
+  /// **'角色声音'**
   String get castingSection;
 
   /// No description provided for @exclusiveVoices.
   ///
   /// In zh, this message translates to:
-  /// **'专属音色'**
+  /// **'独享声音的角色数'**
   String get exclusiveVoices;
 
   /// No description provided for @exclusiveVoicesValue.
@@ -1547,13 +1415,13 @@ abstract class AppLocalizations {
   /// No description provided for @exclusiveVoicesNote.
   ///
   /// In zh, this message translates to:
-  /// **'台词最多的角色各有专属音色，其余共用群演音色。'**
+  /// **'台词最多的几个角色各有自己的声音，其余角色共用几种群演声音。'**
   String get exclusiveVoicesNote;
 
   /// No description provided for @exclusiveVoicesRecastNote.
   ///
   /// In zh, this message translates to:
-  /// **'修改后为已建档的书重新选角，换过或设计的音色不变。'**
+  /// **'修改后会给已分析过的书重新分配声音；你换过或设计的声音不变。'**
   String get exclusiveVoicesRecastNote;
 
   /// No description provided for @fewerVoices.
@@ -1571,19 +1439,19 @@ abstract class AppLocalizations {
   /// No description provided for @recast.
   ///
   /// In zh, this message translates to:
-  /// **'重新选角'**
+  /// **'重新分配声音'**
   String get recast;
 
   /// No description provided for @recastDone.
   ///
   /// In zh, this message translates to:
-  /// **'已按 {count} 个专属音色重新选角'**
+  /// **'已按 {count} 个独享声音重新分配'**
   String recastDone(int count);
 
   /// No description provided for @recastFailed.
   ///
   /// In zh, this message translates to:
-  /// **'没能重新选角，请再试一次'**
+  /// **'没能重新分配声音，请再试一次'**
   String get recastFailed;
 
   /// No description provided for @appearanceSection.
@@ -1595,7 +1463,7 @@ abstract class AppLocalizations {
   /// No description provided for @storageSection.
   ///
   /// In zh, this message translates to:
-  /// **'存储'**
+  /// **'存储与用量'**
   String get storageSection;
 
   /// No description provided for @storage.
@@ -1655,7 +1523,7 @@ abstract class AppLocalizations {
   /// No description provided for @storageCountNote.
   ///
   /// In zh, this message translates to:
-  /// **'按书统计正文、剧本、演员表和音频文件；数据库的索引和日志由所有书共用，不计入。'**
+  /// **'按书统计正文、台词、角色和音频文件；数据库的索引和日志由所有书共用，不计入。'**
   String get storageCountNote;
 
   /// No description provided for @clearAudio.
@@ -1667,7 +1535,7 @@ abstract class AppLocalizations {
   /// No description provided for @clearAudioNote.
   ///
   /// In zh, this message translates to:
-  /// **'清理只删除生成的音频、试听和合成缓存；正文、剧本和演员表都会保留，之后播放时再按需重新合成。'**
+  /// **'清理只删除生成的音频、试听和缓存；正文、台词和角色都会保留，之后播放时再按需重新配音。'**
   String get clearAudioNote;
 
   /// No description provided for @clearAudioTitle.
@@ -1679,7 +1547,7 @@ abstract class AppLocalizations {
   /// No description provided for @clearAudioBody.
   ///
   /// In zh, this message translates to:
-  /// **'将释放 {size}。正文、剧本和演员表会保留；再听这本书时，会按需重新合成音频。'**
+  /// **'将释放 {size}。正文、台词和角色会保留；再听这本书时，会按需重新配音。'**
   String clearAudioBody(String size);
 
   /// No description provided for @clearAudioConfirm.
@@ -1787,7 +1655,7 @@ abstract class AppLocalizations {
   /// No description provided for @llmPageNote.
   ///
   /// In zh, this message translates to:
-  /// **'建档和导演都由它完成：找出说话人，决定每句台词由谁来念、用什么语气。'**
+  /// **'它负责找出书里的角色、决定每句台词由谁来念、用什么语气。'**
   String get llmPageNote;
 
   /// No description provided for @connectionSection.
@@ -1847,13 +1715,13 @@ abstract class AppLocalizations {
   /// No description provided for @profileModel.
   ///
   /// In zh, this message translates to:
-  /// **'建档模型'**
+  /// **'分析模型'**
   String get profileModel;
 
   /// No description provided for @directorModel.
   ///
   /// In zh, this message translates to:
-  /// **'导演模型'**
+  /// **'台词模型'**
   String get directorModel;
 
   /// No description provided for @modelHint.
@@ -1865,13 +1733,13 @@ abstract class AppLocalizations {
   /// No description provided for @sameAsProfileModel.
   ///
   /// In zh, this message translates to:
-  /// **'与建档模型相同'**
+  /// **'与分析模型相同'**
   String get sameAsProfileModel;
 
   /// No description provided for @modelsNote.
   ///
   /// In zh, this message translates to:
-  /// **'建档模型分析人物、挑选声音；导演模型逐句分配台词和语气，留空则与建档模型相同。'**
+  /// **'分析模型找出人物、挑选声音；台词模型逐句分配台词和语气，留空则与分析模型相同。'**
   String get modelsNote;
 
   /// No description provided for @minimaxPageNote.
@@ -1883,7 +1751,7 @@ abstract class AppLocalizations {
   /// No description provided for @minimaxKeyNote.
   ///
   /// In zh, this message translates to:
-  /// **'使用 MiniMax 国际版（minimax.io）的密钥。'**
+  /// **'国内版密钥来自 minimaxi.com，国际版来自 minimax.io，两边的密钥不能混用。'**
   String get minimaxKeyNote;
 
   /// No description provided for @bailianPageNote.
@@ -1973,7 +1841,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteLlmKeyBody.
   ///
   /// In zh, this message translates to:
-  /// **'删除后，建档和导演会暂停，直到重新填写密钥。'**
+  /// **'删除后，分析角色和分配台词会暂停，直到重新填写密钥；已配好的章节照常播放。'**
   String get deleteLlmKeyBody;
 
   /// No description provided for @deleteVoiceKeyBody.
@@ -2009,7 +1877,7 @@ abstract class AppLocalizations {
   /// No description provided for @saveFailed.
   ///
   /// In zh, this message translates to:
-  /// **'没能保存'**
+  /// **'没能保存，请再试一次'**
   String get saveFailed;
 
   /// No description provided for @saveFailedBody.
@@ -2039,7 +1907,7 @@ abstract class AppLocalizations {
   /// No description provided for @llmSection.
   ///
   /// In zh, this message translates to:
-  /// **'建档与导演'**
+  /// **'分析角色与台词'**
   String get llmSection;
 
   /// No description provided for @voiceSection.
@@ -2087,13 +1955,13 @@ abstract class AppLocalizations {
   /// No description provided for @reasonProviderDisabled.
   ///
   /// In zh, this message translates to:
-  /// **'这家配音服务商已在设置里关闭'**
+  /// **'这家服务已在设置里关闭'**
   String get reasonProviderDisabled;
 
   /// No description provided for @reasonNoVoiceProvider.
   ///
   /// In zh, this message translates to:
-  /// **'还没有开启配音服务商，请到设置里打开一个'**
+  /// **'没有开启支持本书语言的配音服务'**
   String get reasonNoVoiceProvider;
 
   /// No description provided for @offProviderTitle.
@@ -2207,7 +2075,7 @@ abstract class AppLocalizations {
   /// No description provided for @llmSectionNote.
   ///
   /// In zh, this message translates to:
-  /// **'没有大模型也能听：导入别人分享的剧本包或有声包，不需要再导演。'**
+  /// **'没有大模型也能听：导入别人分享的剧本包或有声包。'**
   String get llmSectionNote;
 
   /// No description provided for @voiceSectionCloud.
@@ -2225,7 +2093,7 @@ abstract class AppLocalizations {
   /// No description provided for @voiceSectionDeviceNote.
   ///
   /// In zh, this message translates to:
-  /// **'本机引擎在手机上合成，正文不离开设备。'**
+  /// **'本机引擎在手机上配音，正文不离开设备。'**
   String get voiceSectionDeviceNote;
 
   /// No description provided for @traitEmotion.
@@ -2273,7 +2141,7 @@ abstract class AppLocalizations {
   /// No description provided for @engineAbilitiesNote.
   ///
   /// In zh, this message translates to:
-  /// **'导演只写一份剧本。每个引擎演出它做得到的部分，做不到的换成接近的效果或省略。'**
+  /// **'台词只写一份。每个配音服务演出它做得到的部分，做不到的换成接近的效果或省略。'**
   String get engineAbilitiesNote;
 
   /// No description provided for @engineAbilitiesPlain.
@@ -2339,7 +2207,7 @@ abstract class AppLocalizations {
   /// No description provided for @replaceBookBody.
   ///
   /// In zh, this message translates to:
-  /// **'书架上已经有这本书。导入会替换它的演员表、剧本和音频，收听进度保留。'**
+  /// **'书架上已经有这本书。导入会替换它的角色、台词和音频，收听进度保留。'**
   String get replaceBookBody;
 
   /// No description provided for @replaceBookConfirm.
@@ -2369,7 +2237,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareScriptNote.
   ///
   /// In zh, this message translates to:
-  /// **'原文、演员表和 {count} 章剧本。对方用自己的声音配音，不用再跑大模型。'**
+  /// **'原文、角色和 {count} 章台词。对方用自己的声音配音，不用再跑大模型。'**
   String shareScriptNote(int count);
 
   /// No description provided for @shareAudio.
@@ -2393,7 +2261,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareNothing.
   ///
   /// In zh, this message translates to:
-  /// **'还没有可以分享的剧本。先为几章导演或配音。'**
+  /// **'还没有可以分享的内容。先听几章，等它们配好音。'**
   String get shareNothing;
 
   /// No description provided for @sharePreparing.
@@ -2423,13 +2291,13 @@ abstract class AppLocalizations {
   /// No description provided for @expressiveness.
   ///
   /// In zh, this message translates to:
-  /// **'表现力'**
+  /// **'情绪'**
   String get expressiveness;
 
   /// No description provided for @expressivenessPlain.
   ///
   /// In zh, this message translates to:
-  /// **'平实'**
+  /// **'平淡'**
   String get expressivenessPlain;
 
   /// No description provided for @expressivenessNatural.
@@ -2441,7 +2309,7 @@ abstract class AppLocalizations {
   /// No description provided for @expressivenessDramatic.
   ///
   /// In zh, this message translates to:
-  /// **'戏剧'**
+  /// **'夸张'**
   String get expressivenessDramatic;
 
   /// No description provided for @expressivenessPlainNote.
@@ -2453,31 +2321,25 @@ abstract class AppLocalizations {
   /// No description provided for @expressivenessNaturalNote.
   ///
   /// In zh, this message translates to:
-  /// **'按导演写的情绪和语气演出。'**
+  /// **'按台词里的情绪和语气演。'**
   String get expressivenessNaturalNote;
 
   /// No description provided for @expressivenessDramaticNote.
   ///
   /// In zh, this message translates to:
-  /// **'情绪比导演写的再强一档。'**
+  /// **'情绪再强一档。'**
   String get expressivenessDramaticNote;
-
-  /// No description provided for @expressivenessSaveFailed.
-  ///
-  /// In zh, this message translates to:
-  /// **'没能保存表现力，请再试一次'**
-  String get expressivenessSaveFailed;
 
   /// No description provided for @changeVoiceOf.
   ///
   /// In zh, this message translates to:
-  /// **'换{name}的声音'**
+  /// **'换「{name}」的声音'**
   String changeVoiceOf(String name);
 
   /// No description provided for @reassignLine.
   ///
   /// In zh, this message translates to:
-  /// **'这句不是{name}说的'**
+  /// **'这句不是「{name}」说的'**
   String reassignLine(String name);
 
   /// No description provided for @reassignTitle.
@@ -2501,7 +2363,7 @@ abstract class AppLocalizations {
   /// No description provided for @reassigned.
   ///
   /// In zh, this message translates to:
-  /// **'已改为{name}'**
+  /// **'已改为「{name}」说的'**
   String reassigned(String name);
 
   /// No description provided for @reassignFailed.
@@ -2513,8 +2375,980 @@ abstract class AppLocalizations {
   /// No description provided for @speakersLoadFailed.
   ///
   /// In zh, this message translates to:
-  /// **'没能读取演员表'**
+  /// **'没能读取角色'**
   String get speakersLoadFailed;
+
+  /// No description provided for @mingTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'Ming 离线配音'**
+  String get mingTitle;
+
+  /// No description provided for @mingPending.
+  ///
+  /// In zh, this message translates to:
+  /// **'待初始化'**
+  String get mingPending;
+
+  /// No description provided for @mingDescription.
+  ///
+  /// In zh, this message translates to:
+  /// **'内置 32 种普通话音色，覆盖儿童到老年，也有适合旁白的声音。初始化一次即可使用全部音色。'**
+  String get mingDescription;
+
+  /// No description provided for @mingBeforeInit.
+  ///
+  /// In zh, this message translates to:
+  /// **'首次使用请初始化，并保持应用在前台。'**
+  String get mingBeforeInit;
+
+  /// No description provided for @mingReady.
+  ///
+  /// In zh, this message translates to:
+  /// **'初始化完成，可以配音。'**
+  String get mingReady;
+
+  /// No description provided for @mingCopying.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在复制并校验模型文件…'**
+  String get mingCopying;
+
+  /// No description provided for @mingCompiling.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在准备{module}…'**
+  String mingCompiling(String module);
+
+  /// No description provided for @mingPrefill.
+  ///
+  /// In zh, this message translates to:
+  /// **'文本预填充'**
+  String get mingPrefill;
+
+  /// No description provided for @mingStep.
+  ///
+  /// In zh, this message translates to:
+  /// **'单句语言模型'**
+  String get mingStep;
+
+  /// No description provided for @mingFlow.
+  ///
+  /// In zh, this message translates to:
+  /// **'单句语音生成'**
+  String get mingFlow;
+
+  /// No description provided for @mingAgg.
+  ///
+  /// In zh, this message translates to:
+  /// **'声学特征聚合'**
+  String get mingAgg;
+
+  /// No description provided for @mingDec.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频解码'**
+  String get mingDec;
+
+  /// No description provided for @mingFlowPair.
+  ///
+  /// In zh, this message translates to:
+  /// **'双句语音生成'**
+  String get mingFlowPair;
+
+  /// No description provided for @mingStepPair.
+  ///
+  /// In zh, this message translates to:
+  /// **'双句语言模型'**
+  String get mingStepPair;
+
+  /// No description provided for @mingStorageError.
+  ///
+  /// In zh, this message translates to:
+  /// **'模型文件准备失败。请检查剩余空间后重试。'**
+  String get mingStorageError;
+
+  /// No description provided for @mingInitError.
+  ///
+  /// In zh, this message translates to:
+  /// **'模块初始化中断，可从已完成的进度继续。'**
+  String get mingInitError;
+
+  /// No description provided for @mingInitialize.
+  ///
+  /// In zh, this message translates to:
+  /// **'初始化'**
+  String get mingInitialize;
+
+  /// No description provided for @mingRetry.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续初始化'**
+  String get mingRetry;
+
+  /// No description provided for @mingPreview.
+  ///
+  /// In zh, this message translates to:
+  /// **'试听双人对话'**
+  String get mingPreview;
+
+  /// No description provided for @mingActionError.
+  ///
+  /// In zh, this message translates to:
+  /// **'操作未完成，请再试一次。'**
+  String get mingActionError;
+
+  /// No description provided for @fallbackNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 配音没能及时准备好，这一章先用系统声音，下一章自动换回。'**
+  String get fallbackNote;
+
+  /// No description provided for @systemVoiceForNowNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 配音暂时用不了，这一章先用系统声音朗读。'**
+  String get systemVoiceForNowNote;
+
+  /// No description provided for @turnOnAiVoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启 AI 配音'**
+  String get turnOnAiVoice;
+
+  /// No description provided for @waitingWithStatus.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在准备本章：{status}'**
+  String waitingWithStatus(String status);
+
+  /// No description provided for @listenWithSystemVoice.
+  ///
+  /// In zh, this message translates to:
+  /// **'先用系统声音听'**
+  String get listenWithSystemVoice;
+
+  /// No description provided for @miniWaiting.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在准备 AI 配音…'**
+  String get miniWaiting;
+
+  /// No description provided for @listenFromStart.
+  ///
+  /// In zh, this message translates to:
+  /// **'从头再听'**
+  String get listenFromStart;
+
+  /// No description provided for @errorNoSystemVoiceShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'手机上没有朗读声音'**
+  String get errorNoSystemVoiceShort;
+
+  /// No description provided for @errorChapterUnavailableShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'这一章打不开'**
+  String get errorChapterUnavailableShort;
+
+  /// No description provided for @errorAudioFailedShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'这一段播放不了'**
+  String get errorAudioFailedShort;
+
+  /// No description provided for @errorBookMissingShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'这本书已不在书架上'**
+  String get errorBookMissingShort;
+
+  /// No description provided for @errorAudioChangedShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'音频已更新，点播放继续'**
+  String get errorAudioChangedShort;
+
+  /// No description provided for @errorPlaybackStoppedShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'播放停了，点播放重试'**
+  String get errorPlaybackStoppedShort;
+
+  /// No description provided for @chapterProfiling.
+  ///
+  /// In zh, this message translates to:
+  /// **'分析角色中'**
+  String get chapterProfiling;
+
+  /// No description provided for @chapterListening.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在听'**
+  String get chapterListening;
+
+  /// No description provided for @chapterVoiced.
+  ///
+  /// In zh, this message translates to:
+  /// **'已有 AI 配音'**
+  String get chapterVoiced;
+
+  /// No description provided for @generationPausedNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'暂停期间用系统声音朗读，收听不受影响。'**
+  String get generationPausedNote;
+
+  /// No description provided for @profilingPausedLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'分析角色 · {provider}：{reason}'**
+  String profilingPausedLine(String provider, String reason);
+
+  /// No description provided for @checkProviderSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'检查{provider}设置'**
+  String checkProviderSettings(String provider);
+
+  /// No description provided for @resumeAfterFixNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'改好后会自动继续。'**
+  String get resumeAfterFixNote;
+
+  /// No description provided for @retryNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即重试'**
+  String get retryNow;
+
+  /// No description provided for @retryingSoon.
+  ///
+  /// In zh, this message translates to:
+  /// **'稍后会自动重试。'**
+  String get retryingSoon;
+
+  /// No description provided for @reviewAndAgree.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看并同意'**
+  String get reviewAndAgree;
+
+  /// No description provided for @chooseVoices.
+  ///
+  /// In zh, this message translates to:
+  /// **'去换声音'**
+  String get chooseVoices;
+
+  /// No description provided for @useSystemVoiceForBook.
+  ///
+  /// In zh, this message translates to:
+  /// **'这本书改用系统声音'**
+  String get useSystemVoiceForBook;
+
+  /// No description provided for @reasonConsentNeeded.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没同意把正文发给它'**
+  String get reasonConsentNeeded;
+
+  /// No description provided for @consentSetupTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'允许把书的正文发给{provider}？'**
+  String consentSetupTitle(String provider);
+
+  /// No description provided for @consentScopeNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'同意一次，所有书都按这个设置发送；随时可以在 设置 › 隐私 里撤回。'**
+  String get consentScopeNote;
+
+  /// No description provided for @consentAgree.
+  ///
+  /// In zh, this message translates to:
+  /// **'同意'**
+  String get consentAgree;
+
+  /// No description provided for @listeningSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'收听'**
+  String get listeningSection;
+
+  /// No description provided for @aiVoicesEnabled.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 配音'**
+  String get aiVoicesEnabled;
+
+  /// No description provided for @aiVoicesEnabledNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭后所有书都用系统声音，不会再发送任何正文。'**
+  String get aiVoicesEnabledNote;
+
+  /// No description provided for @prepareAheadSetting.
+  ///
+  /// In zh, this message translates to:
+  /// **'提前准备'**
+  String get prepareAheadSetting;
+
+  /// No description provided for @prepareAheadSettingNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'听书时先准备好后面几章；设为 0 只准备正在听的一章。'**
+  String get prepareAheadSettingNote;
+
+  /// No description provided for @fewerAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'少准备一章'**
+  String get fewerAhead;
+
+  /// No description provided for @moreAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'多准备一章'**
+  String get moreAhead;
+
+  /// No description provided for @voiceSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'配音设置'**
+  String get voiceSettings;
+
+  /// No description provided for @voiceSettingsFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取这本书的配音设置'**
+  String get voiceSettingsFailed;
+
+  /// No description provided for @aiVoiceForBook.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 多角色配音'**
+  String get aiVoiceForBook;
+
+  /// No description provided for @aiVoiceForBookNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'每个角色用不同的声音，听到哪里准备到哪里。正文会发给你在设置里配置的服务商；关闭后用系统声音，已配好的章节照常播放。'**
+  String get aiVoiceForBookNote;
+
+  /// No description provided for @aiVoicesOffEverywhere.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 配音已在设置里关闭'**
+  String get aiVoicesOffEverywhere;
+
+  /// No description provided for @openSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'去设置'**
+  String get openSettings;
+
+  /// No description provided for @readDialogueTags.
+  ///
+  /// In zh, this message translates to:
+  /// **'念出「他说」这类提示'**
+  String get readDialogueTags;
+
+  /// No description provided for @readDialogueTagsNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'关闭后角色直接开口，跳过说话提示，更像广播剧。'**
+  String get readDialogueTagsNote;
+
+  /// No description provided for @performanceChangeNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'改动只影响这本书。已配好的章节会在下次收听时按新设置重新配音，会再次调用配音服务；正在播放的这一章先听完。'**
+  String get performanceChangeNote;
+
+  /// No description provided for @prepareAhead.
+  ///
+  /// In zh, this message translates to:
+  /// **'提前准备章节…'**
+  String get prepareAhead;
+
+  /// No description provided for @prepareAheadNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'比如出门前先准备好，离线也能听。'**
+  String get prepareAheadNote;
+
+  /// No description provided for @stopPreparing.
+  ///
+  /// In zh, this message translates to:
+  /// **'停止准备'**
+  String get stopPreparing;
+
+  /// No description provided for @stopPreparingNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消排队中的章节；正在听的时候，接下来的一两章仍会准备。'**
+  String get stopPreparingNote;
+
+  /// No description provided for @castShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'角色'**
+  String get castShort;
+
+  /// No description provided for @castRowNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'每个角色是谁、用什么声音'**
+  String get castRowNote;
+
+  /// No description provided for @sampleVoicedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'示例书已经配好音'**
+  String get sampleVoicedTitle;
+
+  /// No description provided for @sampleVoicedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'它的设置不能更改。导入你自己的书，就能用自己的服务商配音。'**
+  String get sampleVoicedBody;
+
+  /// No description provided for @voiceStatusSample.
+  ///
+  /// In zh, this message translates to:
+  /// **'示例 · 已配好音'**
+  String get voiceStatusSample;
+
+  /// No description provided for @voiceStatusTurnOn.
+  ///
+  /// In zh, this message translates to:
+  /// **'开启 AI 多角色配音'**
+  String get voiceStatusTurnOn;
+
+  /// No description provided for @voiceStatusReadyThrough.
+  ///
+  /// In zh, this message translates to:
+  /// **'已准备到第 {chapter} 章'**
+  String voiceStatusReadyThrough(int chapter);
+
+  /// No description provided for @voiceStatusVoicedCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'已配好 {count} 章'**
+  String voiceStatusVoicedCount(int count);
+
+  /// No description provided for @voiceStatusAsYouListen.
+  ///
+  /// In zh, this message translates to:
+  /// **'听到哪里准备到哪里'**
+  String get voiceStatusAsYouListen;
+
+  /// No description provided for @gapLanguageModelTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'还差一个大模型账户'**
+  String get gapLanguageModelTitle;
+
+  /// No description provided for @gapLanguageModelBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'AI 配音要先用大模型分析角色、分配台词。设置好之前用系统声音朗读。'**
+  String get gapLanguageModelBody;
+
+  /// No description provided for @gapVoiceTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'还差一个配音服务'**
+  String get gapVoiceTitle;
+
+  /// No description provided for @gapVoiceBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'至少开启一家配音服务。Microsoft Edge 免费，不用密钥。'**
+  String get gapVoiceBody;
+
+  /// No description provided for @profileNeededTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'从第 {chapter} 章用 AI 配音，要先分析前面的角色'**
+  String profileNeededTitle(int chapter);
+
+  /// No description provided for @profileNeededBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这会把第 {from}–{through} 章的正文发给大模型，可能要一段时间；在那之前用系统声音朗读。'**
+  String profileNeededBody(int from, int through);
+
+  /// No description provided for @profileNeededAction.
+  ///
+  /// In zh, this message translates to:
+  /// **'开始分析'**
+  String get profileNeededAction;
+
+  /// No description provided for @jumpToChapter.
+  ///
+  /// In zh, this message translates to:
+  /// **'跳到…'**
+  String get jumpToChapter;
+
+  /// No description provided for @profilingNotStarted.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有分析角色'**
+  String get profilingNotStarted;
+
+  /// No description provided for @profilingStatusLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'已分析到第 {chapter} 章 · 共 {count} 章'**
+  String profilingStatusLine(int chapter, int count);
+
+  /// No description provided for @profilingAuto.
+  ///
+  /// In zh, this message translates to:
+  /// **'听到哪里分析到哪里，不用手动操作。'**
+  String get profilingAuto;
+
+  /// No description provided for @profileMore.
+  ///
+  /// In zh, this message translates to:
+  /// **'提前分析更多章节…'**
+  String get profileMore;
+
+  /// No description provided for @laterCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'后面章节登场的 {count} 位角色'**
+  String laterCharacters(int count);
+
+  /// No description provided for @showLaterCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示（可能剧透）'**
+  String get showLaterCharacters;
+
+  /// No description provided for @hideLaterCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'收起'**
+  String get hideLaterCharacters;
+
+  /// No description provided for @profileFirstChapter.
+  ///
+  /// In zh, this message translates to:
+  /// **'登场'**
+  String get profileFirstChapter;
+
+  /// No description provided for @genderMale.
+  ///
+  /// In zh, this message translates to:
+  /// **'男'**
+  String get genderMale;
+
+  /// No description provided for @genderFemale.
+  ///
+  /// In zh, this message translates to:
+  /// **'女'**
+  String get genderFemale;
+
+  /// No description provided for @ageChild.
+  ///
+  /// In zh, this message translates to:
+  /// **'儿童'**
+  String get ageChild;
+
+  /// No description provided for @ageTeen.
+  ///
+  /// In zh, this message translates to:
+  /// **'少年'**
+  String get ageTeen;
+
+  /// No description provided for @ageYoungAdult.
+  ///
+  /// In zh, this message translates to:
+  /// **'青年'**
+  String get ageYoungAdult;
+
+  /// No description provided for @ageMiddleAged.
+  ///
+  /// In zh, this message translates to:
+  /// **'中年'**
+  String get ageMiddleAged;
+
+  /// No description provided for @ageSenior.
+  ///
+  /// In zh, this message translates to:
+  /// **'老年'**
+  String get ageSenior;
+
+  /// No description provided for @startupFailedTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'pagestage 没能打开'**
+  String get startupFailedTitle;
+
+  /// No description provided for @startupFailedBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'书和设置都还在。可以再试一次；如果反复出现，请导出诊断报告发给我们，报告里没有书的内容和密钥。'**
+  String get startupFailedBody;
+
+  /// No description provided for @keysUnavailableTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'读取不到保存的密钥'**
+  String get keysUnavailableTitle;
+
+  /// No description provided for @keysUnavailableBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'系统钥匙串暂时不可用，AI 配音先用不了；书照常可以读，也能用系统声音听。重启手机后再试，或重新填写密钥。'**
+  String get keysUnavailableBody;
+
+  /// No description provided for @regionGlobal.
+  ///
+  /// In zh, this message translates to:
+  /// **'国际版'**
+  String get regionGlobal;
+
+  /// No description provided for @regionChina.
+  ///
+  /// In zh, this message translates to:
+  /// **'国内版'**
+  String get regionChina;
+
+  /// No description provided for @presetSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务商'**
+  String get presetSection;
+
+  /// No description provided for @presetService.
+  ///
+  /// In zh, this message translates to:
+  /// **'用哪家的大模型'**
+  String get presetService;
+
+  /// No description provided for @presetBailian.
+  ///
+  /// In zh, this message translates to:
+  /// **'阿里云百炼（通义千问）'**
+  String get presetBailian;
+
+  /// No description provided for @presetCustom.
+  ///
+  /// In zh, this message translates to:
+  /// **'自定义'**
+  String get presetCustom;
+
+  /// No description provided for @presetCustomNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'兼容 OpenAI 接口、支持结构化输出（JSON Schema）的服务都可以，自己填写地址和模型。'**
+  String get presetCustomNote;
+
+  /// No description provided for @presetConsoleNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'地址、协议和推荐模型已填好，只需在 {console} 创建一个 API Key 粘贴到下面。'**
+  String presetConsoleNote(String console);
+
+  /// No description provided for @shareBailianKey.
+  ///
+  /// In zh, this message translates to:
+  /// **'同时用这个密钥开启百炼配音'**
+  String get shareBailianKey;
+
+  /// No description provided for @shareBailianKeyNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'百炼的同一个密钥也能配音（北京地域），不用再填一次。'**
+  String get shareBailianKeyNote;
+
+  /// No description provided for @testConnection.
+  ///
+  /// In zh, this message translates to:
+  /// **'测试连接'**
+  String get testConnection;
+
+  /// No description provided for @testConnectionNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'用一次很小的请求试试能不能用，不会发送书的内容。'**
+  String get testConnectionNote;
+
+  /// No description provided for @testConnectionOk.
+  ///
+  /// In zh, this message translates to:
+  /// **'连接正常，可以使用。'**
+  String get testConnectionOk;
+
+  /// No description provided for @testUnauthorized.
+  ///
+  /// In zh, this message translates to:
+  /// **'密钥不对或没有权限：检查是否复制完整，地域或国内版/国际版是否选对。'**
+  String get testUnauthorized;
+
+  /// No description provided for @testSchemaUnsupported.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个模型不支持结构化输出（JSON Schema）。换一个支持的模型，或选上面的预设。'**
+  String get testSchemaUnsupported;
+
+  /// No description provided for @testRequestRejected.
+  ///
+  /// In zh, this message translates to:
+  /// **'服务商拒绝了请求：检查接口地址和模型名称是否正确。'**
+  String get testRequestRejected;
+
+  /// No description provided for @testQuota.
+  ///
+  /// In zh, this message translates to:
+  /// **'账户余额不足，充值后再试。'**
+  String get testQuota;
+
+  /// No description provided for @testMissing.
+  ///
+  /// In zh, this message translates to:
+  /// **'还缺密钥或模型名称。'**
+  String get testMissing;
+
+  /// No description provided for @testRateLimited.
+  ///
+  /// In zh, this message translates to:
+  /// **'请求太频繁，过一会儿再试。'**
+  String get testRateLimited;
+
+  /// No description provided for @testNetwork.
+  ///
+  /// In zh, this message translates to:
+  /// **'连不上：检查网络和接口地址。'**
+  String get testNetwork;
+
+  /// No description provided for @usage.
+  ///
+  /// In zh, this message translates to:
+  /// **'用量'**
+  String get usage;
+
+  /// No description provided for @usageRowNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'每本书用了多少大模型和配音额度'**
+  String get usageRowNote;
+
+  /// No description provided for @usageNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'数字来自服务商自己的回报，按它们的单位计；具体费用以服务商账单为准。'**
+  String get usageNote;
+
+  /// No description provided for @usageEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有用过任何付费服务。'**
+  String get usageEmpty;
+
+  /// No description provided for @usageLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取用量'**
+  String get usageLoadFailed;
+
+  /// No description provided for @usageEarlier.
+  ///
+  /// In zh, this message translates to:
+  /// **'早期用量（未按书记录）'**
+  String get usageEarlier;
+
+  /// No description provided for @usageDeletedBook.
+  ///
+  /// In zh, this message translates to:
+  /// **'已删除的书'**
+  String get usageDeletedBook;
+
+  /// No description provided for @usageTokens.
+  ///
+  /// In zh, this message translates to:
+  /// **'{provider} {count} tokens'**
+  String usageTokens(String provider, String count);
+
+  /// No description provided for @usageCharacters.
+  ///
+  /// In zh, this message translates to:
+  /// **'{provider} {count} 字'**
+  String usageCharacters(String provider, String count);
+
+  /// No description provided for @usageNothingBilled.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有计费用量'**
+  String get usageNothingBilled;
+
+  /// No description provided for @privacy.
+  ///
+  /// In zh, this message translates to:
+  /// **'隐私'**
+  String get privacy;
+
+  /// No description provided for @privacyRowNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'书的正文会发给谁，随时可以撤回'**
+  String get privacyRowNote;
+
+  /// No description provided for @privacyIntro.
+  ///
+  /// In zh, this message translates to:
+  /// **'书只存在这台手机上。开启 AI 配音后，你听到的章节正文和书里的角色会发给你设置的大模型和配音服务，用来分析角色、分配台词和配音；密钥加密保存在本机，只发给对应的服务商。用系统声音朗读时，什么都不会发送。'**
+  String get privacyIntro;
+
+  /// No description provided for @consentsSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'已同意发送正文的服务'**
+  String get consentsSection;
+
+  /// No description provided for @consentsNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'撤回后，需要它的 AI 配音会暂停，用系统声音朗读，直到你再次同意。'**
+  String get consentsNote;
+
+  /// No description provided for @consentsEmpty.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有同意发送给任何服务'**
+  String get consentsEmpty;
+
+  /// No description provided for @revokeConsent.
+  ///
+  /// In zh, this message translates to:
+  /// **'撤回'**
+  String get revokeConsent;
+
+  /// No description provided for @consentRevoked.
+  ///
+  /// In zh, this message translates to:
+  /// **'已撤回'**
+  String get consentRevoked;
+
+  /// No description provided for @privacyLoadFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能读取'**
+  String get privacyLoadFailed;
+
+  /// No description provided for @systemVoicePageNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有 AI 配音的书和章节用它朗读。点一下试听并选用。'**
+  String get systemVoicePageNote;
+
+  /// No description provided for @systemVoiceRowNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有 AI 配音时用手机自带的声音朗读，可以选一个更好听的。'**
+  String get systemVoiceRowNote;
+
+  /// No description provided for @systemVoiceChinese.
+  ///
+  /// In zh, this message translates to:
+  /// **'中文'**
+  String get systemVoiceChinese;
+
+  /// No description provided for @systemVoiceEnglish.
+  ///
+  /// In zh, this message translates to:
+  /// **'英文'**
+  String get systemVoiceEnglish;
+
+  /// No description provided for @systemVoiceNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可用的声音'**
+  String get systemVoiceNone;
+
+  /// No description provided for @systemVoiceDownloadNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'在系统设置 › 辅助功能 › 朗读内容 › 声音 里下载「增强」或「高品质」语音，听起来会自然很多。'**
+  String get systemVoiceDownloadNote;
+
+  /// No description provided for @voiceQualityEnhanced.
+  ///
+  /// In zh, this message translates to:
+  /// **'增强'**
+  String get voiceQualityEnhanced;
+
+  /// No description provided for @voiceQualityPremium.
+  ///
+  /// In zh, this message translates to:
+  /// **'高品质'**
+  String get voiceQualityPremium;
+
+  /// No description provided for @continueListening.
+  ///
+  /// In zh, this message translates to:
+  /// **'继续听'**
+  String get continueListening;
+
+  /// No description provided for @sampleBookMeta.
+  ///
+  /// In zh, this message translates to:
+  /// **'示例 · 已配好音'**
+  String get sampleBookMeta;
+
+  /// No description provided for @importFailedDismiss.
+  ///
+  /// In zh, this message translates to:
+  /// **'知道了'**
+  String get importFailedDismiss;
+
+  /// No description provided for @bookUpdatedAdded.
+  ///
+  /// In zh, this message translates to:
+  /// **'《{title}》新增了 {added} 章'**
+  String bookUpdatedAdded(String title, int added);
+
+  /// No description provided for @bookUpdatedChanged.
+  ///
+  /// In zh, this message translates to:
+  /// **'《{title}》有 {changed} 章内容更新'**
+  String bookUpdatedChanged(String title, int changed);
+
+  /// No description provided for @chapterShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'章'**
+  String get chapterShort;
+
+  /// No description provided for @lineShort.
+  ///
+  /// In zh, this message translates to:
+  /// **'句'**
+  String get lineShort;
+
+  /// No description provided for @bookUsageLine.
+  ///
+  /// In zh, this message translates to:
+  /// **'本书已用：{summary}。数字来自服务商的回报。'**
+  String bookUsageLine(String summary);
+
+  /// No description provided for @auditionNeedsProvider.
+  ///
+  /// In zh, this message translates to:
+  /// **'试听要用到{provider}，它还没设置好'**
+  String auditionNeedsProvider(String provider);
+
+  /// No description provided for @auditionNeedsProviderBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'这个声音在已配好的章节里还没出现过，需要用它现场生成一段。'**
+  String get auditionNeedsProviderBody;
 }
 
 class _AppLocalizationsDelegate

@@ -1,0 +1,147 @@
+{
+  "revision": "ming-0.5b-s10-matrix2-v1",
+  "models": [
+    {
+      "name": "lm2_epsdiv_prefill_wfp16.tflite",
+      "size": 716458304,
+      "sha256": "db3964aa40278d4445a2037e6430c19315472d18fc11f078490882280e6582d3",
+      "pack": "ming_front"
+    },
+    {
+      "name": "embed_tokens_f16.bin",
+      "size": 272269312,
+      "sha256": "85f2682f649a94501d9759f5a5053a850d3910a3f02ce28c23771b0a2f15a273",
+      "pack": "ming_front"
+    },
+    {
+      "name": "temb_epss10.bin",
+      "size": 40960,
+      "sha256": "cb3b832859e22bfa00203fe46a6b9008484c9f115b7096697c3564c1ca9328d2",
+      "pack": "ming_front"
+    },
+    {
+      "name": "stop_head.bin",
+      "size": 7176,
+      "sha256": "c31ad4d6bc42107d6d4e28af210d2b4edce8a9a072637c6d241170b9011d909a",
+      "pack": "ming_front"
+    },
+    {
+      "name": "istft_window.bin",
+      "size": 14112,
+      "sha256": "1e1daeb1138f1ff220fc6f1e1e45c377a3ef7de4458105e32934c29ba2b8d5f9",
+      "pack": "ming_front"
+    },
+    {
+      "name": "char_classes.bin",
+      "size": 13540,
+      "sha256": "b12ac7f70eea66c531bbd89779f8d7af710eadceece190b9ebd1dc7d593f11d3",
+      "pack": "ming_front"
+    },
+    {
+      "name": "tokenizer_vocab.txt",
+      "size": 1521126,
+      "sha256": "479c920073825cc49357a884b9b26adcfd96155beb2ea068666c6d991065859f",
+      "pack": "ming_front"
+    },
+    {
+      "name": "tokenizer_merges.txt",
+      "size": 1671839,
+      "sha256": "599bab54075088774b1733fde865d5bd747cbcc7a547c5bc12610e874e26f5e3",
+      "pack": "ming_front"
+    },
+    {
+      "name": "tokenizer_added.txt",
+      "size": 1344,
+      "sha256": "088313bd84664c79f4bd6e9d3fff5d6020961ff7aa8d409981b0e95b1eca3ff3",
+      "pack": "ming_front"
+    },
+    {
+      "name": "lm2_epsdiv_step_wfp16.tflite",
+      "size": 716389696,
+      "sha256": "6c4ecacf5fb4e34bcfd63d59542febde057225a0f1cc189a5e7fa836ae161433",
+      "pack": "ming_steps"
+    },
+    {
+      "name": "lm2_epsdiv_step_pair_wfp16.tflite",
+      "size": 716378832,
+      "sha256": "e15428389a41fc63e6719400ea95551c1dc9bcdc2819bbfd03a6e6bee6f5c481",
+      "pack": "ming_steps"
+    },
+    {
+      "name": "flow_r4b_s10_wfp16.tflite",
+      "size": 204500864,
+      "sha256": "9b6aed11d7086b54e78ac0282b8354d7843aec565fe3ada9a5ad7eb92bef0868",
+      "pack": "ming_audio"
+    },
+    {
+      "name": "flow_r4b_s10_pair_wfp16.tflite",
+      "size": 204505824,
+      "sha256": "f57f3278b19b30c61af221f3d05256bc0756c775e216a4f2ba2089c87dbe33be",
+      "pack": "ming_audio"
+    },
+    {
+      "name": "agg_r4b_wfp16.tflite",
+      "size": 203752128,
+      "sha256": "5188d360e0c393898b6221e52996c8b06526c45f162ed9a2201573fb4c78c1e0",
+      "pack": "ming_audio"
+    },
+    {
+      "name": "dec_c16_wfp16.tflite",
+      "size": 722909248,
+      "sha256": "4d4a6ef61230451c710ca06fffcf90c2d2c7645bddcc7d69d42c2a1c9af9fa0a",
+      "pack": "ming_audio"
+    }
+  ],
+  "libraries": [
+    {
+      "name": "libLiteRtCompilerPlugin_Qualcomm.so",
+      "size": 724016,
+      "sha256": "425e5caf007f834748c6bf67aff265d7e21512a01910f219fab6b7749ef57732"
+    },
+    {
+      "name": "libLiteRtDispatch_Qualcomm.so",
+      "size": 445576,
+      "sha256": "c4abfff6c99ec218f545415a81a2a03a3ee3e21df2ea911902d6b7bbfeda80bf"
+    },
+    {
+      "name": "libQnnHtp.so",
+      "size": 3664752,
+      "sha256": "ab01bb8b74a933009bfb0518c3f73d5c972f72ea2d358136e6f72ecfedb2d693"
+    },
+    {
+      "name": "libQnnHtpPrepare.so",
+      "size": 86301616,
+      "sha256": "ce1b30c8d77e2d551da020255c2586b8a9b0267d0eafb5efb0bf9d0422be301b"
+    },
+    {
+      "name": "libQnnHtpV75CalculatorStub.so",
+      "size": 250904,
+      "sha256": "c48ea8834b30556c4bb6d6a5748f641a63446abc20a2a73476ecf844caab88ce"
+    },
+    {
+      "name": "libQnnHtpV75Skel.so",
+      "size": 17265488,
+      "sha256": "2034cb2aa7632bb3021b6325a2a0f65c123c7307997cc9ccdbc26810ce5da2e9"
+    },
+    {
+      "name": "libQnnHtpV75Stub.so",
+      "size": 748168,
+      "sha256": "2598b0bdbbdbd51024399051e56a1b070cbe4920ece9369038a180adc979760f"
+    },
+    {
+      "name": "libQnnIr.so",
+      "size": 1940848,
+      "sha256": "79043536d4ac324782c953c9092066d3418ec88626ac2384b2e81883a3f8f644"
+    },
+    {
+      "name": "libQnnSaver.so",
+      "size": 809832,
+      "sha256": "d26d8002da0fbe829f58370465dc40b4e5a0fc2c2830c0608972817ac5835026"
+    },
+    {
+      "name": "libQnnSystem.so",
+      "size": 3931808,
+      "sha256": "d6da066808f50fb2e5a3363a4f4a2ac616b7605ea8c5a42e3beda1e550ae4c41"
+    }
+  ]
+}

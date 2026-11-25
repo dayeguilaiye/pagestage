@@ -6,9 +6,10 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"/>
     <application
         android:allowBackup="false"
-        android:label="pagestage_app"
+        android:label="pagestage"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <uses-native-library android:name="libcdsprpc.so" android:required="false"/>
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.diagnostics"
@@ -17,10 +18,13 @@
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/diagnostic_paths" />
         </provider>
+        <!-- singleTask: a file another app opens in pagestage reaches this one
+             activity, rather than a second copy inside the other app's task
+             that would take audio_service's shared engine from it. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -38,6 +42,43 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- Books and packages other apps open in pagestage ("Open with") or
+                 share to it. MainActivity copies each into the app and hands it to
+                 Dart, which imports it as the import button would. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="application/epub+zip"/>
+                <data android:mimeType="application/octet-stream"/>
+            </intent-filter>
+            <!-- Packages by name, whatever type the sender gives them. A pattern's
+                 ".*" stops at the first dot, hence one per number of dots before. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:scheme="content"/>
+                <data android:scheme="file"/>
+                <data android:host="*"/>
+                <data android:mimeType="*/*"/>
+                <data android:pathPattern=".*\\.pagestage"/>
+                <data android:pathPattern=".*\\..*\\.pagestage"/>
+                <data android:pathPattern=".*\\..*\\..*\\.pagestage"/>
+                <data android:pathPattern=".*\\..*\\..*\\..*\\.pagestage"/>
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <data android:mimeType="text/plain"/>
+                <data android:mimeType="application/epub+zip"/>
+                <data android:mimeType="application/octet-stream"/>
+            </intent-filter>
+            <!-- The app has no routes; an opened file must not become one. -->
+            <meta-data
+                android:name="flutter_deeplinking_enabled"
+                android:value="false"/>
         </activity>
         <service android:name="com.ryanheise.audioservice.AudioService"
             android:foregroundServiceType="mediaPlayback"

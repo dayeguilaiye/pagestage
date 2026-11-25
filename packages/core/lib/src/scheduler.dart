@@ -226,13 +226,16 @@ class Scheduler {
   }
 
   /// Profiles chapters 1..through, or directs/synthesizes first..through.
-  /// Directing and synthesis require an already profiled range.
+  /// Directing and synthesis require an already profiled range, unless
+  /// [profile] asks for the missing chapters to be profiled first; their
+  /// directing then waits for that profiling.
   Future<void> enqueue(
     String bookId,
     TaskKind kind, {
     required int through,
     int first = 1,
     PerformanceMode mode = PerformanceMode.audiobook,
+    bool profile = false,
   }) => _command(() async {
     final book = await Library(store).getBook(bookId);
     book.chapter(first);
@@ -240,7 +243,10 @@ class Scheduler {
     if (first > through) throw ArgumentError('Invalid chapter range.');
     final cast = await CastRepository(store).get(bookId);
     if (kind != TaskKind.profile && through > cast.profiledThrough) {
-      throw StateError('Profile the requested range first.');
+      if (!profile) throw StateError('Profile the requested range first.');
+      for (var n = cast.profiledThrough + 1; n <= through; n++) {
+        await _add(bookId, n, TaskKind.profile, TaskOrigin.user, mode);
+      }
     }
     for (var n = kind == TaskKind.profile ? 1 : first; n <= through; n++) {
       if (kind == TaskKind.synthesize) {
@@ -253,11 +259,14 @@ class Scheduler {
 
   /// Call only while listening. Passing null stops pending automatic work.
   /// Reopening the scheduler does not resume automatic work until this is called.
+  /// With [profile], chapters ahead that are not profiled yet are profiled
+  /// as part of the lookahead instead of ending it.
   Future<void> reportListening(
     String? bookId, {
     int? chapter,
     Lookahead? lookahead,
     PerformanceMode mode = PerformanceMode.audiobook,
+    bool profile = false,
   }) => _command(() async {
     if (bookId == null) {
       _listeningBook = null;
@@ -270,11 +279,23 @@ class Scheduler {
     final cast = await CastRepository(store).get(bookId);
     _listeningBook = bookId;
     _lookaheadIds = {};
+    final reach = profile
+        ? book.chapters.length
+        : cast.profiledThrough.clamp(0, book.chapters.length);
+    if (profile) {
+      for (
+        var n = cast.profiledThrough + 1;
+        n <= chapter + settings.directing && n <= book.chapters.length;
+        n++
+      ) {
+        _lookaheadIds.add(
+          await _add(bookId, n, TaskKind.profile, TaskOrigin.lookahead, mode),
+        );
+      }
+    }
     for (
       var n = chapter + 1;
-      n <= chapter + settings.directing &&
-          n <= cast.profiledThrough &&
-          n <= book.chapters.length;
+      n <= chapter + settings.directing && n <= reach;
       n++
     ) {
       _lookaheadIds.add(
@@ -294,6 +315,15 @@ class Scheduler {
     }
     _kick();
   });
+
+  /// While held nothing new starts; the task under way still reaches its
+  /// checkpoint. Not persisted: the owner holds again after reopening.
+  bool get held => _held;
+  var _held = false;
+  void hold(bool held) {
+    _held = held;
+    if (!held) _kick();
+  }
 
   Future<void> resume({String? provider, String? bookId, TaskKind? kind}) =>
       _command(() async {
@@ -443,6 +473,7 @@ class Scheduler {
   Future<void> _run() async {
     while (!_closing) {
       await _commands;
+      if (_held) return;
       final pending =
           tasks
               .where(
@@ -549,6 +580,19 @@ class Scheduler {
         )) {
       return true;
     }
+    // Directing waits for profiling queued to reach its chapter.
+    if (task.kind != TaskKind.profile &&
+        tasks.any(
+          (t) =>
+              t.bookId == task.bookId &&
+              t.kind == TaskKind.profile &&
+              t.chapter <= task.chapter &&
+              t.status != TaskStatus.completed,
+        ) &&
+        task.chapter >
+            (await CastRepository(store).get(task.bookId)).profiledThrough) {
+      return true;
+    }
     if (task.kind != TaskKind.synthesize) {
       return paused.any((t) => t.provider == 'llm');
     }
@@ -563,6 +607,7 @@ class Scheduler {
       await Profiler(
         store,
         profileLlm,
+        voiceCatalog: voiceCatalog,
       ).profile(book, throughChapter: task.chapter);
       return;
     }

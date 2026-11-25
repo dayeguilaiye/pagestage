@@ -17,6 +17,7 @@ class ListeningController extends ValueNotifier<ListeningState>
     required this.engine,
     required this.speech,
     DateTime Function()? now,
+    this.fallbackAfter = const Duration(seconds: 20),
   }) : _now = now ?? DateTime.now,
        super(const ListeningState()) {
     _subscription = engine.states.listen(_onEngine);
@@ -26,6 +27,18 @@ class ListeningController extends ValueNotifier<ListeningState>
   final PlaybackEngine engine;
   final SystemSpeech speech;
   final DateTime Function() _now;
+
+  /// How long playback waits for AI voices before the system voice reads
+  /// the rest of the chapter.
+  final Duration fallbackAfter;
+  Timer? _fallbackTimer;
+  DateTime? _waitingSince;
+
+  /// The system voice stands in for AI voices that were not ready.
+  bool _fallback = false;
+
+  /// Whether the open book uses AI voices and can.
+  bool _aiVoice = false;
   late final StreamSubscription<EngineState> _subscription;
   Future<void> _commands = Future.value();
   Future<void> _saved = Future.value();
@@ -77,17 +90,120 @@ class ListeningController extends ValueNotifier<ListeningState>
     generation = service;
     service.onModeChanged = (bookId) async {
       if (_book?.id != bookId) return;
-      final play = _wantPlay;
-      _cancelPending();
-      await _command(() => _loadChapter(_book!, _chapter, _line, play: play));
+      // A chapter still being voiced starts over in the new performance;
+      // one already playing in full, or read by the system voice, finishes
+      // as it is and the change applies from the next chapter.
+      if (_streaming && !_audioComplete) {
+        final play = _wantPlay;
+        _cancelPending();
+        await _command(() => _loadChapter(_book!, _chapter, _line, play: play));
+        return;
+      }
+      await _command(() async {
+        if (_book?.id != bookId) return;
+        _mode = await service.coreMode(bookId);
+        if (_wantPlay) {
+          await service.listening(bookId, chapter: _chapter, mode: _mode);
+        }
+      });
     };
-    _generationEvents = service.changes.listen((_) => _queueRefresh());
+    _generationEvents = service.changes.listen((_) {
+      _queueRefresh();
+      unawaited(_refreshAiVoice());
+    });
+  }
+
+  Future<void> _refreshAiVoice() async {
+    final book = _book;
+    if (book == null || generation == null || _closed) return;
+    try {
+      final active = await generation!.active(book.id);
+      if (active != _aiVoice && !_closed && _book?.id == book.id) {
+        _aiVoice = active;
+        _publish();
+      }
+    } catch (_) {
+      // A book deleted meanwhile has nothing to show.
+    }
   }
 
   void _cancelPending() {
     _epoch++;
-    generation?.cancelRequest();
   }
+
+  /// Starts the wait for AI voices, which the system voice ends after
+  /// [fallbackAfter].
+  void _startWaiting() {
+    if (!_wantPlay || _fallbackTimer != null) return;
+    _waitingSince ??= _now();
+    final epoch = _epoch;
+    final chapter = _chapter;
+    _fallbackTimer = Timer(fallbackAfter, () {
+      _fallbackTimer = null;
+      if (_closed || epoch != _epoch || chapter != _chapter) return;
+      unawaited(
+        _command(() async {
+          if (_streaming && _waiting && _wantPlay && _chapter == chapter) {
+            await _fallBack();
+          }
+        }),
+      );
+    });
+  }
+
+  void _stopWaiting() {
+    _fallbackTimer?.cancel();
+    _fallbackTimer = null;
+    _waitingSince = null;
+  }
+
+  /// The system voice reads the rest of this chapter, from the first line
+  /// not heard yet. AI voices come back with the next chapter.
+  Future<void> _fallBack() async {
+    final book = _book;
+    if (book == null) return;
+    _stopWaiting();
+    final heard = _queue != null && _lines.isNotEmpty
+        ? _lines[_line.clamp(0, _lines.length - 1)].end
+        : _requestedOffset;
+    final offset = heard > _requestedOffset ? heard : _requestedOffset;
+    _streaming = false;
+    _waiting = false;
+    _queue = null;
+    _audioHash = null;
+    _source = ListeningSource.system;
+    _fallback = true;
+    _loading = true;
+    _publish();
+    await engine.pause();
+    _replaceLines(splitSentences(book.chapter(_chapter).text));
+    final next = _lines.indexWhere((l) => l.end > offset);
+    if (next < 0 || _lines.isEmpty) {
+      _loading = false;
+      _line = (_lines.length - 1).clamp(0, 10000000);
+      if (_wantPlay) {
+        await _advance();
+      } else {
+        _publish();
+      }
+      return;
+    }
+    _line = next;
+    _requestedOffset = _lines[next].start;
+    await _loadSentence();
+    await engine.setSpeed(_speed);
+    _completionScheduled = false;
+    _loading = false;
+    if (_wantPlay) await engine.play();
+    _publish();
+    await _savePosition();
+  }
+
+  @override
+  Future<void> useSystemVoice() => _command(() async {
+    if (_book == null || !_streaming) return;
+    await _fallBack();
+  });
 
   void _queueRefresh() {
     if (_closed || !_streaming || _refreshQueued) return;
@@ -191,6 +307,10 @@ class ListeningController extends ValueNotifier<ListeningState>
             _chapter == chapter &&
             _source == ListeningSource.system)) {
       final cast = await CastRepository(store).get(bookId);
+      String? named(Speaker? speaker) =>
+          speaker == null || speaker.kind == SpeakerKind.narrator
+          ? null
+          : speaker.name;
       return [
         for (var i = 0; i < script.lines.length; i++)
           ListeningLine(
@@ -201,9 +321,10 @@ class ListeningController extends ValueNotifier<ListeningState>
             speakerId: cast
                 .findSpeaker(script.lines[i].direction.speakerId)
                 ?.id,
-            speakerName: cast
-                .findSpeaker(script.lines[i].direction.speakerId)
-                ?.name,
+            // Narration needs no name beside it; characters do.
+            speakerName: named(
+              cast.findSpeaker(script.lines[i].direction.speakerId),
+            ),
             nonStory: script.lines[i].isNonStory,
             directed: true,
           ),
@@ -279,10 +400,11 @@ class ListeningController extends ValueNotifier<ListeningState>
             ? 0
             : previousLines[line.clamp(0, previousLines.length - 1)].start);
     final epoch = _epoch;
-    await generation?.listening(null);
+    _stopWaiting();
     _wantPlay = play;
     _waiting = false;
     _streaming = false;
+    _fallback = false;
     _queue = null;
     _audioHash = null;
     _mode = await generation?.coreMode(book.id) ?? PerformanceMode.audiobook;
@@ -297,13 +419,18 @@ class ListeningController extends ValueNotifier<ListeningState>
     _source = ListeningSource.synthesized;
     _replaceLines(await lines(book.id, chapter));
     _requestedOffset = offset;
+    try {
+      _aiVoice = await generation?.active(book.id) ?? false;
+    } catch (_) {
+      _aiVoice = false;
+    }
     if (!hasAudio && generation != null) {
       _publish();
-      final choice = await generation!.choose(book.id, chapter, _mode);
-      if (epoch != _epoch || choice == GenerationChoice.cancel) {
+      // Never asks: AI voices are prepared while playback waits, or the
+      // system voice reads the chapter.
+      final choice = await generation!.plan(book.id, chapter, _mode);
+      if (epoch != _epoch) {
         _loading = false;
-        _wantPlay = false;
-        _error = 'generationCancelled';
         _publish();
         return;
       }
@@ -332,7 +459,11 @@ class ListeningController extends ValueNotifier<ListeningState>
       _audioComplete = false;
       _line = line.clamp(0, (_lines.length - 1).clamp(0, 10000000));
       _loading = false;
+      _startWaiting();
       _publish();
+      if (play) {
+        await generation?.listening(book.id, chapter: chapter, mode: _mode);
+      }
       await _refreshStream();
       return;
     }
@@ -372,7 +503,9 @@ class ListeningController extends ValueNotifier<ListeningState>
     _loading = false;
     if (play) await engine.play();
     _publish();
-    if (play && _source == ListeningSource.synthesized) {
+    // Chapters ahead are prepared while the book is listened to, whichever
+    // voice reads this one; the generation service knows whether to.
+    if (play) {
       await generation?.listening(book.id, chapter: chapter, mode: _mode);
     } else {
       await generation?.listening(null);
@@ -382,8 +515,16 @@ class ListeningController extends ValueNotifier<ListeningState>
 
   Future<void> _refreshStream() async {
     if (!_streaming || _book == null) return;
-    _publish();
     final book = _book!;
+    // A paused book will not voice this chapter soon: the system voice
+    // reads it instead of leaving the listener in silence.
+    if (_waiting &&
+        _wantPlay &&
+        generation?.failure(book.id, _chapter) != null) {
+      await _fallBack();
+      return;
+    }
+    _publish();
     final repository = AudioRepository(store);
     final script = await ScriptRepository(store).get(book.id, _chapter);
     if (script == null ||
@@ -463,6 +604,7 @@ class ListeningController extends ValueNotifier<ListeningState>
     }
     await engine.setSpeed(_speed);
     _waiting = false;
+    _stopWaiting();
     _loading = false;
     _error = null;
     _completionScheduled = false;
@@ -485,6 +627,12 @@ class ListeningController extends ValueNotifier<ListeningState>
     );
     await engine.load(path, Duration.zero);
     await engine.setSpeed(_speed);
+    // The next sentence renders while this one plays, so there is no
+    // silence between them.
+    final next = _lines.skip(_line + 1).where((l) => l.text.trim().isNotEmpty);
+    if (next.isNotEmpty) {
+      unawaited(speech.prefetch(_book!.id, next.first.text, _book!.language));
+    }
   }
 
   void _onEngine(EngineState state) {
@@ -508,6 +656,7 @@ class ListeningController extends ValueNotifier<ListeningState>
     if (_streaming && !_audioComplete) {
       _waiting = true;
       _completionScheduled = false;
+      _startWaiting();
       _publish();
       await _refreshStream();
       return;
@@ -578,6 +727,9 @@ class ListeningController extends ValueNotifier<ListeningState>
           : (remaining.isNegative ? Duration.zero : remaining),
       sleepAfterChapter: _sleepAfterChapter,
       error: _error,
+      aiVoice: _aiVoice,
+      fallback: _fallback,
+      waitingSince: _waiting && _wantPlay ? _waitingSince : null,
     );
   }
 
@@ -598,6 +750,7 @@ class ListeningController extends ValueNotifier<ListeningState>
         'progress':
             ((snapshot.chapter - 1 + snapshot.progress) / book.chapters.length)
                 .clamp(0, 1),
+        'at': _now().toUtc().microsecondsSinceEpoch,
       });
     });
     _saved = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
@@ -615,6 +768,12 @@ class ListeningController extends ValueNotifier<ListeningState>
             line: json['line'] as int,
             progress: (json['progress'] as num).toDouble(),
             sourceOffset: json['sourceOffset'] as int?,
+            listenedAt: json['at'] is int
+                ? DateTime.fromMicrosecondsSinceEpoch(
+                    json['at'] as int,
+                    isUtc: true,
+                  )
+                : null,
           );
   }
 
@@ -623,6 +782,8 @@ class ListeningController extends ValueNotifier<ListeningState>
     if (_book == null) return;
     _wantPlay = true;
     if (_streaming && _waiting) {
+      _startWaiting();
+      await generation?.listening(_book!.id, chapter: _chapter, mode: _mode);
       await _refreshStream();
       return;
     }
@@ -639,15 +800,14 @@ class ListeningController extends ValueNotifier<ListeningState>
     }
     _completionScheduled = false;
     await engine.play();
-    if (_source == ListeningSource.synthesized) {
-      await generation?.listening(_book!.id, chapter: _chapter, mode: _mode);
-    }
+    await generation?.listening(_book!.id, chapter: _chapter, mode: _mode);
     _publish();
   });
   @override
   Future<void> pause() {
     _cancelPending();
     _wantPlay = false;
+    _stopWaiting();
     return _command(() async {
       await generation?.listening(null);
       await engine.pause();
@@ -791,6 +951,7 @@ class ListeningController extends ValueNotifier<ListeningState>
   Future<void> close() async {
     await pause();
     _sleepTimer?.cancel();
+    _stopWaiting();
     store.removeListener(_onStore);
     await _generationEvents?.cancel();
     await _subscription.cancel();

@@ -4,6 +4,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:path/path.dart' as p;
 
 /// Atomic local snapshots shared by the CLI's modules.
 ///
@@ -196,4 +197,17 @@ class _Database extends GeneratedDatabase {
       'PRIMARY KEY(collection, key))',
     ),
   );
+}
+
+/// A path saved by an earlier install, read against where the data lives
+/// now. iOS moves an app's container whenever the app is updated, so a
+/// stored absolute path into the old container would point at nothing; the
+/// part under the data directory of [store] is kept and rebased.
+String relocatePath(LocalStore store, String path) {
+  final root = p.dirname(store.path);
+  if (p.isWithin(root, path)) return path;
+  final anchor = '${p.separator}${p.basename(root)}${p.separator}';
+  final at = path.lastIndexOf(anchor);
+  if (at < 0) return path;
+  return p.join(root, path.substring(at + anchor.length));
 }

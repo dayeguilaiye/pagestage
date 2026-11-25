@@ -162,6 +162,19 @@ class MemoryBookshelf extends ChangeNotifier implements Bookshelf {
     return await _onImport?.call(this) ?? const ImportCancelled();
   }
 
+  /// Files given to [importPath], oldest first.
+  final importedPaths = <String>[];
+
+  /// Imports as [importBook] does, as if [path] had been picked.
+  @override
+  Future<ImportOutcome> importPath(
+    String path, {
+    Future<bool> Function(String title)? confirmReplace,
+  }) {
+    importedPaths.add(path);
+    return importBook(confirmReplace: confirmReplace);
+  }
+
   @override
   Future<void> deleteBook(String bookId) async {
     await _wait();

@@ -121,7 +121,7 @@ void main() {
         expect(providerCalls, 0);
         expect(speech.requests, isEmpty);
         expect(consents.value, isNull);
-        expect(generation.value.request, isNull);
+        expect(generation.value.failures, isEmpty);
         debugPrint(
           'BUNDLED_VERIFIED ${book.title}: ${queue.duration.inMilliseconds} ms, ${queue.entries.length} utterances',
         );

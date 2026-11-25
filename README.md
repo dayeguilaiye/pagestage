@@ -16,7 +16,7 @@ dart run packages/core/bin/pagestage.dart chapters <book-id>
 
 `import` 返回书的 `bookId`、语言和章节列表。后续命令使用这个 ID。使用全局参数 `--data-dir <目录>` 选择本地数据目录，默认是当前目录的 `.pagestage`；书和章节通过 drift 保存到该目录的 SQLite 文件。
 
-TXT 先严格按 UTF-8 解码，再尝试 GB18030。GB18030 解码使用 WHATWG Encoding Standard 的索引，支持 GBK 两字节字符与 GB18030 四字节字符。中文的「章」「回」与英文 Chapter 标题用于划分章节，「卷」用于分组；没有章节标题时每约 5000 个 Unicode 字符分成一章。章节正文保留解码后的换行和空白，后续剧本的原文区间使用 Dart UTF-16 偏移量。
+TXT 先严格按 UTF-8 解码，再尝试 GB18030。GB18030 解码使用 WHATWG Encoding Standard 的索引，支持 GBK 两字节字符与 GB18030 四字节字符。中文的「章」「回」与英文 Chapter 标题用于划分章节，独占一行的「序章」「楔子」「引子」「前言」「后记」「尾声」「终章」「番外」以及 Prologue、Epilogue、Interlude 也算章节，「卷」用于分组；第一个标题之前有实质内容（至少 20 个非空白字符）时保留为第 1 章「开篇」（英文书为 Opening）；没有章节标题时约每 5000 个 Unicode 字符分成一章，切在最近的段落或句子边界。章节正文保留解码后的换行和空白，后续剧本的原文区间使用 Dart UTF-16 偏移量。
 
 EPUB 使用同一个 `import` 命令，支持 EPUB 3 导航目录与 EPUB 2 NCX。目录锚点决定章节边界，可以在一个文件内拆章或跨多个文件合章；缺少目录时按阅读顺序中的文件分章。导入仅保留标题与正文，拒绝带 DRM 的文件；字体混淆不影响正文提取。
 
@@ -54,6 +54,7 @@ Edge 可免 key 朗读已导入章节：`dart run packages/core/bin/pagestage.da
 | [音色设计](docs/cli-voice-design.md) | 生成候选、选择并激活设计音色 |
 | [导演](docs/cli-directing.md) | 原文对齐、表演指令和非正文标记 |
 | [语音合成](docs/cli-tts.md) | 服务商配置、多角色、演播模式、缓存和停顿 |
+| [引擎与书籍包](docs/engines-and-packages.md) | 引擎扩展、表现力、剧本包与有声包导入导出 |
 | [读音与响度](docs/cli-pronunciation-loudness.md) | 中文词典、拼音请求、统一响度和音频路径 |
 | [归属评估](docs/cli-evaluation.md) | 人工参考标注、命中率和错例导出 |
 | [产品规格](docs/spec.md) | 原型目标与产品设计 |
@@ -80,7 +81,7 @@ git push origin v1.2.3
 
 ```sh
 dart format --output=none --set-exit-if-changed packages/core packages/app
-dart analyze
+dart analyze packages
 dart test packages/core/test
 (cd packages/app && flutter test)
 ```

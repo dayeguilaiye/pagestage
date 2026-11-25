@@ -1,6 +1,7 @@
 import 'package:args/command_runner.dart';
 
 import '../cli.dart';
+import '../engines/engine.dart';
 import '../profiler.dart';
 import '../provider_configuration.dart';
 import '../engines/llm_engine.dart';
@@ -41,12 +42,24 @@ class ProfileCommand extends Command<void> {
       usageException('Provide a valid chapter range and positive batch size.');
     }
     final injected = context.profileLlm;
+    final config = await ProviderConfiguration.load(
+      argResults!['config'] as String?,
+      environment: context.environment,
+    );
+    final options = await context.store.get('casting', book.id);
+    final previousProviders = (options?['providers'] as List?)?.cast<String>();
+    final catalog = standardTtsEngines.catalog(
+      config,
+      only: [
+        for (final engine in standardTtsEngines.all)
+          if (engine.readiness(config) == EngineReadiness.ready &&
+              (previousProviders == null ||
+                  previousProviders.contains(engine.id)))
+            engine.id,
+      ],
+    );
     LlmAdapter? adapter;
     if (injected == null) {
-      final config = await ProviderConfiguration.load(
-        argResults!['config'] as String?,
-        environment: context.environment,
-      );
       adapter = standardLlmEngines
           .active(config)
           .open(
@@ -60,6 +73,7 @@ class ProfileCommand extends Command<void> {
       final result = await Profiler(
         context.store,
         injected ?? adapter!,
+        voiceCatalog: () => catalog,
       ).profile(book, throughChapter: through, batchSize: batchSize);
       context.writeJson(result.toJson());
     } finally {

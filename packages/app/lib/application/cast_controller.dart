@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:pagestage_core/pagestage_core.dart';
 
 import '../playback/playback_engine.dart';
+import '../playback/playback_queue.dart';
 import 'contracts.dart';
 import 'provider_store.dart';
 import 'provider_gateway.dart';
@@ -129,14 +131,16 @@ class CastController extends ChangeNotifier implements Casts {
     if (!await store.exists('books', bookId)) return;
     try {
       final cast = await CastRepository(store).get(bookId);
-      if (cast.profiledThrough == 0 ||
-          cast.speakers.every((s) => s.voiceId != null)) {
+      if (cast.profiledThrough == 0) return;
+      if (cast.speakers.every((s) => s.voiceId != null)) {
+        if (await store.exists('castingFailure', bookId)) {
+          await store.delete('castingFailure', bookId);
+        }
         return;
       }
       final book = await Library(store).getBook(bookId);
       final casting = _casting();
-      if (_voiceProviders.isEmpty) {
-        // Waits for a switch; turning one on reconciles again.
+      if (!casting.catalog.any((p) => p.languages.contains(book.language))) {
         await store.put('castingFailure', bookId, {
           'bookId': bookId,
           'provider': '',
@@ -231,9 +235,35 @@ class CastController extends ChangeNotifier implements Casts {
         : cast.cast.profiledThrough > 0
         ? ProfilingStatus.complete
         : ProfilingStatus.idle;
+    final presetNames = {
+      for (final p in gateway.engines.voice.catalog(
+        providers.settings,
+        only: cast.voices.values.map((v) => v.binding.provider).toSet(),
+      ))
+        if (p.displayName != null)
+          (p.binding.provider, p.binding.voiceId): p.displayName!,
+    };
+    String? displayName(Voice? voice) => voice == null
+        ? null
+        : presetNames[(voice.binding.provider, voice.binding.voiceId)] ??
+              voice.binding.voiceId;
+    final spoken = await _spokenSpeakers(bookId, cast.cast);
+    // The narrator first, then everyone in the order they first appear.
+    final speakers = cast.cast.speakers.indexed.toList()
+      ..sort((a, b) {
+        int rank(Speaker s) => s.kind == SpeakerKind.narrator ? 0 : 1;
+        int first(Speaker s) =>
+            s.chapters.isEmpty ? 1 << 30 : s.chapters.reduce(math.min);
+        final byKind = rank(a.$2).compareTo(rank(b.$2));
+        if (byKind != 0) return byKind;
+        final byChapter = first(a.$2).compareTo(first(b.$2));
+        return byChapter != 0 ? byChapter : a.$1.compareTo(b.$1);
+      });
     return CastState(
       bookId: bookId,
-      profiledThrough: cast.cast.profiledThrough,
+      // An example packed from a longer book may say more were profiled
+      // than it has.
+      profiledThrough: math.min(cast.cast.profiledThrough, chapterCount),
       targetChapter: target,
       chapterCount: chapterCount,
       status: status,
@@ -250,7 +280,7 @@ class CastController extends ChangeNotifier implements Casts {
               ? 'interrupted'
               : _reason(paused?.reason, paused?.code)),
       members: [
-        for (final speaker in cast.cast.speakers)
+        for (final (_, speaker) in speakers)
           CastMember(
             id: speaker.id,
             name: speaker.name,
@@ -260,8 +290,12 @@ class CastController extends ChangeNotifier implements Casts {
             personality: speaker.personality,
             speakingStyle: speaker.speakingStyle,
             voiceDescription: speaker.voiceDescription,
-            voiceName: cast.voices[speaker.id]?.binding.voiceId,
+            voiceName: displayName(cast.voices[speaker.id]),
             provider: cast.voices[speaker.id]?.binding.provider,
+            firstChapter: speaker.chapters.isEmpty
+                ? null
+                : speaker.chapters.reduce(math.min),
+            spoken: spoken.contains(speaker.id),
           ),
       ],
     );
@@ -411,6 +445,31 @@ class CastController extends ChangeNotifier implements Casts {
         kind: ProviderErrorKind.invalidConfiguration,
       );
     }
+    // A line this voice already spoke in the book is the best sample, and
+    // costs nothing: an example book and every voiced chapter have them.
+    final spoken = await _hasSample(voice)
+        ? null
+        : await _spokenLine(book, speakerId);
+    if (spoken case (final path, final start, final length)) {
+      if (generation != _auditionGeneration || _closed) return;
+      await listening.pause();
+      await auditionEngine.pause();
+      await auditionEngine.load(path, Duration.zero);
+      if (start > Duration.zero) await auditionEngine.seek(start);
+      await auditionEngine.setSpeed(1);
+      _auditioning = speakerId;
+      await auditionEngine.play();
+      _notify();
+      // A line inside a whole chapter's audio stops where the line does.
+      if (length != null) {
+        _auditionStop?.cancel();
+        _auditionStop = Timer(length, () {
+          if (generation != _auditionGeneration || _closed) return;
+          unawaited(stopAudition());
+        });
+      }
+      return;
+    }
     if (!await _hasSample(voice)) {
       try {
         voice =
@@ -458,6 +517,79 @@ class CastController extends ChangeNotifier implements Casts {
     _notify();
   }
 
+  /// Speakers with a line in the first voiced chapters, which auditions can
+  /// play without any provider. Bounded, as the cast page reloads often.
+  Future<Set<String>> _spokenSpeakers(String bookId, Cast cast) async {
+    final mode = (await PerformanceRepository(store).get(bookId)).mode;
+    final out = <String>{};
+    final last = math.min(cast.profiledThrough, 30);
+    for (var chapter = 1; chapter <= last; chapter++) {
+      final audio = await AudioRepository(
+        store,
+      ).get(bookId, chapter, mode: mode);
+      if (audio == null || !audio.complete) continue;
+      for (final utterance in audio.utterances) {
+        out.add(
+          cast.findSpeaker(utterance.speakerId)?.id ?? utterance.speakerId,
+        );
+      }
+    }
+    return out;
+  }
+
+  /// The audio of a line [speakerId] speaks in a chapter voiced with the
+  /// book's current voices: its file, where the line starts in it, and how
+  /// long it lasts when the file holds the whole chapter. Null when no
+  /// voiced chapter has the speaker.
+  Future<(String, Duration, Duration?)?> _spokenLine(
+    Book book,
+    String speakerId,
+  ) async {
+    final mode = (await PerformanceRepository(store).get(book.id)).mode;
+    final audio = AudioRepository(store);
+    final cast = await CastRepository(store).get(book.id);
+    final id = cast.findSpeaker(speakerId)?.id ?? speakerId;
+    for (final chapter in book.chapters.take(200)) {
+      final script = await ScriptRepository(store).get(book.id, chapter.number);
+      if (script == null || script.sourceTextHash != chapter.textHash) continue;
+      final voiced = await audio.get(book.id, chapter.number, mode: mode);
+      if (voiced == null) continue;
+      try {
+        if (!await audio.isComplete(script, mode: mode)) continue;
+      } catch (_) {
+        continue;
+      }
+      final PlaybackQueue queue;
+      try {
+        queue = PlaybackQueue(voiced.utterances);
+      } catch (_) {
+        continue;
+      }
+      // A line long enough to hear the voice, else the first one.
+      final lines = [
+        for (final entry in queue.entries)
+          if ((cast.findSpeaker(entry.utterance.speakerId)?.id ??
+                  entry.utterance.speakerId) ==
+              id)
+            entry,
+      ];
+      final entry =
+          lines
+              .where((e) => e.utterance.duration >= const Duration(seconds: 2))
+              .firstOrNull ??
+          lines.firstOrNull;
+      if (entry == null) continue;
+      final path = entry.utterance.audioPath;
+      if (!await File(path).exists()) continue;
+      final shared =
+          voiced.utterances.where((u) => u.audioPath == path).length > 1;
+      return shared
+          ? (path, entry.audioStart, entry.utterance.duration)
+          : (path, Duration.zero, null);
+    }
+    return null;
+  }
+
   Future<bool> _hasSample(Voice voice) async {
     final path = voice.samplePath;
     if (path == null) return false;
@@ -469,8 +601,12 @@ class CastController extends ChangeNotifier implements Casts {
     }
   }
 
+  Timer? _auditionStop;
+
   @override
   Future<void> stopAudition() {
+    _auditionStop?.cancel();
+    _auditionStop = null;
     _auditionGeneration++;
     _auditioning = null;
     _notify();
@@ -479,6 +615,7 @@ class CastController extends ChangeNotifier implements Casts {
 
   Future<void> close() async {
     _closed = true;
+    _auditionStop?.cancel();
     store.removeListener(_notify);
     providers.removeListener(_onProviders);
     await scheduler.close();

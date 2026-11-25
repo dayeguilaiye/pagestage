@@ -148,7 +148,30 @@ class AudioRepository {
     PerformanceMode mode = PerformanceMode.audiobook,
   }) async {
     final json = await store.get('audio', '$bookId:$chapter:${mode.name}');
-    return json == null ? null : ChapterAudio.fromJson(json);
+    return json == null ? null : ChapterAudio.fromJson(_relocated(json));
+  }
+
+  /// Audio files recorded by an earlier install of the app, found again
+  /// after the app's container moved.
+  Map<String, Object?> _relocated(Map<String, Object?> json) {
+    String? at(Object? path) =>
+        path is String ? relocatePath(store, path) : null;
+    return {
+      ...json,
+      if (json['path'] != null) 'path': at(json['path']),
+      'utterances': [
+        for (final item in json['utterances'] as List? ?? const [])
+          if (item is Map)
+            {
+              ...item,
+              if (item['audioPath'] != null) 'audioPath': at(item['audioPath']),
+              if (item['rawAudioPath'] != null)
+                'rawAudioPath': at(item['rawAudioPath']),
+            }
+          else
+            item,
+      ],
+    };
   }
 
   Future<void> save(ChapterAudio audio) => store.put(

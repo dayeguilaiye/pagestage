@@ -143,7 +143,7 @@ void main() {
       await _openBook(tester, fakes);
       await _openShare(tester);
       expect(find.text('分享《阿Q正传》'), findsOneWidget);
-      expect(find.textContaining('12 章剧本'), findsOneWidget);
+      expect(find.textContaining('12 章台词'), findsOneWidget);
       expect(find.textContaining('5 章音频'), findsOneWidget);
 
       await tester.tap(find.byKey(const ValueKey('share-audio')));
@@ -178,7 +178,7 @@ void main() {
     ) async {
       await _openBook(tester, Fakes());
       await _openShare(tester);
-      expect(find.textContaining('还没有可以分享的剧本'), findsOneWidget);
+      expect(find.textContaining('还没有可以分享的内容'), findsOneWidget);
       expect(find.byKey(const ValueKey('share-script')), findsNothing);
     });
 
@@ -197,30 +197,35 @@ void main() {
   });
 
   group('expression', () {
-    testWidgets('is chosen per book beside the performance mode', (
-      tester,
-    ) async {
+    Future<void> openVoice(WidgetTester tester) async {
+      await tester.tap(find.text('AI 配音'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('is chosen per book beside reading the tags', (tester) async {
       final fakes = Fakes();
       await _openBook(tester, fakes);
-      expect(find.text('表现力'), findsOneWidget);
-      expect(find.textContaining('按导演写的情绪和语气演出。'), findsOneWidget);
+      await openVoice(tester);
+      expect(find.text('情绪'), findsOneWidget);
+      expect(find.textContaining('按台词里的情绪和语气演。'), findsOneWidget);
 
-      await tester.tap(find.text('平实'));
+      await tester.tap(find.text('平淡'));
       await tester.pumpAndSettle();
       expect(fakes.generation.expressionChanges, [
         (_bookId, BookExpressiveness.plain),
       ]);
       expect(find.textContaining('只分角色朗读'), findsOneWidget);
-      // The mode keeps its own choice.
+      // Reading the tags keeps its own choice.
       expect(fakes.generation.modeChanges, isEmpty);
     });
 
     testWidgets('a failed change goes back and says so', (tester) async {
       final fakes = Fakes()..generation.expressionFailure = Exception();
       await _openBook(tester, fakes);
-      await tester.tap(find.text('戏剧'));
+      await openVoice(tester);
+      await tester.tap(find.text('夸张'));
       await tester.pumpAndSettle();
-      expect(find.text('没能保存表现力，请再试一次'), findsOneWidget);
+      expect(find.text('没能保存，请再试一次'), findsOneWidget);
       expect(
         tester
             .widget<PsSegmentedControl<BookExpressiveness>>(

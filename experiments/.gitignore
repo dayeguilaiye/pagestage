@@ -1,0 +1,15 @@
+artifacts/
+vendor/
+.venv*/
+**/.dart_tool/
+**/build/
+**/.gradle/
+**/local.properties
+**/android/.kotlin/
+**/.flutter-plugins-dependencies
+**/*.iml
+**/.idea/
+tts_lab_shared/android/src/main/jniLibs/
+ming_tts_lab/android/app/src/main/jniLibs/
+tts_lab_shared/android/src/main/assets/hexagon/
+**/__pycache__/

@@ -33,6 +33,8 @@ await scheduler.reportListening(null); // 收听停止
 
 默认导演提前 2 章、合成提前 1 章，范围限定在已有的建档范围和书的结尾内。合成提前量必须小于等于导演提前量，两个值都允许为 0。阅读页只读取书库；播放器在收听时报告位置，停止时传入 `null`。重新打开调度器后，提前量任务等待新的收听位置。
 
+`reportListening` 和 `enqueue` 都接受 `profile: true`：缺少的建档章节作为同一批任务排在前面，导演和合成等建档到达所在章节后再开始，而不是报错或在建档范围处停下。App 用它让建档跟着收听自动进行；跳得太远时由 App 先征得读者同意（ADR-0010）。`hold(true)` 让调度器暂停领取新任务，正在执行的任务仍会到达检查点，App 的 AI 配音总开关用它暂停一切生成。
+
 ## 验证
 
 `dart test packages/core/test/scheduler_test.dart` 使用假 LLM、假 TTS 和假时钟，验证恢复、优先级、逐条输出、缓存、提前量以及服务商暂停。`library_lifecycle_test.dart` 覆盖这些成果对应的章节状态和书籍删除。

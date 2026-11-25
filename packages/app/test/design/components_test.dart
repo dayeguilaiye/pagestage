@@ -80,7 +80,21 @@ void main() {
     await tester.pump();
 
     expect(taps, [(1, 0)]);
-    expect(find.text('赵太爷'), findsOneWidget, reason: 'cue stays put');
+    // The cue hangs in the margin, one glyph under another, outside the
+    // text: the paragraph reads exactly as written.
+    for (final glyph in ['赵', '太', '爷']) {
+      expect(find.text(glyph), findsOneWidget, reason: 'cue stays put');
+    }
+    final first = tester.widget<RichText>(
+      find.byWidgetPredicate(
+        (w) => w is RichText && w.text.toPlainText().contains('你敢胡说'),
+      ),
+    );
+    expect(
+      first.text.toPlainText(),
+      isNot(contains('赵太爷『')),
+      reason: 'no name inside the text',
+    );
   });
 
   testWidgets('chapter rows announce their state', (tester) async {

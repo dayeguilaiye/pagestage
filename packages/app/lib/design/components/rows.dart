@@ -253,6 +253,9 @@ class PsChapterRow extends StatelessWidget {
     this.duration,
     this.current = false,
     this.playing = false,
+    this.voiced = false,
+    this.currentLabel,
+    this.voicedLabel,
     this.onTap,
   });
 
@@ -261,6 +264,15 @@ class PsChapterRow extends StatelessWidget {
 
   /// Null for a chapter at rest, which carries no mark.
   final PsChapterStatus? status;
+
+  /// Its AI voices are ready: a small seal-red dot, quieter than a status.
+  final bool voiced;
+
+  /// Read out for the chapter being listened to, e.g. 正在听.
+  final String? currentLabel;
+
+  /// Read out for a voiced chapter, e.g. 已有 AI 配音.
+  final String? voicedLabel;
 
   /// Replaces the status's generic word, e.g. 配音中 18/40.
   final String? statusLabel;
@@ -274,6 +286,10 @@ class PsChapterRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final p = context.ps;
+    // Three digits fit the column; longer books widen it instead of
+    // clipping chapter 1000 and beyond.
+    final digits = '$index'.length;
+    final numberWidth = 28.0 + (digits > 3 ? (digits - 3) * 8.0 : 0);
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
@@ -288,9 +304,11 @@ class PsChapterRow extends StatelessWidget {
                 spacing: PsSpace.s3,
                 children: [
                   SizedBox(
-                    width: 28,
+                    width: numberWidth,
                     child: Text(
                       '$index'.padLeft(3, '0'),
+                      maxLines: 1,
+                      softWrap: false,
                       style: PsType.numeral.copyWith(
                         color: current ? p.vermilion : p.ink2,
                         fontWeight: current ? FontWeight.w500 : null,
@@ -310,7 +328,24 @@ class PsChapterRow extends StatelessWidget {
                       ).copyWith(color: p.ink),
                     ),
                   ),
+                  if (current && currentLabel != null && !playing)
+                    Text(
+                      currentLabel!,
+                      style: PsType.caption.copyWith(color: p.vermilion),
+                    ),
                   if (current && playing) const PsEq(),
+                  if (voiced && status == null)
+                    Semantics(
+                      label: voicedLabel,
+                      child: Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: p.vermilion.withValues(alpha: 0.7),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
                   if (duration != null)
                     Text(
                       duration!,
@@ -326,7 +361,7 @@ class PsChapterRow extends StatelessWidget {
               ),
             ),
             Positioned(
-              left: PsSpace.s5 + 40,
+              left: PsSpace.s5 + numberWidth + PsSpace.s3,
               right: 0,
               bottom: 0,
               child: const Divider(),
@@ -446,14 +481,17 @@ class PsCastRow extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             spacing: 2,
             children: [
-              PsIconButton(
-                icon: auditioning ? PsIcons.pause : PsIcons.play,
-                label: auditioning ? l.stopAudition : l.audition,
-                onPressed: onAudition,
-                variant: PsIconButtonVariant.outline,
-                size: PsControlSize.sm,
-                iconSize: 16,
-              ),
+              // Without a way to hear the voice there is no button at all,
+              // rather than one that can only fail.
+              if (onAudition != null)
+                PsIconButton(
+                  icon: auditioning ? PsIcons.pause : PsIcons.play,
+                  label: auditioning ? l.stopAudition : l.audition,
+                  onPressed: onAudition,
+                  variant: PsIconButtonVariant.outline,
+                  size: PsControlSize.sm,
+                  iconSize: 16,
+                ),
               if (onMore != null)
                 PsIconButton(
                   icon: PsIcons.more,

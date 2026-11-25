@@ -22,6 +22,8 @@ dart run packages/core/bin/pagestage.dart narrate <book-id> 1 --provider edge
 
 ## 多角色整章合成
 
+演播模式和表现力按书保存，省略参数时使用已保存的选择；新书默认 `audiobook` 与 `natural`。导出有声包也沿用该书的模式，详见[引擎与书籍包](engines-and-packages.md)。
+
 先完成 [建档](cli-profiling.md)、[选角](cli-casting.md) 和 [导演](cli-directing.md)，再合成持久化的 Script：
 
 ```sh
@@ -34,22 +36,23 @@ dart run packages/core/bin/pagestage.dart synthesize <book-id> 1 --merge-narrato
 
 | 选项或规则 | 行为 |
 | --- | --- |
-| `--mode audiobook`（默认） | 朗读正文和说话提示，跳过非正文 |
+| `--mode audiobook` | 朗读正文和说话提示，跳过非正文 |
 | `--mode drama` | 朗读正文，跳过说话提示和非正文 |
-| `--merge-narrator` | 合并原文中相邻、情绪和强度相同的旁白台词，沿用第一行的表演说明；原文逐字保留，长请求仍按服务商预算拆分 |
+| `--expressiveness plain\|natural\|dramatic` | 保存本书的表现力：平实、自然或戏剧 |
+| `--merge-narrator` | 合并原文中相邻、情绪、强度、语速和音量相同且没有发声提示的旁白台词，沿用第一行的表演说明；原文逐字保留，长请求仍按服务商预算拆分 |
 | 连续同一说话人 | 100 ms 停顿 |
 | 切换说话人 | 180 ms 停顿 |
 | 原文换段 | 300 ms 停顿，优先于说话人规则 |
 
 停顿根据两条可听台词之间原文的换行判断，包含附在台词末尾或开头的空白。第一条前面不加停顿；同一 utterance 的服务商分块之间直接拼接。合并旁白时，合并后的原文作为一个 utterance，内部节奏交由 TTS 处理，供试听对比。
 
-MiniMax 仅传情绪枚举。百炼将情绪、强度和补充说明组合成中文或英文自然语言 `instruction`，例如 `Read with a sad emotion and strong intensity. Speak softly.`。
+MiniMax 使用情绪枚举、数值韵律控制和模型支持的发声标记。百炼将情绪、强度、语速、音量和补充说明组合成中文或英文自然语言 `instruction`，例如 `Read with a sad emotion and strong intensity. Speak softly.`。
 
 默认整章文件是 `.pagestage/audio/<book-id>/chapter-1-audiobook.wav` 或 `chapter-1-drama.wav`。JSON 返回整章路径、音频时长、耗时、实际新请求数、缓存命中数、服务商用量以及每条原文对应的说话人和音频引用。合并旁白的各行共用一个 utterance 音频引用，`utteranceLineIndices` 是原 Script 的零起始索引；接口没有提供单词或行内时间戳。
 
 ### 音频缓存
 
-`.pagestage/audio/<book-id>/cache/` 按书保存每个 utterance 的原始 PCM WAV，已经拼好服务商分块。缓存身份包含实际分块原文、语言、服务商、模型、音色绑定参数、完整表演指令、映射后的请求说明以及规范化的匹配发音词典。相同内容跨 CLI 调用复用；换掉一个说话人的音色，仅他的台词重新请求。修改原文、模型或表演指令会产生新缓存。缓存文件丢失或损坏时自动重新合成。已有 `.pagestage/audio/cache/` 中的命中项会复制到所属书的目录，继续复用。
+`.pagestage/audio/<book-id>/cache/` 按书保存每个 utterance 的原始 PCM WAV，已经拼好服务商分块。缓存身份包含实际分块原文、语言、服务商、模型、音色绑定参数、按引擎能力适配后的 `Delivery` 以及规范化的匹配发音词典。相同内容跨 CLI 调用复用；换掉一个说话人的音色，仅他的台词重新请求。修改实际请求内容会产生新缓存，引擎无法表现的指令改动仍复用原缓存。缓存文件丢失或损坏时自动重新合成。已有 `.pagestage/audio/cache/` 中的命中项会复制到所属书的目录，继续复用。
 
 缓存保留原始 utterance 音频。每次组装先从原始音频统一响度，再添加章节停顿。`rawAudioPath` 指向原始缓存，`audioPath` 指向 `normalized/` 下处理后的台词音频，详见 [发音词典与响度](cli-pronunciation-loudness.md)。开关演播模式可复用保留台词的缓存；合并旁白改变 utterance 的原文组合，因此第一次会生成对应缓存。`requests`、`characters` 和 token 字段只统计本次新请求；全部命中时请求数、字符用量为 0，未报告的 token 用量为 `null`。程序调用方可通过 `Synthesizer(cacheDirectory: ...)` 选定缓存目录；默认在输出目录下的 `.utterances/`。
 
@@ -94,7 +97,8 @@ App 的音色列表可直接选择 Edge；未配置付费 TTS key 时，自动�
 | 环境变量 | JSON 字段 | 默认值 |
 | --- | --- | --- |
 | `MINIMAX_API_KEY` | `minimax.key` | 必填 |
-| `MINIMAX_BASE_URL` | `minimax.baseUrl` | `https://api.minimax.io/v1` |
+| `MINIMAX_REGION` | `minimax.region` | `global`（`https://api.minimax.io/v1`）；国内版 key 用 `china`（`https://api.minimaxi.com/v1`） |
+| `MINIMAX_BASE_URL` | `minimax.baseUrl` | 按 `minimax.region` 取地址；设置后覆盖区域 |
 | `MINIMAX_REQUESTS_PER_MINUTE` | `minimax.requestsPerMinute` | `12` |
 | `MINIMAX_MODEL` | `minimax.model` | `speech-2.8-hd` |
 | `MINIMAX_VOICE` | `minimax.voice` | 中文 `Chinese (Mandarin)_Male_Announcer`，英文 `English_expressive_narrator` |
@@ -135,7 +139,7 @@ App 的音色列表可直接选择 Edge；未配置付费 TTS key 时，自动�
 
 ## 适配器能力
 
-`TtsAdapter.capabilitiesFor(binding)` 根据模型、音色和区域返回拼音标注能力及请求字符预算。`TtsRequest` 携带原文、语言、音色绑定、表演指令和发音词典条目；适配器将表演指令转换为对应的厂商参数。MiniMax 使用情绪枚举，百炼将情绪、强度和说明组合成自然语言指令。
+`TtsAdapter.capabilitiesFor(binding)` 根据模型、音色和区域返回情绪、强度、自然语言指令、发声提示、韵律控制、拼音标注能力及请求字符预算。`Delivery.lower` 将表演指令适配为该音色能够执行的请求内容，`TtsRequest` 携带原文、语言、音色绑定、`Delivery` 和发音词典条目；适配器再转换为对应的厂商参数。MiniMax 使用情绪枚举和模型支持的发声标记，百炼使用自然语言指令，Edge 使用数值韵律控制。
 
 MiniMax 的预算是 9999 个 Unicode 码点，对应官方“少于 10000 字符”的限制。百炼使用 Qwen-Audio 3.0/3.1 HTTP 接口，默认预算为 600 个码点。这是原型采用的保守实现预算；当前 HTTP 文档没有明确给出数值上限。程序调用方可通过 `BailianTtsAdapter(requestCharacterLimit: ...)` 调整，实际连续性仍需真实音频试听验证。
 
@@ -144,7 +148,7 @@ MiniMax 的预算是 9999 个 Unicode 码点，对应官方“少于 10000 字�
 ## 离线验证
 
 ```sh
-dart analyze
+dart analyze packages
 dart test packages/core/test
 ```
 

@@ -1,15 +1,44 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pagestage_app/application/cast_controller.dart';
 import 'package:pagestage_app/application/contracts.dart';
 import 'package:pagestage_app/application/listening_controller.dart';
+import 'package:pagestage_app/application/ming.dart';
 import 'package:pagestage_app/application/provider_store.dart';
 import 'package:pagestage_core/pagestage_core.dart';
 
 import '../../../core/test/support/generation_fakes.dart';
 import 'support.dart';
+
+class _CastingLlm extends GenerationLlm {
+  final prompts = <Map>[];
+  late String choice;
+
+  @override
+  Future<LlmResponse> complete(LlmRequest request) async {
+    final input = jsonDecode(request.user) as Map;
+    prompts.add(input);
+    final offered = (input['voiceCatalog'] as List).cast<Map>();
+    choice =
+        offered.firstWhere((p) => p['presetId'] == 'ming:ps_xubai')['presetId']
+            as String;
+    return LlmResponse(
+      data: {
+        'characters': [],
+        'personas': [],
+        'merges': [],
+        'provisionalResolutions': [],
+        'lexicon': [],
+        'voiceChoices': [
+          {'speakerId': 'narrator', 'presetId': choice},
+        ],
+      },
+    );
+  }
+}
 
 void main() {
   late Directory root;
@@ -74,6 +103,70 @@ void main() {
     expect(llm.chapters, isEmpty);
     expect(casts.scheduler.tasks, isEmpty);
   });
+
+  test(
+    'Ming-only profiling offers all 32 presets and keeps the same narrator on extension',
+    () async {
+      final chooser = _CastingLlm();
+      llm = chooser;
+      await casts.close();
+      providers.dispose();
+      final manifest = File('android/app/src/main/assets/ming/voices.json');
+      final device = MingDevice.fromSnapshot({
+        'phase': 'ready',
+        'done': 7,
+        'total': 7,
+        'percent': 100,
+        'detail': '',
+        'voices': jsonDecode(await manifest.readAsString()),
+      });
+      addTearDown(device.dispose);
+      providers = await ProviderStore.open(
+        store,
+        secrets,
+        engines: AppEngines(voice: TtsEngines([MingTtsEngine(device)])),
+      );
+      await providers.switchVoice('ming', true);
+      book = await importBook(store, root, language: 'zh');
+      casts = await CastController.open(
+        store: store,
+        providers: providers,
+        consents: consents,
+        listening: listening,
+        auditionEngine: MemoryEngine(),
+        profileFactory: (_) => llm,
+        auditionFactory: (_, _) => tts,
+      );
+      await casts.profile(book.id, through: 2);
+      await casts.idle;
+      expect(chooser.prompts, hasLength(2));
+      final catalog = (chooser.prompts.first['voiceCatalog'] as List)
+          .cast<Map>();
+      expect(catalog, hasLength(32));
+      expect(
+        catalog.every((v) => (v['presetId'] as String).startsWith('ming:ps_')),
+        isTrue,
+      );
+      expect(
+        catalog.every((v) => (v['description'] as String).isNotEmpty),
+        isTrue,
+      );
+      expect(chooser.prompts.last['assignedVoices'], {
+        'narrator': chooser.choice,
+      });
+      final voice = (await Casting(
+        store,
+      ).getCasting(book.id)).voices['narrator']!;
+      expect(voice.profileSelected, isTrue);
+      expect('ming:${voice.binding.voiceId}', chooser.choice);
+      expect((await casts.load(book.id)).members.single.voiceName, '叙白');
+      device.checkBinding(voice.binding);
+      expect(tts.requests, isEmpty);
+      await providers.switchVoice('ming', false);
+      await casts.idle;
+      expect((await casts.load(book.id)).members.single.voiceName, '叙白');
+    },
+  );
 
   test(
     'casting waits for a voice provider and goes on once one is on',
